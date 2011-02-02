@@ -16,6 +16,7 @@ Contents:
    ch03
    ch04
    ch05
+   ch06
 
 
 Indices and tables
