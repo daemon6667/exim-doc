@@ -9,7 +9,7 @@ Welcome to Specification of the Exim Mail Transfer Agent's documentation!
 Contents:
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1 
 
    ch01
    ch02
@@ -18,6 +18,7 @@ Contents:
    ch05
    ch06
    ch07
+   ch08
 
 
 Indices and tables
