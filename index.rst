@@ -21,6 +21,7 @@ Contents:
    ch08
    ch09
    ch10
+   ch11
 
 
 Indices and tables
