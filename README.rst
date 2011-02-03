@@ -15,7 +15,7 @@
 
 Исходная документация http://exim.org/docs.html
 
-Переводчики\корректоры\праздо-шатающиеся-рядом:
+Переводчики\\корректоры\\праздо-шатающиеся-рядом:
 
 * lissyara (Alex Keda, http://lissyara.su)
 * Gerk (http://itbase.org.ua/)
