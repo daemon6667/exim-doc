@@ -20,6 +20,7 @@ Contents:
    ch07
    ch08
    ch09
+   ch10
 
 
 Indices and tables
