@@ -8,94 +8,186 @@
 
 Для общего описания, как работает маршрутизатор, смотрите раздел :ref:`3.10 <ch03_10>` и :ref:`3.12 <ch03_12>`. Последний, определяет порядок в котором проверяются предварительные условия. Порядок раскрытия опций, которые предоставляют данные для транспортов, таков: **errors_to**, **headers_add**, **headers_remove**, **transport**.
 
-address_data    Use: routers    Type: string†   Default: unset
+================  ============  =============  ==============
+**address_data**  Use: routers  Type: string†  Default: unset
+================  ============  =============  ==============
 
-address_test    Use: routers‡   Type: boolean   Default: true
+================  =============  =============  ==============
+**address_test**  Use: routers‡  Type: boolean  Default: true
+================  =============  =============  ==============
 
-cannot_route_message    Use: routers    Type: string†   Default: unset
+========================  ============  =============  ==============
+**cannot_route_message**  Use: routers  Type: string†  Default: unset
+========================  ============  =============  ==============
 
-caseful_local_part      Use: routers    Type: boolean   Default: false
+======================  ============  =============  ==============
+**caseful_local_part**  Use: routers  Type: boolean  Default: false
+======================  ============  =============  ==============
 
-check_local_user        Use: routers‡   Type: boolean   Default: false
+====================  =============  =============  ==============
+**check_local_user**  Use: routers‡  Type: boolean  Default: false
+====================  =============  =============  ==============
 
-condition       Use: routers‡   Type: string†   Default: unset
+=============  =============  =============  ==============
+**condition**  Use: routers‡  Type: string†  Default: unset
+=============  =============  =============  ==============
 
-debug_print     Use: routers    Type: string†   Default: unset
+===============  ============  =============  ==============
+**debug_print**  Use: routers  Type: string†  Default: unset
+===============  ============  =============  ==============
 
-disable_logging Use: routers    Type: boolean   Default: false
+===================  ============  =============  ==============
+**disable_logging**  Use: routers  Type: boolean  Default: false
+===================  ============  =============  ==============
 
-domains Use: routers‡   Type: domain list†      Default: unset
+===========  =============  ==================  ==============
+**domains**  Use: routers‡  Type: domain list†  Default: unset
+===========  =============  ==================  ==============
 
-driver  Use: routers    Type: string    Default: unset
+==========  ============  ============  ==============
+**driver**  Use: routers  Type: string  Default: unset
+==========  ============  ============  ==============
 
-errors_to       Use: routers    Type: string†   Default: unset
+=============  ============  =============  ==============
+**errors_to**  Use: routers  Type: string†  Default: unset
+=============  ============  =============  ==============
 
-expn    Use: routers‡   Type: boolean   Default: true
+========  =============  =============  =============
+**expn**  Use: routers‡  Type: boolean  Default: true
+========  =============  =============  =============
 
-fail_verify     Use: routers    Type: boolean   Default: false
+===============  ============  =============  ==============
+**fail_verify**  Use: routers  Type: boolean  Default: false
+===============  ============  =============  ==============
 
-fail_verify_recipient   Use: routers    Type: boolean   Default: false
+=========================  ============  =============  ==============
+**fail_verify_recipient**  Use: routers  Type: boolean  Default: false
+=========================  ============  =============  ==============
 
-fail_verify_sender      Use: routers    Type: boolean   Default: false
+======================  ============  =============  ==============
+**fail_verify_sender**  Use: routers  Type: boolean  Default: false
+======================  ============  =============  ==============
 
-fallback_hosts  Use: routers    Type: string list       Default: unset
+==================  ============  =================  ==============
+**fallback_hosts**  Use: routers  Type: string list  Default: unset
+==================  ============  =================  ==============
 
-group   Use: routers    Type: string†   Default: see below
+=========  ============  =============  ==================
+**group**  Use: routers  Type: string†  Default: see below
+=========  ============  =============  ==================
 
-headers_add     Use: routers    Type: string†   Default: unset
+===============  ============  =============  ==============
+**headers_add**  Use: routers  Type: string†  Default: unset
+===============  ============  =============  ==============
 
-headers_remove  Use: routers    Type: string†   Default: unset
+==================  ============  =============  ==============
+**headers_remove**  Use: routers  Type: string†  Default: unset
+==================  ============  =============  ==============
 
-ignore_target_hosts     Use: routers    Type: host list†        Default: unset
+=======================  ============  ================  ==============
+**ignore_target_hosts**  Use: routers  Type: host list†  Default: unset
+=======================  ============  ================  ==============
 
-initgroups      Use: routers    Type: boolean   Default: false
+==============  ============  =============  ==============
+**initgroups**  Use: routers  Type: boolean  Default: false
+==============  ============  =============  ==============
 
-local_part_prefix       Use: routers‡   Type: string list       Default: unset
+=====================  =============  =================  ==============
+**local_part_prefix**  Use: routers‡  Type: string list  Default: unset
+=====================  =============  =================  ==============
 
-local_part_prefix_optional      Use: routers    Type: boolean   Default: false
+==============================  ============  =============  ==============
+**local_part_prefix_optional**  Use: routers  Type: boolean  Default: false
+==============================  ============  =============  ==============
 
-local_part_suffix       Use: routers‡   Type: string list       Default: unset
+=====================  =============  =================  ==============
+**local_part_suffix**  Use: routers‡  Type: string list  Default: unset
+=====================  =============  =================  ==============
 
-local_part_suffix_optional      Use: routers    Type: boolean   Default: false
+==============================  ============  =============  ==============
+**local_part_suffix_optional**  Use: routers  Type: boolean  Default: false
+==============================  ============  =============  ==============
 
-local_parts     Use: routers‡   Type: local part list†  Default: unset
+===============  =============  ======================  ==============
+**local_parts**  Use: routers‡  Type: local part list†  Default: unset
+===============  =============  ======================  ==============
 
-log_as_local    Use: routers    Type: boolean   Default: see below
+================  ============  =============  ==================
+**log_as_local**  Use: routers  Type: boolean  Default: see below
+================  ============  =============  ==================
 
-more    Use: routers    Type: boolean†  Default: true
+========  ============  ==============  =============
+**more**  Use: routers  Type: boolean†  Default: true
+========  ============  ==============  =============
 
-pass_on_timeout Use: routers    Type: boolean   Default: false
+===================  ============  =============  ==============
+**pass_on_timeout**  Use: routers  Type: boolean  Default: false
+===================  ============  =============  ==============
 
-pass_router     Use: routers    Type: string    Default: unset
+===============  ============  ============  ==============
+**pass_router**  Use: routers  Type: string  Default: unset
+===============  ============  ============  ==============
 
-redirect_router Use: routers    Type: string    Default: unset
+===================  ============  ============  ==============
+**redirect_router**  Use: routers  Type: string  Default: unset
+===================  ============  ============  ==============
 
-require_files   Use: routers‡   Type: string list†      Default: unset
+=================  =============  ==================  ==============
+**require_files**  Use: routers‡  Type: string list†  Default: unset
+=================  =============  ==================  ==============
 
-retry_use_local_part    Use: routers    Type: boolean   Default: see below
+========================  ============  =============  ==================
+**retry_use_local_part**  Use: routers  Type: boolean  Default: see below
+========================  ============  =============  ==================
 
-router_home_directory   Use: routers    Type: string†   Default: unset
+=========================  ============  =============  ==============
+**router_home_directory**  Use: routers  Type: string†  Default: unset
+=========================  ============  =============  ==============
 
-self    Use: routers    Type: string    Default: freeze
+========  ============  ============  ===============
+**self**  Use: routers  Type: string  Default: freeze
+========  ============  ============  ===============
 
-senders Use: routers‡   Type: address list†     Default: unset
+===========  =============  ===================  ==============
+**senders**  Use: routers‡  Type: address list†  Default: unset
+===========  =============  ===================  ==============
 
-translate_ip_address    Use: routers    Type: string†   Default: unset
+========================  ============  =============  ==============
+**translate_ip_address**  Use: routers  Type: string†  Default: unset
+========================  ============  =============  ==============
 
-transport       Use: routers    Type: string†   Default: unset
+=============  ============  =============  ==============
+**transport**  Use: routers  Type: string†  Default: unset
+=============  ============  =============  ==============
 
-transport_current_directory     Use: routers    Type: string†   Default: unset
+===============================  ============  =============  ==============
+**transport_current_directory**  Use: routers  Type: string†  Default: unset
+===============================  ============  =============  ==============
 
-transport_home_directory        Use: routers    Type: string†   Default: see below
+============================  ============  =============  ==================
+**transport_home_directory**  Use: routers  Type: string†  Default: see below
+============================  ============  =============  ==================
 
-unseen  Use: routers    Type: boolean†  Default: false
+==========  ============  ==============  ==============
+**unseen**  Use: routers  Type: boolean†  Default: false
+==========  ============  ==============  ==============
 
-user    Use: routers    Type: string†   Default: see below
+========  ============  =============  ==================
+**user**  Use: routers  Type: string†  Default: see below
+========  ============  =============  ==================
 
-verify  Use: routers‡   Type: boolean   Default: true
+==========  =============  =============  =============
+**verify**  Use: routers‡  Type: boolean  Default: true
+==========  =============  =============  =============
 
-verify_only     Use: routers‡   Type: boolean   Default: false
+===============  =============  =============  ==============
+**verify_only**  Use: routers‡  Type: boolean  Default: false
+===============  =============  =============  ==============
 
-verify_recipient        Use: routers‡   Type: boolean   Default: true
+====================  =============  =============  =============
+**verify_recipient**  Use: routers‡  Type: boolean  Default: true
+====================  =============  =============  =============
 
-verify_sender   Use: routers‡   Type: boolean   Default: true
+=================  =============  =============  =============
+**verify_sender**  Use: routers‡  Type: boolean  Default: true
+=================  =============  =============  =============
