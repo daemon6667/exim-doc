@@ -3,7 +3,7 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Документация EXIM MTA
+Документация MTA EXIM
 =====================
 
 Оглавление:
@@ -33,6 +33,9 @@
    ch20
    ch21
    ch22
+   ch23
+   ch24
+   ch25
 
 
 Глоссарий
