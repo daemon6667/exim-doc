@@ -3,10 +3,10 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to Specification of the Exim Mail Transfer Agent's documentation!
-=========================================================================
+Документация EXIM MTA
+=====================
 
-Contents:
+Оглавление:
 
 .. toctree::
    :maxdepth: 1 
@@ -35,10 +35,9 @@ Contents:
    ch22
 
 
-Indices and tables
-==================
+Глоссарий
+=========
 
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+* :ref:`Глоссарий <genindex>`
+* :ref:`Поиск <search>`
 
