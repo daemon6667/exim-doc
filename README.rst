@@ -19,6 +19,7 @@
 
 * lissyara (Alex Keda, http://lissyara.su)
 * Gerk (http://itbase.org.ua/)
-* Andy (http://www.lissyara.su/authors/2007/andy/)  
+* Andy (http://www.lissyara.su/authors/2007/andy/) 
+* проэкт exim.org.ua (труп)
 
 Лицензия не известна :-(
