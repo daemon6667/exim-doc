@@ -46,6 +46,6 @@
 Глоссарий
 =========
 
-* :ref:`Глоссарий <genindex>`
-* :ref:`Поиск <search>`
+* :ref:`genindex`
+* :ref:`search`
 
