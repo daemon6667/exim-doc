@@ -33,7 +33,7 @@ Exim применяет таймаут к запросам функции local 
 
     LOCAL_SCAN_HAS_OPTIONS=yes
 
-в файле *Local/Makefile* (смотрите раздел :ref:`42.3 <ch42_3>` ниже).
+в файле *Local/Makefile* (смотрите раздел :ref:`42.3 <ch42_03>` ниже).
 
 .. _ch42_02:
 
