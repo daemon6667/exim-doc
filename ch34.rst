@@ -13,11 +13,17 @@
 
 При конфигурировании как сервера, **plaintext** имеет следующие опции:
 
+.. index::
+   triple: authenticators; plaintext; server_condition
+
 ====================  ===================  =============  ==============
 **server_condition**  Use: authenticators  Type: string†  Default: unset
 ====================  ===================  =============  ==============
 
 Фактически, это глобальная аутентификационная опция, но, она может быть установлена для конфигурирования драйвера **plaintext** как сервера. Её использование описано ниже.
+
+.. index::
+   pair: plaintext; server_prompts
 
 ==================  ==============  =============  ==============
 **server_prompts**  Use: plaintext  Type: string†  Default: unset
