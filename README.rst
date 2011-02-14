@@ -1,5 +1,5 @@
-Руссифицированная документация exim 4.70
-========================================
+Документация exim 4.7x на великом могучем
+=========================================
 
 Для установки треба *app-python/sphinx* (http://sphinx.pocoo.org/index.html, не путать с поисковым движком!)
 
@@ -20,7 +20,7 @@
 * lissyara (Alex Keda, http://lissyara.su)
 * Gerk (http://itbase.org.ua/)
 * Andy (http://www.lissyara.su/authors/2007/andy/) 
-* проэкт exim.org.ua (труп)
+* exim.org.ua (труп)
 
 Лицензия не известна :-(
 
