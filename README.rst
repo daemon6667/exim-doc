@@ -10,7 +10,7 @@
 
 Генерация pdf(sphinx должен бать собран с поддержкой latex)::
   
-  make pdf
+  make latexpdf
 
 
 Исходная документация http://exim.org/docs.html
