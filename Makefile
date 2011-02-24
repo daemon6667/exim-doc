@@ -28,6 +28,7 @@ help:
 	@echo "  latex      to make LaTeX files, you can set PAPER=a4 or PAPER=letter"
 	@echo "  latexpdf   to make LaTeX files and run them through pdflatex"
 	@echo "  text       to make text files"
+	@echo "  pdf        to make PDF files"
 	@echo "  man        to make manual pages"
 	@echo "  changes    to make an overview of all changed/added/deprecated items"
 	@echo "  linkcheck  to check all external links for integrity"
@@ -128,3 +129,8 @@ doctest:
 	$(SPHINXBUILD) -b doctest $(ALLSPHINXOPTS) $(BUILDDIR)/doctest
 	@echo "Testing of doctests in the sources finished, look at the " \
 	      "results in $(BUILDDIR)/doctest/output.txt."
+
+pdf:
+	$(SPHINXBUILD) -b pdf $(ALLSPHINXOPTS) $(BUILDDIR)/pdf
+	@echo
+	@echo "Build finished. The PDF files are in $(BUILDDIR)/pdf."

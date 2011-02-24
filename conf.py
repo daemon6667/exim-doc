@@ -25,7 +25,7 @@ import sys, os
 
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
-extensions = ['sphinx.ext.todo']
+extensions = ['sphinx.ext.todo', 'rst2pdf.pdfbuilder']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -180,7 +180,7 @@ htmlhelp_basename = 'SpecificationoftheEximMailTransferAgentdoc'
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-  ('index', 'SpecificationoftheEximMailTransferAgent.tex', u'Specification of the Exim Mail Transfer Agent Documentation',
+  ('index', 'Exim.tex', u'Specification of the Exim Mail Transfer Agent Documentation',
    u'Exim Maintainers', 'manual'),
 ]
 
@@ -217,3 +217,14 @@ man_pages = [
     ('index', 'specificationoftheeximmailtransferagent', u'Specification of the Exim Mail Transfer Agent Documentation',
      [u'Exim Maintainers'], 1)
 ]
+
+
+pdf_documents = [
+  ('index', u'SpecificationoftheEximMailTransferAgent', u'Specification of the Exim Mail Transfer Agent Documentation',
+   u'Exim Maintainers'),
+]
+
+pdf_stylesheets = ['sphinx','kerning','a4']
+
+pdf_language="ru_RU"
+
