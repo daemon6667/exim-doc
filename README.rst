@@ -1,17 +1,20 @@
 Документация Exim 4.7x на "Великом и Могучем"
 =============================================
 
-Для установки треба *app-python/sphinx* (http://sphinx.pocoo.org/index.html, не путать с поисковым движком!)
+Для сборки треба *app-python/sphinx* (http://sphinx.pocoo.org/index.html, не путать с поисковым движком!) и dev-python/rst2pdf
 
-Генерация html::
+Создание html::
   
   make html
 
 
-Генерация pdf(sphinx должен бать собран с поддержкой latex)::
+Создание pdf через latex::
   
   make latexpdf
 
+Создание pdf через rst2pdf::
+
+  make pdf
 
 Исходная документация http://exim.org/docs.html
 
@@ -20,6 +23,7 @@
 * lissyara (Alex Keda, http://lissyara.su)
 * Gerk (http://itbase.org.ua/)
 * Andy (http://www.lissyara.su/authors/2007/andy/) 
+* princeps (Сочи) 
 * exim.org.ua (труп)
 
 Лицензия не известна :-(
