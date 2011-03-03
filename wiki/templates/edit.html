@@ -1,0 +1,47 @@
+{% extends "layout.html" %}
+{% block body %}
+<div class="article">
+	<h2>Edit {{ artname }}</h2>
+	<p></p>
+	{% if preview %}
+	<div class="artbody">{%- autoescape false %}{{ artbody }}{% endautoescape -%}</div>
+	<hr>
+	<p></p>
+	{% endif %}
+	<div class="editpage">
+		<form method="POST" action="{{ url_for('edit', page=artname) }}">
+			<p>
+				<textarea name=newcontent cols="76" rows="25">
+{% autoescape false %}
+{{ artraw }}
+{% endautoescape %}
+				</textarea>
+			</p>
+			<p>
+			<label for="comment">Change summary:</label>
+			<input id="comment" type="text" name="comment" size="50"/>
+			</p>
+			<p>
+			<button name="submit" type="submit" value="submit">Save</button>
+			<button name="preview" type="submit" value="preview">Preview</button>
+			</p>
+		</form>
+	</div>
+<div class="quickhelp">
+<h2>Quick help</h2>
+
+<ul>
+  <li>Paragraphs are split by an empty line.</li>
+  <li>Lines that are underlined with dashes ("----") are a title.</li>
+  <li>Lines beginning with an "*" form a list.</li>
+  <li>To create new links, put them between backticks, <tt>`like
+    this`</tt>.</li>
+</ul>
+
+More information:
+<a href="http://docutils.sourceforge.net/docs/user/rst/quickref.html">reST
+quick reference</a>.<p/>
+</div>
+	
+</div>
+{% endblock %}

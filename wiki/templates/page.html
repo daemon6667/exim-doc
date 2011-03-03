@@ -1,0 +1,28 @@
+{% extends "layout.html" %}
+{% block body %}
+<div class="article">
+	<h2>{{ artname }}</h2>
+	<span class="artinfo">{{ artinfo }}</span>
+	<p></p>
+	<div class="artbody">
+		{% autoescape false %}
+		{{ artbody }}
+		{% endautoescape %}
+	</div>
+	<hr>
+	<p></p>
+	<div class="footer">
+		<a href="{{ url_for('page', page='about') }}">about</a>|
+		<a href="{{ url_for('page', page='help') }}">help</a>|
+		{% if session.logged_in %}
+		<a href="{{ url_for('log', page=artname) }}">view history</a>|
+		<a href="{{ url_for('edit', page=artname) }}">edit</a>|
+		<a href="{{ url_for('logout') }}">log out</a>
+		{% else %}
+		<a href="{{ url_for('login') }}">log in</a>
+		{% endif %}
+
+	</div>
+	
+</div>
+{% endblock %}

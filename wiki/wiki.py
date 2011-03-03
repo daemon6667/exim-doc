@@ -7,12 +7,13 @@ import os
 import sys
 import datetime
 import urllib
-from config import *
 
 import docutils.parsers.rst
 import docutils.nodes
 import re
 from docutils.core import publish_parts
+
+data_path = '../../exim-doc-devel'
 
 ref_re = re.compile(r'(.+)\s+<ch(\d\d)_(\d\d)>', re.U)
 

@@ -1,0 +1,163 @@
+body {
+    font-family: serif;
+}
+
+div.content {
+    width: 80%;
+}
+
+h1 {
+    font-size: x-large;
+    border-bottom: 2px solid #99F;
+    width: 65%;
+    margin-bottom: 1em;
+}
+
+h2 {
+    font-size: large;
+    font-weight: bold;
+    margin-bottom: 1pt;
+    border-bottom: 1px solid #99C;
+}
+
+h1 a, h2 a {
+    text-decoration: none;
+    color: black;
+}
+
+span.artinfo {
+    font-size: x-small;
+}
+
+span.artinfo a {
+    text-decoration: none;
+    color: #339;
+}
+
+span.artinfo a:hover {
+    text-decoration: none;
+    color: blue;
+}
+
+div.artbody {
+    margin-left: 1em;
+}
+
+div.article {
+    margin-bottom: 2em;
+}
+hr {
+    /* hack to properly align the hr */
+    text-align: left;
+    margin: 0 auto 0 0;
+
+    height: 2px;
+    border: 0;
+    background-color: #99F;
+    width: 60%;
+}
+
+div.footer {
+    font-size: small;
+}
+
+div.footer a {
+    text-decoration: none;
+}
+
+div.warning {
+	background-color: #ffe4e4;
+	border: 1px solid #ffe4e4;
+}                             
+
+table.docutils {
+	border: 1px solid #888;
+	border-collapse: collapse; 
+}
+
+
+table.docutils td, table.docutils th {
+	border: 1px solid #888;
+	padding: 0.25em 0.7em;
+}
+
+table.log {
+    border-right: 1px solid #6666cc;
+    border-collapse: collapse;
+    margin-left: 1em;
+}
+
+table.log td {
+    border-left: 1px solid #6666cc;
+    padding-right: 1em;
+    padding-left: 1em;
+}
+
+table.log td.date {
+    white-space: nowrap;
+}
+
+table.log td.summary {
+
+}
+
+table.log td.links {
+    white-space: nowrap;
+    font-size: small;
+}
+
+/* Articles are enclosed in <div class="section"> */
+div.section h1 {
+    font-size: medium;
+    font-weight: bold;
+    width: 100%;
+    margin-bottom: 1pt;
+    border-bottom: 1px dotted #99C;
+}
+	
+div.section h2 {
+   font-size: small;
+   font-weight: bold;
+    width: 75%;
+    margin-bottom: 1pt;
+    border-bottom: 1px dotted #DDD;
+}
+
+pre.wiki, pre.literal-block {
+	background: #f7f7f7;
+	border: 1px solid #d7d7d7;
+	margin: 1em 1.75em;
+	padding: .25em;
+	overflow: auto;
+}
+	
+/* diff */
+div.diff {
+	font-family: monospace;
+	white-space: pre;
+	margin: 0;
+	padding: 0;
+}
+
+div.diff span.add {
+	color: #090;
+}
+
+div.diff span.remove {
+	color: #900;
+}
+
+div.diff span.unchanged {
+}
+
+div.diff span.position {
+	background-color: #E5E5FF;
+}
+
+div.diff span.header {
+	background-color: #CCF;
+	font-weight: bold;
+}
+
+div.diff span.other {
+}

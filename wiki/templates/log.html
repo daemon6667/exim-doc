@@ -1,0 +1,22 @@
+{% extends "layout.html" %}
+{% block body %}
+<div class="article">
+	<h2>Change history for {{ artname }}</h2>
+	<p>
+		<table class="log">
+			{% for item in commits %}
+			<tr>
+				<td class="date">{{ item.atime }}</td>
+				<td class="summary">{{ item.msg.decode('utf8') }}</td>
+				<td class="author">{{ item.author.decode('utf8') }}</td>
+				<td class="links">
+					<a href="{{ url_for('revview', page=artname, rev=item.commit) }}">view</a>|
+					<a href="#">restore</a>|
+					<a href="{{ url_for('diffview', page=artname, rev=item.commit) }}">diff</a>
+				</td>
+			</tr>
+			{% endfor %}
+		</table>
+	</p>
+</div>
+{% endblock %}
