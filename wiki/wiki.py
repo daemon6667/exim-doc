@@ -400,9 +400,9 @@ def login():
     if request.method == 'GET' and 'logged_in' in session:
         return redirect(url_for('hello'))
     if request.method == 'POST':
-        if request.form['username'] != 'hizel':
+        if request.form['username'] != 'test':
             error = 'Invalid username'
-        elif request.form['password'] != 'anna':
+        elif request.form['password'] != 'tost':
             error = 'Invalid password'
         else:
             session['logged_in'] = True
