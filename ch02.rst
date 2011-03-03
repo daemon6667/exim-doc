@@ -1,15 +1,17 @@
-
-.. _ch02_00:
-
 ==============
 Включенный код
 ==============
 
+.. _ch02-00:
+
 В дистрибутив Exim включено много внешнего кода.
 
-* Регулярные выражения поддерживаются в Exim`e и в мониторе Exim`a с использованием свободно распространяемой библиотеки PCRE, © Университета Кембриджа. Исходные коды PCRE более не поставляются с Exim, таким образом вам необходимо использовать PCRE, входящий в вашу систему, или скачать и инсталлировать полную версию библиотеки с ftp://ftp.csx.cam.ac.uk/pub/software/programming/pcre.
-* Метод поиска cdb (Constant DataBase) реализован с помощью кода, внесённого Найджелом Метэринэмом в то время, когда он был сотрудником Planet Online Ltd. Реализация этого метода полностью содержится в коде Exim. Она не связана с внешней библиотекой cdb. Код содержит следующие заявления::
-
+* Регулярные выражения поддерживаются в Exim`e и в мониторе Exim`a с использованием свободно распространяемой библиотеки PCRE, © Университета Кембриджа. Исходные коды PCRE более не поставляются с Exim, таким образом вам необходимо использовать PCRE, входящий в вашу систему, или скачать и инсталлировать полную версию библиотеки с `ftp://ftp.csx.cam.ac.uk/pub/software/programming/pcre <ftp://ftp.csx.cam.ac.uk/pub/software/programming/pcre>`_.
+  
+* Метод поиска cdb (Constant DataBase) реализован с помощью кода, внесённого Найджелом Метэринэмом в то время, когда он был сотрудником Planet Online Ltd. Реализация этого метода полностью содержится в коде Exim. Она не связана с внешней библиотекой cdb. Код содержит следующие заявления:
+  
+  ::
+  
     Copyright © 1998 Nigel Metheringham, Planet Online Ltd This program is free
     software; you can redistribute it and/or modify it under the terms of the
     GNU General Public License as published by the Free Software Foundation;
@@ -19,10 +21,13 @@
     http://www.pobox.com/~djb/cdb.html. This implementation borrows some code
     from Dan Bernstein's implementation (which has no license restrictions
     applied to it).
-
+  
 * Поддержка клиентов Microsoft “Secure Password Authentication” обеспечивается кодом, внесённым Marc Prud’hommeaux. Поддержка сервера была внесена Томом Кистнером. Также включён некоторый код из проекта Samba, выпущенный под Gnu GPL.
-* Поддержка вызовов Cyrus *pwcheck* и *saslauthd* даемонов обеспечивается кодом, взятым из библиотеки Cyrus-SASL и адаптирован Alexander S. Sabourenkov (русский товарищ - но пришлось писать по аглицки - непонятно как правильно перевести фамилию с аглицкого транслита... - прим. lissyara). Уведомление о разрешении представлено ниже, в соответствии с условиями оговорёнными в нём.::
-
+  
+* Поддержка вызовов Cyrus *pwcheck*\  и *saslauthd*\  даемонов обеспечивается кодом, взятым из библиотеки Cyrus-SASL и адаптирован Alexander S. Sabourenkov (русский товарищ - но пришлось писать по аглицки - непонятно как правильно перевести фамилию с аглицкого транслита... - прим. lissyara). Уведомление о разрешении представлено ниже, в соответствии с условиями оговорёнными в нём.:
+  
+  ::
+  
     Copyright © 2001 Carnegie Mellon University. All rights reserved.
     Redistribution and use in source and binary forms, with or without
     modification, are permitted provided that the following conditions are met:
@@ -46,9 +51,11 @@
     LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
     OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
     PERFORMANCE OF THIS SOFTWARE.
-
-* Программа Exim Monitor, являющаяся приложением X-Window, включает модифицированные версии Athena StripChart и элементов управления (виджетов) TextPop. Авторские права на этот код у DEC и MIT, в соответствии с их условиями, представленными ниже.::
-
+  
+* Программа Exim Monitor, являющаяся приложением X-Window, включает модифицированные версии Athena StripChart и элементов управления (виджетов) TextPop. Авторские права на этот код у DEC и MIT, в соответствии с их условиями, представленными ниже.:
+  
+  ::
+  
     Copyright 1987, 1988 by Digital Equipment Corporation, Maynard,
     Massachusetts, and the Massachusetts Institute of Technology, Cambridge,
     Massachusetts.  All Rights Reserved Permission to use, copy, modify, and
@@ -63,6 +70,8 @@
     SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER
     RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF
     CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
-    CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE. 
-
+    CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+  
 * Много людей внесли фрагменты кода, некоторые большие, некоторые маленькие, которые не были охвачены никакими определенными лицензионными требованиями. Предполагается, что эти вкладчики рады видеть их код включённым в Exim под GPL.
+  
+
