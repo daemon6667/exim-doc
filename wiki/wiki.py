@@ -128,18 +128,6 @@ class Article (object):
             self.updated = datetime.datetime.now()
 
         hdr_lines = 0
-        if self.has_header:
-            for l in raw:
-                if ':' in l:
-                    name, value = l.split(':', 1)
-                    name = name.lower().strip()
-                    self.attrs[name] = value.strip()
-                    hdr_lines += 1
-
-                elif l == '\n' or l == '\r\n':
-                    # end of header
-                    hdr_lines += 1
-                    break
 
         self._raw_content = ''.join(raw[hdr_lines:])
         self.loaded = True
@@ -362,7 +350,11 @@ def edit(page):
                 comment = request.form['comment']
             h = History()
             a = Article(pagename)
-            a.save('', request.form['newcontent'].encode('utf8'), raw=True)
+            a.save(
+                    '',
+                    request.form['newcontent'].encode('utf8').replace('\r\n','\n'),
+                    raw=True
+                    )
             h.add(a.qname)
             h.commit(msg = comment, author = author)
             art_parts = a.to_html()

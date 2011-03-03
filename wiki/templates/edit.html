@@ -11,11 +11,7 @@
 	<div class="editpage">
 		<form method="POST" action="{{ url_for('edit', page=artname) }}">
 			<p>
-				<textarea name=newcontent cols="76" rows="25">
-{% autoescape false %}
-{{ artraw }}
-{% endautoescape %}
-				</textarea>
+				<textarea name=newcontent cols="76" rows="25">{{ artraw }}</textarea>
 			</p>
 			<p>
 			<label for="comment">Change summary:</label>
