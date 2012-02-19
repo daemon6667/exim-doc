@@ -12,10 +12,6 @@
   
   make latexpdf
 
-Создание pdf через rst2pdf::
-
-  make pdf
-
 Исходная документация http://exim.org/docs.html
 
 Переводчики\\корректоры\\праздо-шатающиеся-рядом:
@@ -25,6 +21,8 @@
 * Andy (http://www.lissyara.su/authors/2007/andy/) 
 * princeps (Сочи) 
 * exim.org.ua (труп)
+
+пример выхлопа http://hizel.github.com/exim-doc/
 
 Лицензия не известна :-(
 
