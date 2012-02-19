@@ -5,10 +5,6 @@
 
 Документация MTA EXIM
 =====================
-.. note::
-
-  Исходный код документации см. https://github.com/hizel/exim-doc , эта
-  документация в формате pdf см. http://404.hizel.ru/exim/exim.pdf
 
 Оглавление:
 
