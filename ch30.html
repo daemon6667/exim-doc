@@ -1,0 +1,997 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Транспорт smtp &mdash; Specification of the Exim Mail Transfer Agent 4.70 documentation</title>
+    
+    <link rel="stylesheet" href="_static/flasky.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '4.70',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/translations.js"></script>
+    <link rel="top" title="Specification of the Exim Mail Transfer Agent 4.70 documentation" href="index.html" />
+    <link rel="next" title="Перезапись адресов" href="ch31.html" />
+    <link rel="prev" title="Транспорт pipe" href="ch29.html" />
+   
+  
+  <link media="only screen and (max-device-width: 480px)" href="_static/small_flask.css" type= "text/css" rel="stylesheet" />
+
+  </head>
+  <body>
+    <div class="related">
+      <h3>Просмотр</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="Словарь-указатель"
+             accesskey="I">словарь</a></li>
+        <li class="right" >
+          <a href="ch31.html" title="Перезапись адресов"
+             accesskey="N">следующий</a> |</li>
+        <li class="right" >
+          <a href="ch29.html" title="Транспорт pipe"
+             accesskey="P">предыдущий</a> |</li>
+        <li><a href="index.html">Specification of the Exim Mail Transfer Agent 4.70 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="smtp">
+<span id="ch30-00"></span><h1>Транспорт <strong>smtp</strong><a class="headerlink" href="#smtp" title="Ссылка на этот заголовок">¶</a></h1>
+<p>Транспорт <strong>smtp</strong> доставляет сообщения через TCP/IP соединения, используя протокол SMTP или LMTP. Список хостов, для попыток доставки, может быть взят из обрабатываемого адреса (будет установлен маршрутизатором), или явно определён для транспорта. Обработка таймаутов и повторов (смотрите главу <a class="reference internal" href="ch32.html#ch32-00"><em>32</em></a>) применяется независимо, к каждому IP-адресу.</p>
+<div class="section" id="ch30-01">
+<span id="id1"></span><h2>Несколько сообщений в одном соединении<a class="headerlink" href="#ch30-01" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Отправка нескольких сообщений через одно TCP/IP соединение может быть результатом двух путей:</p>
+<ul class="simple">
+<li>Если сообщение содержит более чем <strong>max_rcpt</strong> (смотрите ниже) адресов, которые направляются к одному и тому же хосту, к нему должна быть послана более чем одна копия сообщения. В этой ситуации, несколько копий могут быть посланы в одном запуске транспорта <strong>smtp</strong> через одно TCP/IP соединение. (Что, фактически, и делает Exim, когда ему надо отослать очень много адресов в одном сообщении, также зависит от значения глобального параметра <strong>remote_max_parallel</strong>. Подробности даны в разделе <a class="reference internal" href="ch45.html#ch45-01"><em>45.1</em></a>.)</li>
+<li>Когда сообщение было успешно доставлено через TCP/IP соединение, Exim смотрит свою БД подсказок (hints), для нахождения - есть ли какие-либо другие сообщения, ожидающие подключения к тому же самому хосту. Если они есть, для одного из них начинается новый процесс доставки, и текущее TCP/IP соединеие передаётся ему. Новый процесс, в свою очередь, может посылать несколько копий, и, возможно, создать ещё один процесс.</li>
+</ul>
+<p>Для каждой копии, посланной по одному и тому же TCP/IP соединению, увеличивается счётчик, и, если его значение когда-либо добирается до <strong>connection_max_messages</strong>, по этому подключению сообщения более не посылаются.</p>
+</div>
+<div class="section" id="host-host-address">
+<span id="ch30-02"></span><h2>Использование переменных $host и $host_address<a class="headerlink" href="#host-host-address" title="Ссылка на этот заголовок">¶</a></h2>
+<p>В начале запуска транспорта <strong>smtp</strong>, значения $host и $host_address - имя и адрес первого хоста в списке хостов переданном маршрутизатором. Однако, когда транспорт собирается соединяться с заданным хостом, и в то время, пока он соединён с этим хостом, в $host и $host_address содержат данные этого хоста. Также эти значения находятся в силе, когда раскрыты <strong>helo_data</strong>, <strong>hosts_try_auth</strong>, <strong>interface</strong> <strong>serialize_hosts</strong> и различные параметры TLS.</p>
+</div>
+<div class="section" id="tls-cipher-tls-peerdn">
+<span id="ch30-03"></span><h2>Использование $tls_cipher и $tls_peerdn<a class="headerlink" href="#tls-cipher-tls-peerdn" title="Ссылка на этот заголовок">¶</a></h2>
+<p>В начале запуска транспорта <strong>smtp</strong>, значения $tls_cipher и $tls_peerdn - значения установленные при получении сообщения. Эти значения используются для параметров раскрываемых до создания любых SMTP соединений. Просто, до создания любых соединений, эти две переменные - пусты. Если впоследствии запускается TLS, они устанавливаются в соответствующие значения для исходящего соединения, и эти значения остаются в силе при работе любых аутентификаторов и при раскрытии параметра <strong>authenticated_sender</strong>.</p>
+</div>
+<div class="section" id="ch30-04">
+<span id="id2"></span><h2>Частные параметры для <strong>smtp</strong><a class="headerlink" href="#ch30-04" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Частные параметра транспорта <strong>smtp</strong> таковы:</p>
+<table border="1" class="docutils" id="index-0">
+<colgroup>
+<col width="48%" />
+<col width="13%" />
+<col width="19%" />
+<col width="19%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>address_retry_include_sender</strong></td>
+<td>Use: smtp</td>
+<td>Type: boolean</td>
+<td>Default: true</td>
+</tr>
+</tbody>
+</table>
+<p>Когда доставка откладывается из-за ответа 4хх на команду RCPT, эта комбинация отправителя и получателя задерживается при последующих обработках очереди. Вы можете задержать получателя без ссылки на отправителя (что и делал Exim в более ранних версиях), путём установки <strong>address_retry_include_sender</strong> в ложь. Однако, это может вызвать проблемы с серверами которые регулярно отвечают 4xx на команды RCPT.</p>
+<table border="1" class="docutils" id="index-1">
+<colgroup>
+<col width="35%" />
+<col width="16%" />
+<col width="24%" />
+<col width="25%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>allow_localhost</strong></td>
+<td>Use: smtp</td>
+<td>Type: boolean</td>
+<td>Default: false</td>
+</tr>
+</tbody>
+</table>
+<p>Когда хост, заданный в <strong>hosts</strong> или <strong>fallback_hosts</strong> (смотрите ниже), оказывается локальным хостом, или перечислен в <strong>hosts_treat_as_local</strong>, по умолчанию, доставка задерживается. Однако, если установлен параметр <strong>allow_localhost</strong>, Exim продолжает производить доставку. Это должно использоваться лишь в специальных случаях, когда конфигурация гарантирует, что в результате не будет петель (например, порт, на который посылается сообщение, слушает иначе сконфигурированный Exim).</p>
+<table border="1" class="docutils" id="index-2">
+<colgroup>
+<col width="40%" />
+<col width="15%" />
+<col width="22%" />
+<col width="23%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>authenticated_sender</strong></td>
+<td>Use: smtp</td>
+<td>Type: string†</td>
+<td>Default: unset</td>
+</tr>
+</tbody>
+</table>
+<p>Когда Exim аутентифицирует клиента, или если истиннен параметр <strong>authenticated_sender_force</strong>, этот параметр устанавливает значение для элемента “AUTH=” в исходящих командах MAIL, замещая любое существующее значение аутентифицированного отправителя. Если раскрытие строки принудительно неудачно, параметр игнорируется. Иные ошибки раскрытия вызывают задержку доставки. Если результат раскрытия - пустая строка, она также игнорируется.</p>
+<p>Раскрытие успешно после создания исходящего соединения и запуска TLS, если это требуется. Это означает, что $host, $host_address, $tls_cipher и $tls_peerdn устанавливаются в зависимости от конкретного соединения.</p>
+<p>Если SMTP-сессия не аутентифицирована, всё равно происходит раскрытие <strong>authenticated_sender</strong> (и может вызывать задержку доставки, если оно неудачно), но элемент “AUTH=” в команды MAIL не добавляется, исключая случай, когда истинен параметр <strong>authenticated_sender_force</strong>.</p>
+<p>Этот параметр позволяет вам использовать транспорт SMTP в режиме LMTP, для доставки почты Cyrus IMAP, и обеспечения надлежащей локальной части как “authenticated sender”, с помощью установки типа:</p>
+<div class="highlight-python"><pre>authenticated_sender = $local_part</pre>
+</div>
+<p>Это удаляет необходимость в поддиректориях IMAP, для назначения специальных ACL, чтобы позволить прямую доставку в эти поддиректории.</p>
+<p>Поскольку ожидаемое использование - типа описанного для Cyrus (когда домен не используется), нет проверки на синтаксис предоставляемого значения.</p>
+<table border="1" class="docutils" id="index-3">
+<colgroup>
+<col width="45%" />
+<col width="14%" />
+<col width="20%" />
+<col width="21%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>authenticated_sender_force</strong></td>
+<td>Use: smtp</td>
+<td>Type: boolean</td>
+<td>Default: false</td>
+</tr>
+</tbody>
+</table>
+<p>Если этот параметр истинна, значение параметра <strong>authenticated_sender</strong> используется для элемента “AUTH=” в исходящих командах MAIL, когда Exim не аутентифицирован, как клиент.</p>
+<table border="1" class="docutils" id="index-4">
+<colgroup>
+<col width="39%" />
+<col width="18%" />
+<col width="20%" />
+<col width="22%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>command_timeout</strong></td>
+<td>Use: smtp</td>
+<td>Type: time</td>
+<td>Default: 5m</td>
+</tr>
+</tbody>
+</table>
+<p>Этот параметр определяет таймаут для получения ответа на отосланную SMTP команду. Также, это значение используется при ожидании начально приветственного сообщения с удалённого хоста. Это значение должно быть ненулевым.</p>
+<table border="1" class="docutils" id="index-5">
+<colgroup>
+<col width="39%" />
+<col width="18%" />
+<col width="20%" />
+<col width="22%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>connect_timeout</strong></td>
+<td>Use: smtp</td>
+<td>Type: time</td>
+<td>Default: 5m</td>
+</tr>
+</tbody>
+</table>
+<p>Этот параметр определяет таймаут для функции <em>connect()</em>, устанавливающей TCP/IP вызов к удалённому хосту. Значение нуля разрешает действовать системному таймауту (обычно - несколько минут). Для какого-либо эффекта, это значение должно быть меньше системного таймаута. Однако, на некоторых системах наблюдалось отсутствие какого-либо системного таймаута, поэтому, значение по умолчанию этот параметр - 5 минут, это значение рекомендовано <span class="target" id="index-6"></span><a class="rfc reference external" href="http://tools.ietf.org/html/rfc1123.html"><strong>RFC 1123</strong></a>.</p>
+<table border="1" class="docutils" id="index-7">
+<colgroup>
+<col width="44%" />
+<col width="15%" />
+<col width="21%" />
+<col width="20%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>connection_max_messages</strong></td>
+<td>Use: smtp</td>
+<td>Type: integer</td>
+<td>Default: 500</td>
+</tr>
+</tbody>
+</table>
+<p>Этот параметр контролирует максимальное число отдельных сообщений, доставляемых через одно TCP/IP соединение. Если значение равно нулю, нет ограничений. В целях тестирования, это значение может быть замещено параметром командной строки <strong>-oB</strong>.</p>
+<table border="1" class="docutils" id="index-8">
+<colgroup>
+<col width="35%" />
+<col width="20%" />
+<col width="22%" />
+<col width="24%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>data_timeout</strong></td>
+<td>Use: smtp</td>
+<td>Type: time</td>
+<td>Default: 5m</td>
+</tr>
+</tbody>
+</table>
+<p>Этот параметр определяет таймаут для передачи каждого блока, в части данных, сообщения. Как результат, - полный таймаут зависит от размера сообщения. Значение не должно быть нулём. Также смотрите параметр <strong>final_timeout</strong>.</p>
+<table border="1" class="docutils" id="index-9">
+<colgroup>
+<col width="39%" />
+<col width="16%" />
+<col width="23%" />
+<col width="23%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>delay_after_cutoff</strong></td>
+<td>Use: smtp</td>
+<td>Type: boolean</td>
+<td>Default: true</td>
+</tr>
+</tbody>
+</table>
+<p>Этот параметр управляет там, что происходит когда все удалённые адреса для данного домена были недоступны так долго, что для них были было превышено количество повторов.</p>
+<p>По умолчанию, если в следующее время повтора ни один из них не был достигнут, адрес возвращается <a class="footnote-reference" href="#id12" id="id3">[1]</a> без дальнейших попыток доставки. Другими словами, Exim задерживает повторы IP адресов после финального времени сокращения до достижения нового времени повтора, и поэтому адрес может сорваться без попыток доставки, когда машина недоступна долгое время. Некоторые люди несчастны от этой перспективы, так что...</p>
+<p>Если параметр <strong>delay_after_cutoff</strong> установлен в ложь, Exim ведёт себя по другому. Если все адреса проходят их финальное время сокращения, Exim пробует доставить тем адресам, которые не были опробованы с моменты прибытия сообщения. Если они отсутствуют, или все они неудачны, адрес срывается <a class="footnote-reference" href="#id13" id="id4">[2]</a> . Другими словами, при прибытии нового сообщения задержки не происходит, немедленно пробуются адреса с истёкшим сроком, которые не пробовались с момента прибытия сообщения. Если существует продолжающийся поток сообщений к мёртвым хостам, не заданный параметр <strong>delay_after_cutoff</strong> означает, что будет ещё много попыток доставки на них.</p>
+<table border="1" class="docutils" id="index-10">
+<colgroup>
+<col width="39%" />
+<col width="16%" />
+<col width="23%" />
+<col width="23%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>dns_qualify_single</strong></td>
+<td>Use: smtp</td>
+<td>Type: boolean</td>
+<td>Default: true</td>
+</tr>
+</tbody>
+</table>
+<p>Если используются параметры <strong>hosts</strong> и <strong>fallback_hosts</strong>, и параметр <strong>gethostbyname</strong> - ложь, то установлен параметр RES_DEFNAMES, резольвера. Для дополнительных деталей, смотрите параметр <strong>qualify_single</strong>, в главе <a class="reference internal" href="ch17.html#ch17-00"><em>17</em></a>.</p>
+<table border="1" class="docutils" id="index-11">
+<colgroup>
+<col width="38%" />
+<col width="16%" />
+<col width="22%" />
+<col width="24%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>dns_search_parents</strong></td>
+<td>Use: smtp</td>
+<td>Type: boolean</td>
+<td>Default: false</td>
+</tr>
+</tbody>
+</table>
+<p>Если используются параметры <strong>hosts</strong> и <strong>fallback_hosts</strong>, и параметр <strong>gethostbyname</strong> - ложь, то установлен параметр RES_DNSRCH, резольвера. Для дополнительных деталей, смотрите параметр <strong>qualify_single</strong>, в главе <a class="reference internal" href="ch17.html#ch17-00"><em>17</em></a>.</p>
+<table border="1" class="docutils" id="index-12">
+<colgroup>
+<col width="31%" />
+<col width="16%" />
+<col width="29%" />
+<col width="24%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>fallback_hosts</strong></td>
+<td>Use: smtp</td>
+<td>Type: string list</td>
+<td>Default: unset</td>
+</tr>
+</tbody>
+</table>
+<p>К этому параметр не применяется раскрытие строк. Аргумент должен быть списком имён хостов, или IP-адресов, разделённых двоеточиями, также, необязательно, включается номер порта, разделитель может быть изменён, как описано в разделе <a class="reference internal" href="ch06.html#ch06-19"><em>6.19</em></a>. Каждый отдельный элемент списка - тоже самое, что и элемент в установке <strong>route_list</strong> для <strong>manualroute</strong>, как описано в разделе <a class="reference internal" href="ch20.html#ch20-05"><em>20.5</em></a>.</p>
+<p>Аварийные <a class="footnote-reference" href="#id14" id="id5">[3]</a> хосты, также могут быть определены в маршрутизаторах, которые ассоциированы с обрабатываемыми адресами. Что используется для параметра <strong>hosts</strong> без заданных в транспорте <strong>hosts_override</strong> и <strong>fallback_hosts</strong> лишь если адрес не обладает собственным ассоциированным аварийным списком хостов. В отличие от <strong>hosts</strong>, установка для адреса <strong>fallback_hosts</strong> не замещается путём <strong>hosts_override</strong>. Однако, <strong>hosts_randomize</strong> обращается к спискам аварийных хостов.</p>
+<p>Если Exim не может доставить на любой хост для специфического адреса, и ошибки - не постоянные отклонения, адрес помещается в отдельную транспортную очередь, со своим списком хостов, заменённым аварийными хостами, кроме адресов которые марашрутизируются через MX-записи и текущий хост был в изначальном списке MX. В этой ситуации, список аварийных хостов не используется.</p>
+<p>Как только завершены нормальные доставки, аварийная очередь доставляется путем повторного запуска тогоже транспорта с новыми списками хостов. Если несколько неудачных адресов имеют одинаковый аварийный хост (и это разрешается параметром <strong>max_rcpt</strong>), посылается одна копия сообщения.</p>
+<p>Разрешение имён хостов в аварийном списке контролируется параметром <strong>gethostbyname</strong>, как для параметра <strong>hosts</strong>. Аварийные хосты применяются в обоих случаях, когда список хостов прибывает с адресом, и когда он берётся из <strong>hosts</strong>. Этот параметр обеспечивает средство “use a smart host only if delivery fails” (использовать умные хосты лишь когда неудачна доставка).</p>
+<table border="1" class="docutils" id="index-13">
+<colgroup>
+<col width="35%" />
+<col width="19%" />
+<col width="21%" />
+<col width="25%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>final_timeout</strong></td>
+<td>Use: smtp</td>
+<td>Type: time</td>
+<td>Default: 10m</td>
+</tr>
+</tbody>
+</table>
+<p>Это - таймаут, который применяется когда ожидается заключительная строка, содержащая лишь “.”, завершая сообщение. Это значение не должно быть нулём.</p>
+<table border="1" class="docutils" id="index-14">
+<colgroup>
+<col width="32%" />
+<col width="17%" />
+<col width="25%" />
+<col width="26%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>gethostbyname</strong></td>
+<td>Use: smtp</td>
+<td>Type: boolean</td>
+<td>Default: false</td>
+</tr>
+</tbody>
+</table>
+<p>Если этот параметр истинна, когда используются параметры <strong>hosts</strong> и/или <strong>fallback_hosts</strong>, имена ищутся используя <em>gethostbyname()</em> (или <em>getipnodebyname()</em>, когда доступна), вместо использования DNS. Разумеется, эта функция, может, фактически, использовать DNS, но она, также, может консультироваться с другими источниками информации, типа <em>/etc/hosts</em>.</p>
+<table border="1" class="docutils" id="index-15">
+<colgroup>
+<col width="37%" />
+<col width="16%" />
+<col width="23%" />
+<col width="25%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>gnutls_require_kx</strong></td>
+<td>Use: smtp</td>
+<td>Type: string</td>
+<td>Default: unset</td>
+</tr>
+</tbody>
+</table>
+<p>Этот параметр контролирует механизм обмена ключами при использовании GnuTLS в клиенте Exim. За дополнительными деталями обратитесь к разделу <a class="reference internal" href="ch39.html#ch39-05"><em>39.5</em></a>.</p>
+<table border="1" class="docutils" id="index-16">
+<colgroup>
+<col width="39%" />
+<col width="16%" />
+<col width="21%" />
+<col width="25%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>gnutls_require_mac</strong></td>
+<td>Use: smtp</td>
+<td>Type: string</td>
+<td>Default: unset</td>
+</tr>
+</tbody>
+</table>
+<p>Этот параметр контролирует алгоритм MAC при использовании GnuTLS в клиенте Exim. За дополнительными деталями обратитесь к разделу <a class="reference internal" href="ch39.html#ch39-05"><em>39.5</em></a>.</p>
+<table border="1" class="docutils" id="index-17">
+<colgroup>
+<col width="44%" />
+<col width="14%" />
+<col width="19%" />
+<col width="22%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>gnutls_require_protocols</strong></td>
+<td>Use: smtp</td>
+<td>Type: string</td>
+<td>Default: unset</td>
+</tr>
+</tbody>
+</table>
+<p>Этот параметр контролирует протоколы при использовании GnuTLS в клиенте Exim. За дополнительными деталями обратитесь к разделу <a class="reference internal" href="ch39.html#ch39-05"><em>39.5</em></a>.</p>
+<table border="1" class="docutils" id="index-18">
+<colgroup>
+<col width="38%" />
+<col width="16%" />
+<col width="22%" />
+<col width="24%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>gnutls_compat_mode</strong></td>
+<td>Use: smtp</td>
+<td>Type: boolean</td>
+<td>Default: unset</td>
+</tr>
+</tbody>
+</table>
+<p>Этот параметр контролирует когда GnuTLS используется в совместимом режиме в сервере Exim. Это уменьшает безопасность, но улучшает совместимость со старыми реализациями TLS.</p>
+<table border="1" class="docutils" id="index-19">
+<colgroup>
+<col width="25%" />
+<col width="17%" />
+<col width="25%" />
+<col width="34%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>helo_data</strong></td>
+<td>Use: smtp</td>
+<td>Type: string†</td>
+<td>Default: see below</td>
+</tr>
+</tbody>
+</table>
+<p>Значение этого параметра раскрывается после установки подключения к другому хосту. Результат используется как аргумент для команды EHLO, HELO, или LHLO, запускающей исходящую SMTP или LMTP сессии. Значение по умолчанию:</p>
+<div class="highlight-python"><pre>$primary_hostname</pre>
+</div>
+<p>В процессе раскрытия переменные $host и $host_address устанавливается данные удалённого хоста, и переменные $sending_ip_address и $sending_port устанавливаются в используемые локальный IP адрес и номер порта. Эти переменные могут использоваться для создания различных значений для различных серверов или различных локальных IP адресов. Например, если вы хотите чтобы строка используемая для <strong>helo_data</strong> была получена путём поиска в DNS адреса исходящего интерфейса, вы можете использовать это:</p>
+<div class="highlight-python"><pre>helo_data = ${lookup dnsdb{ptr=$sending_ip_address}{$value}\
+                          {$primary_hostname}</pre>
+</div>
+<p>Использование <strong>helo_data</strong> применяется в обоих случаях - при отправке сообщений и при выполнении обратных вызовов (callout).</p>
+<table border="1" class="docutils" id="index-20">
+<colgroup>
+<col width="18%" />
+<col width="18%" />
+<col width="36%" />
+<col width="28%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>hosts</strong></td>
+<td>Use: smtp</td>
+<td>Type: string list†</td>
+<td>Default: unset</td>
+</tr>
+</tbody>
+</table>
+<p>Хосты ассоциированы с адресом при помощи маршрутизатора типа <strong>dnslookup</strong>, который ищёт хосты поиском домена адреса в DNS, или путём <strong>manualroute</strong>, имеющего списки хостов в конфигурации. Однако, почтовые адреса могут быть переданы транспорту <strong>smtp</strong> при помощи любого маршрутизатора, и не все они могут обеспечить ассоциированный список хостов.</p>
+<p>Параметр <strong>hosts</strong> задаёт список хостов, используемых если обрабатываемый адрес не имеет связанных с ним ассоциированных хостов. Также, хосты определённые в <strong>hosts</strong> используются при заданного параметра <strong>hosts_override</strong>, независимо от того, заданы ли собственные хосты адреса или нет.</p>
+<p>Вначале строка раскрывается, до интерпретации как списка имён хостов, или IP-адресов разделённых двоеточиями, с возможным включением номера порта. Разделитель может быть изменён на что-то иное, чем двоеточие, как описано в разделе <a class="reference internal" href="ch06.html#ch06-19"><em>6.19</em></a>. Каждый отдельный элемент списка - тоже самое, что и элемент в установке <strong>route_list</strong> для <strong>manualroute</strong>, как описано в разделе <a class="reference internal" href="ch20.html#ch20-05"><em>20.5</em></a>. Однако, отметьте, что средство “/MX”, маршрутизатора <strong>manualroute</strong>, тут недоступно.</p>
+<p>Если раскрытие неудачно, доставка задерживается. Исключая ошибку, вызванную неспособностью завершить поиск, ошибка записывается в лог паники, также как и в главный лог. Имена хостов ищутся или путём непосредственного поиска записи адреса в DNS, или путём вызова <em>gethostbyname()</em> (или <em>getipnodebyname()</em>, когда она доступна), в зависимости от установки параметра <strong>gethostbyname</strong>. Когда Exim собран с поддержкой IPv6, если хост, который ищется в DNS, имеет оба адреса - IPv4 и IPv6, используются оба типа адреса.</p>
+<p>В процессе доставки, хосты пробуются в порядке подчиняющемся их статусу повтора, если не задан параметр <strong>hosts_randomize</strong>.</p>
+<table border="1" class="docutils" id="index-21">
+<colgroup>
+<col width="35%" />
+<col width="15%" />
+<col width="27%" />
+<col width="23%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>hosts_avoid_esmtp</strong></td>
+<td>Use: smtp</td>
+<td>Type: host list†</td>
+<td>Default: unset</td>
+</tr>
+</tbody>
+</table>
+<p>Этот параметр - для использования с кривыми хостами, которые объявляют средства ESMTP (например PIPELINING), и, затем, не в состоянии осуществить их должным образом. Когда хост совпадает с <strong>hosts_avoid_esmtp</strong>, Exim посылает HELO, а не EHLO, в начале сеанса SMTP. Это означает, что не могут использоваться какие бы то ни было ESMTP средства, типа AUTH, PIPELINING, SIZE, и STARTTLS.</p>
+<table border="1" class="docutils" id="index-22">
+<colgroup>
+<col width="40%" />
+<col width="14%" />
+<col width="25%" />
+<col width="22%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>hosts_avoid_pipelining</strong></td>
+<td>Use: smtp</td>
+<td>Type: host list†</td>
+<td>Default: unset</td>
+</tr>
+</tbody>
+</table>
+<p>Exim не использует расширение SMTP PIPELINING когда производит доставку на любой хост из этого списка, даже если хост объявлял поддержку PIPELINING.</p>
+<table border="1" class="docutils" id="index-23">
+<colgroup>
+<col width="33%" />
+<col width="16%" />
+<col width="28%" />
+<col width="24%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>hosts_avoid_tls</strong></td>
+<td>Use: smtp</td>
+<td>Type: host list†</td>
+<td>Default: unset</td>
+</tr>
+</tbody>
+</table>
+<p>Exim не пытается начать TLS-сессию, когда происходит доставка на любой хост совпадающий с этим списком. Для получения дополнительных деталей о TLS, смотрите главе <a class="reference internal" href="ch39.html#ch39-00"><em>39</em></a>.</p>
+<table border="1" class="docutils" id="index-24">
+<colgroup>
+<col width="35%" />
+<col width="18%" />
+<col width="27%" />
+<col width="20%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>hosts_max_try</strong></td>
+<td>Use: smtp</td>
+<td>Type: integer</td>
+<td>Default: 5</td>
+</tr>
+</tbody>
+</table>
+<p>Этот параметр ограничивает число IP-адресов, которые пробуются для любой одной доставки, в случае когда происходят временные ошибки доставки. Раздел <a class="reference internal" href="#ch30-05"><em>30.5</em></a> описывает её использование, и зачем она нужна.</p>
+<table border="1" class="docutils" id="index-25">
+<colgroup>
+<col width="45%" />
+<col width="15%" />
+<col width="22%" />
+<col width="18%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>hosts_max_try_hardlimit</strong></td>
+<td>Use: smtp</td>
+<td>Type: integer</td>
+<td>Default: 50</td>
+</tr>
+</tbody>
+</table>
+<p>Это - дополнительная проверка на максимальное число IP-адресов, которые Exim пробует для любой одной доставки. Раздел <a class="reference internal" href="#ch30-05"><em>30.5</em></a> описывает её использование, и зачем она нужна.</p>
+<table border="1" class="docutils" id="index-26">
+<colgroup>
+<col width="34%" />
+<col width="15%" />
+<col width="27%" />
+<col width="24%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>hosts_nopass_tls</strong></td>
+<td>Use: smtp</td>
+<td>Type: host list†</td>
+<td>Default: unset</td>
+</tr>
+</tbody>
+</table>
+<p>Для любых хостов, которые совпадают с этим списком, соединение на котором была начата TLS-сессия, не будет передаваться новому процессу доставки для посылки иного сообщения в той же самой сессии. Для объяснений, когда это может быть необходимо, смотрите раздел <a class="reference internal" href="ch39.html#ch39-10"><em>39.10</em></a>.</p>
+<table border="1" class="docutils" id="index-27">
+<colgroup>
+<col width="33%" />
+<col width="17%" />
+<col width="24%" />
+<col width="26%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>hosts_override</strong></td>
+<td>Use: smtp</td>
+<td>Type: boolean</td>
+<td>Default: false</td>
+</tr>
+</tbody>
+</table>
+<p>Если этот параметр установлен, и, также, установлен параметр <strong>hosts</strong>, то любые хосты присоединённые к адресу игнорируются, и вместо них всегда используются хосты заданные в параметре <strong>hosts</strong>. Этот параметр не применяется к <strong>fallback_hosts</strong>.</p>
+<table border="1" class="docutils" id="index-28">
+<colgroup>
+<col width="35%" />
+<col width="16%" />
+<col width="24%" />
+<col width="25%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>hosts_randomize</strong></td>
+<td>Use: smtp</td>
+<td>Type: boolean</td>
+<td>Default: false</td>
+</tr>
+</tbody>
+</table>
+<p>Если этот параметр установлен, и, или список хостов взят из параметра <strong>hosts</strong> или <strong>fallback_hosts</strong>, или хосты предоставленные маршрутизатором не были получены из MX-записей (это включает аварийные хосты из маршрутизатора), и не были рандомизированы <a class="footnote-reference" href="#id15" id="id6">[4]</a> маршрутизатором, то порядок опробования хостов рандомизируется каждый раз при запуске транспорта. Перемешивание порядка списка хостов может использоваться для грубого распределения нагрузки.</p>
+<p>Когда параметр <strong>hosts_randomize</strong> - истинна, список хостов может быть разбит на группы, порядок которых перемешивается отдельно. Это позволяет установить MX-like поведение. Границы между группами обозначены элементом, который просто “+” в списке хостов. Например:</p>
+<div class="highlight-python"><pre>hosts = host1:host2:host3:+:host4:host5</pre>
+</div>
+<p>Порядок трёх первых и порядок последних двух хостов перемешивается для каждого использования, но первые три всегда завершаются до двух последних. Если параметр <strong>hosts_randomize</strong> не установлена, элемент списка “+” - игнорируется.</p>
+<table border="1" class="docutils" id="index-29">
+<colgroup>
+<col width="36%" />
+<col width="15%" />
+<col width="26%" />
+<col width="23%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>hosts_require_auth</strong></td>
+<td>Use: smtp</td>
+<td>Type: host list†</td>
+<td>Default: unset</td>
+</tr>
+</tbody>
+</table>
+<p>Этот параметр предоставляет список серверов, для которых должна произойти успешная аутентификация до того, как Exim попробует передать сообщение. Если аутентификация неудачна для серверов которые не в этом списке, Exim пробует отослать без аутентификации. Если аутентифкация неудачна для одного из серверов в списке, - доставка задерживается. Эта временная ошибка обнаружима в правилах повторов, таким образом, она может быть превращена жёсткую ошибку, если это требуется. Также смотрите параметр <strong>hosts_try_auth</strong> и главу <a class="reference internal" href="ch33.html#ch33-00"><em>33</em></a> - для получения дополнительных деталей о аутентификации.</p>
+<table border="1" class="docutils" id="index-30">
+<colgroup>
+<col width="35%" />
+<col width="15%" />
+<col width="27%" />
+<col width="23%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>hosts_require_tls</strong></td>
+<td>Use: smtp</td>
+<td>Type: host list†</td>
+<td>Default: unset</td>
+</tr>
+</tbody>
+</table>
+<p>Exim будет настаивать на использовании сессии TLS, когда доставляет к любому хосту который совпадает с этим списком. Смотрите главу <a class="reference internal" href="ch39.html#ch39-00"><em>39</em></a>, для получения дополнительных деталей о TLS.</p>
+<div class="admonition note">
+<p class="first admonition-title">Примечание</p>
+<p class="last">Этот параметр затрагивает лишь исходящую почту. Для применения TLS ко входящим сообщениям, используйте соответствующую ACL.</p>
+</div>
+<table border="1" class="docutils" id="index-31">
+<colgroup>
+<col width="32%" />
+<col width="16%" />
+<col width="28%" />
+<col width="25%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>hosts_try_auth</strong></td>
+<td>Use: smtp</td>
+<td>Type: host list†</td>
+<td>Default: unset</td>
+</tr>
+</tbody>
+</table>
+<p>Этот параметр предоставляет список серверов, которым Exim пытается аутентифицироваться, когда соединяется как клиент, если эти сервера объявляли о поддержке аутентификации. Если аутентификация неудачна, Exim пробует передать сообщение неаутентифицировавшись. Также смотрите параметр <strong>hosts_require_auth</strong> и главу <a class="reference internal" href="ch33.html#ch33-00"><em>33</em></a> - для получения дополнительных деталей о аутентификации.</p>
+<table border="1" class="docutils" id="index-32">
+<colgroup>
+<col width="24%" />
+<col width="17%" />
+<col width="33%" />
+<col width="26%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>interface</strong></td>
+<td>Use: smtp</td>
+<td>Type: string list†</td>
+<td>Default: unset</td>
+</tr>
+</tbody>
+</table>
+<p>Этот параметр определяет, какие интерфейсы будут использоваться при создании исходящего SMTP-вызова. Значение - IP адрес, а не имя интерфейса, типа <tt class="docutils literal"><span class="pre">xl0</span></tt>. Не перепутайте с адресом интерфейса который используется при получении сообщения, находящегося в $received_ip_address, ранее известной как $interface_address. Имя было изменено для минимизации путаницы с адресом исходящего интерфейса. Нет переменной которая содержит адрес исходящего интерфейса, по причине что если он не задан этим параметром - его значение неизвестно.</p>
+<p>В процессе раскрытия параметра <strong>interface</strong> переменные $host и $host_address ссылаются на хост, к которому будет производиться подключение. Принудительная неудача раскрытия, или результат в виде пустой строки, вызывают игнорирование этого параметра. Иначе, после раскрытия, строка должна быть списком IP-адресов, по умолчанию разделённых двоеточиями, но разделитель может быть изменён обычным способом. Например:</p>
+<div class="highlight-python"><pre>interface = &lt;; 192.168.123.123 ; 3ffe:ffff:836f::fe86:a061</pre>
+</div>
+<p>Первый интерфейс корректного типа (IPv4 или IPv6) - используется для исходящего соединения. Если ни один из них не является интерфейсом правильного типа, параметр игнорируется. Если параметр <strong>interface</strong> не установлен, или игнорируется, то системные IP-функции выбирают, какой интерфейс использовать, если у хоста их более одного.</p>
+<table border="1" class="docutils" id="index-33">
+<colgroup>
+<col width="27%" />
+<col width="19%" />
+<col width="27%" />
+<col width="27%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>keepalive</strong></td>
+<td>Use: smtp</td>
+<td>Type: boolean</td>
+<td>Default: true</td>
+</tr>
+</tbody>
+</table>
+<p>Этот параметра контролирует установку SO_KEEPALIVE на исходящих сокетах соединения TCP/IP. Когда она установлена, она заставляет ядро периодически исследовать неактивные соединения, путём отправки пакета со “старым” номером последовательности. Другой конец подключения должен послать подтверждение, если с подключением всё в порядке, или сброс, если подключение было прервано. Причина этого в том, что оказывается благоприятное воздействие освобождения некоторых типов подключений, которые могут “застрять”, когда удалённый хост отключается, не разрывая TCP/IP соединение должным образом. Механизм “keepalive” может занять несколько часов, для обнаружения недостижимых хостов.</p>
+<table border="1" class="docutils" id="index-34">
+<colgroup>
+<col width="37%" />
+<col width="16%" />
+<col width="23%" />
+<col width="25%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>lmtp_ignore_quota</strong></td>
+<td>Use: smtp</td>
+<td>Type: boolean</td>
+<td>Default: false</td>
+</tr>
+</tbody>
+</table>
+<p>Если этот параметр истинна, когда параметр <strong>protocol</strong> установлен в <strong>lmtp</strong>, строка <tt class="docutils literal"><span class="pre">IGNOREQUOTA</span></tt> добавляется у команде RCPT, при условии, что LMTP-сервер информировал о поддержке <tt class="docutils literal"><span class="pre">IGNOREQUOTA</span></tt> в его ответе на команду LHLO.</p>
+<table border="1" class="docutils" id="index-35">
+<colgroup>
+<col width="26%" />
+<col width="20%" />
+<col width="28%" />
+<col width="26%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>max_rcpt</strong></td>
+<td>Use: smtp</td>
+<td>Type: integer</td>
+<td>Default: 100</td>
+</tr>
+</tbody>
+</table>
+<p>Этот параметр ограничивает число команд RCPT, которые посылаются в одной SMTP-транзакции. Каждый установленный адрес обрабатывается независимо, и, таким образом, может вызывать параллельные подключения к одному и тому же хосту, если это разрешается параметром <strong>remote_max_parallel</strong>.</p>
+<table border="1" class="docutils" id="index-36">
+<colgroup>
+<col width="31%" />
+<col width="18%" />
+<col width="25%" />
+<col width="25%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>multi_domain</strong></td>
+<td>Use: smtp</td>
+<td>Type: boolean</td>
+<td>Default: true</td>
+</tr>
+</tbody>
+</table>
+<p>Когда этот параметр установлен, транспорт <strong>smtp</strong> может обрабатывать множество адресов, содержащих смесь различных доменов, если все они резольвятся в один и тот же список хостов. Выключение параметр ограничивает транспорт обработкой лишь одного домена одновременно. Это полезно, если вы хотите использовать $domain в раскрытии для транспорта, поскольку она установлена лишь когда один домен вовлечён в удалённую доставку.</p>
+<table border="1" class="docutils" id="index-37">
+<colgroup>
+<col width="17%" />
+<col width="19%" />
+<col width="27%" />
+<col width="38%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>port</strong></td>
+<td>Use: smtp</td>
+<td>Type: string†</td>
+<td>Default: see below</td>
+</tr>
+</tbody>
+</table>
+<p>Этот параметр определяет TCP/IP порт на сервере, с котырым соединяется Exim.</p>
+<div class="admonition note">
+<p class="first admonition-title">Примечание</p>
+<p class="last">Не перепутайте её с портом который используется при приёме сообщения, $received_port, ранее известной как $interface_port. Имя изменено для минимизации ошибок с исходящим портом. Переменная содержащая исходящий порт - остутствует.</p>
+</div>
+<p>Если значение параметра начинается с цифры, оно берётся как номер порта; иначе, оно ищется с использованием <em>getservbyname()</em>. Обычно, значение по умолчанию - <strong>smtp</strong>, но, если протокол установлен как <strong>lmtp</strong>, значение по умолчанию - <strong>lmtp</strong>. Если раскрытие неудачно, или если не может быть найден номер порта, доставка задерживается.</p>
+<table border="1" class="docutils" id="index-38">
+<colgroup>
+<col width="26%" />
+<col width="20%" />
+<col width="26%" />
+<col width="28%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>protocol</strong></td>
+<td>Use: smtp</td>
+<td>Type: string</td>
+<td>Default: smtp</td>
+</tr>
+</tbody>
+</table>
+<p>Если этот параметр установлен в <strong>lmtp</strong> вместо <strong>smtp</strong>, значение по умолчанию для параметра <strong>port</strong> изменяется на <strong>lmtp</strong>, и транспорт оперирует протоколом LMTP (<span class="target" id="index-39"></span><a class="rfc reference external" href="http://tools.ietf.org/html/rfc2033.html"><strong>RFC 2033</strong></a>), вместо SMTP. Этот протокол иногда используется для локальных доставок в закрытое хранилища сообщений. Exim, также, поддерживает выполнение LMTP через трубу к локальному процессу - смотрите главу <a class="reference internal" href="ch28.html#ch28-00"><em>28</em></a>.</p>
+<table border="1" class="docutils" id="index-40">
+<colgroup>
+<col width="44%" />
+<col width="14%" />
+<col width="21%" />
+<col width="21%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>retry_include_ip_address</strong></td>
+<td>Use: smtp</td>
+<td>Type: boolean</td>
+<td>Default: true</td>
+</tr>
+</tbody>
+</table>
+<p>Exim, обычно, включает оба - имя хоста и IP-адрес в ключ, создаваемый для индексирования данных повторов, после временной неудачи доставки. Это означает, что когда один или несколько IP-адресов для хоста неудачны, он проверяет их периодически (управляемый правилами повторов), но использование других IP-адресов - не затрагивается.</p>
+<p>Однако, в некоторых окружающих средах dialup-хостов, назначается другой адрес при каждом соединении. В этой ситуации, использование IP-адреса как части ключа повторов приводит к нежелательным результатам. Установка этого параметра в ложь, заставляет Exim использовать только имя хоста. Обычно, это должно делаться на отдельном <strong>smtp</strong> транспорте, устанавливаемом специально для обработки dialup-хостов.</p>
+<table border="1" class="docutils" id="index-41">
+<colgroup>
+<col width="33%" />
+<col width="16%" />
+<col width="28%" />
+<col width="24%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>serialize_hosts</strong></td>
+<td>Use: smtp</td>
+<td>Type: host list†</td>
+<td>Default: unset</td>
+</tr>
+</tbody>
+</table>
+<p>Поскольку Exim работает в распределённой манере, если несколько сообщений для одного хоста прибывают одновременно, может произойти более одного подключения к удалённому хосту. Обычно, это не проблема, кроме случаев, когда между хостами медленная связь. В этом случае, может быть полезным ограничить Exim одним соединением одновременно. Это может быть сделано путём установки параметра <strong>serialize_hosts</strong>, чтобы она совпадала с этими хостами.</p>
+<p>Exim осуществляет упорядочивание посредством базы данных подсказок (hints), в которую вносятся записи каждый раз, когда процесс соединяется с одним из ограниченных хостов. Запись удаляется после завершения соединения. Очевидно, есть возможность для оставления ложных записей, если происходит системный или программный сбой. Для принятия мер против этого, Exim игнорирует любые записи старше шести часов.</p>
+<p>Если вы устанавливаете этот вид упорядочивания, вы, также, должны принять меры для удаления БД подсказок (hints) при каждой перезагрузке системы. Имена файлов начинаются с <em>misc</em>, и они хранятся в директории <em>spool/db</em>. Могут быть один, или два файла, в зависимости от типа используемой DBM. Те же самые файлы используются для упорядочивания ETRN.</p>
+<table border="1" class="docutils" id="index-42">
+<colgroup>
+<col width="33%" />
+<col width="17%" />
+<col width="25%" />
+<col width="25%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>size_addition</strong></td>
+<td>Use: smtp</td>
+<td>Type: integer</td>
+<td>Default: 1024</td>
+</tr>
+</tbody>
+</table>
+<p>Если удалённый сервер SMTP указывает, что он поддерживает параметр SIZE в команде MAIL, Exim использует её для передачи размера сообщения, в начале SMTP-транзакции. Этим параметром добавляется значение <strong>size_addition</strong> к передаваемому значению, для учёта заголовков и другого текста, который может быть добавлен, в процессе доставки, конфигурационными параметрами, или в транспортном фильтре. Может возникнуть необходимость увеличить это значение, если к сообщениям добавляется много текста.</p>
+<p>Альтернативно, если установлено отрицательное значение параметра <strong>size_addition</strong>, оно вообще отключает использование параметра SIZE.</p>
+<table border="1" class="docutils" id="index-43">
+<colgroup>
+<col width="35%" />
+<col width="16%" />
+<col width="24%" />
+<col width="25%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>tls_certificate</strong></td>
+<td>Use: smtp</td>
+<td>Type: string†</td>
+<td>Default: unset</td>
+</tr>
+</tbody>
+</table>
+<p>Значение этого параметра должно быть абсолютным путём к файлу, содержащему клиентский сертификат, для возможного использования при посылке сообщения через зашифрованное соединение. В процессе раскрытия, значения $host и $host_address устанавливаются в имя и адрес сервера. Смотрите главу <a class="reference internal" href="ch39.html#ch39-00"><em>39</em></a>, для получения дополнительных деталей о TLS.</p>
+<div class="admonition note">
+<p class="first admonition-title">Примечание</p>
+<p class="last">Этот параметр должен быть задан, если вы хотите, чтобы Exim мог использовать TLS-сертификаты при отправке сообщений как клиент. Глобальный параметр, с тем же самым именем, задаёт сертификат для Exim`a как сервера; не предполагается, автоматически, что тот же самый сертификат должен использоваться при работе Exim`a как клиента.</p>
+</div>
+<table border="1" class="docutils" id="index-44">
+<colgroup>
+<col width="23%" />
+<col width="19%" />
+<col width="28%" />
+<col width="30%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>tls_crl</strong></td>
+<td>Use: smtp</td>
+<td>Type: string†</td>
+<td>Default: unset</td>
+</tr>
+</tbody>
+</table>
+<p>Этот параметр определяет список аннулированных сертификатов. Раскрытое значение должно быть именем файла, содержащего CRL в формате PEM.</p>
+<table border="1" class="docutils" id="index-45">
+<colgroup>
+<col width="33%" />
+<col width="17%" />
+<col width="24%" />
+<col width="26%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>tls_privatekey</strong></td>
+<td>Use: smtp</td>
+<td>Type: string†</td>
+<td>Default: unset</td>
+</tr>
+</tbody>
+</table>
+<p>Значение этого параметра должно быть абсолютным путём к файлу, содержащему частный ключ клиента. Это используется при отправке сообщения через шифрованное соединение, используя клиентский сертификат. В процессе раскрытия, значения $host и $host_address устанавливаются в имя и адрес сервера. Если этот параметр не задан, или раскрытие принудительно неудачно, или результат - пустая строка, предполагается, что частный ключ находится в том же файле, что и сертификат. Смотрите главу <a class="reference internal" href="ch39.html#ch39-00"><em>39</em></a>, для получения дополнительных деталей о TLS.</p>
+<table border="1" class="docutils" id="index-46">
+<colgroup>
+<col width="39%" />
+<col width="15%" />
+<col width="22%" />
+<col width="24%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>tls_require_ciphers</strong></td>
+<td>Use: smtp</td>
+<td>Type: string†</td>
+<td>Default: unset</td>
+</tr>
+</tbody>
+</table>
+<p>Значение этого параметра должно быть списком разрешённых наборов шифров, для использования при установке исходящего шифрованного соединения. (Есть глобальный параметр, с тем же самым именем, для контроля входящих соединений.) В процессе раскрытия, значения $host и $host_address устанавливаются в имя и адрес сервера. Смотрите главу <a class="reference internal" href="ch39.html#ch39-00"><em>39</em></a>, для получения дополнительных деталей о TLS; отметьте, что этот параметр используется по разному OpenSSL и GnuTLS (смотрите разделы <a class="reference internal" href="ch39.html#ch39-04"><em>39.4</em></a> и <a class="reference internal" href="ch39.html#ch39-05"><em>39.5</em></a>). Для GnuTLS, порядок шифров - предпочтительный порядок.</p>
+<table border="1" class="docutils" id="index-47">
+<colgroup>
+<col width="42%" />
+<col width="15%" />
+<col width="22%" />
+<col width="22%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>tls_tempfail_tryclear</strong></td>
+<td>Use: smtp</td>
+<td>Type: boolean</td>
+<td>Default: true</td>
+</tr>
+</tbody>
+</table>
+<p>Когда хост сервера не находится в <strong>hosts_require_tls</strong>, и есть проблема в установке TLS-сессии, этот параметр определяет, должен ли Exim пытаться доставить не шифрованное соединение. Если она установлена в ложь, доставка к текущему хосту задержана; если есть другие хосты - пробуются они. Если этот параметр установлен в истину, Exim пытается доставить не шифрованное сообщение, после 4xx ответа на STARTTLS. Также, если STARTTLS принят, но последующие переговоры TLS неудачны, Exim закрывает текущее соединение (поскольку оно находится в неопределённом состоянии), открывает новое, к тому же самому хосту, и пытается осуществить чистую <a class="footnote-reference" href="#id16" id="id7">[5]</a> доставку.</p>
+<table border="1" class="docutils" id="index-48">
+<colgroup>
+<col width="43%" />
+<col width="14%" />
+<col width="21%" />
+<col width="22%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>tls_verify_certificates</strong></td>
+<td>Use: smtp</td>
+<td>Type: string†</td>
+<td>Default: unset</td>
+</tr>
+</tbody>
+</table>
+<p>Значение этого параметра должно быть абсолютным путём к файлу, содержащему разрешённые серверные сертификаты, для использования при установке шифрованного подключения. Альтернативно, если вы используете OpenSSL, вы должны установить <strong>tls_verify_certificates</strong> в имя директории, содержащей файлы сертификатов. Это не работает с GnuTLS; этот параметр должен быть установлен в имя одного файла, если вы используете GnuTLS. В процессе раскрытия, значения $host и $host_address устанавливаются в имя и адрес сервера. Смотрите главу <a class="reference internal" href="ch39.html#ch39-00"><em>39</em></a>, для получения дополнительных деталей о TLS.</p>
+</div>
+<div class="section" id="ch30-05">
+<span id="id8"></span><h2>Как ограничить число хостов используемых для проверки<a class="headerlink" href="#ch30-05" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Есть два параметра, которые связаны с числом хостов, которые проверяются при SMTP доставке. Это <strong>hosts_max_try</strong> и <strong>hosts_max_try_hardlimit</strong>.</p>
+<p>Параметр <strong>hosts_max_try</strong> ограничивает число хостов, которые пробуются за за одну доставку. Однако, несмотря на термин “хост” в её названии, параметр, фактически, применяется независимо к каждому IP-адресу. Другими словами, многоадресные <a class="footnote-reference" href="#id17" id="id9">[6]</a> хосты обрабатываются как несколько независимых хостов, точно так же как и для повторов.</p>
+<p>Многие из больших <abbr>ISP</abbr> <a class="footnote-reference" href="#id18" id="id10">[7]</a> имеют много MX-записей, часто указывающих на многоадресные хосты. Как результат, список дюжины и более IP-адресов может быть создан в результате маршрутизации одного из этих доменов.</p>
+<p>Пробовать каждый отдельный адрес в таком длинном списке - не самая разумная идея; если несколько адресов вверху списка неудачны, разумно предположить, что существует какая-то проблема, затрагивающая их все. Грубо говоря, значение <strong>hosts_max_try</strong> - максимальное число, пробуемое до задержки доставки. Однако, логика не может быть простой.</p>
+<p>Во-первых, IP-адреса пропускаются, поскольку не пришло их время повтора, и кроме того, адреса, время повтора которых не подошло, также не подсчитываются. Это означает, что когда некоторые адреса доходят до их времени повтора, может быть попробовано более одного значения <strong>hosts_max_try</strong>. Причина такого поведения заключается в необходимости гарантировать, что все IP-адреса рассмотрены до таймаута почтового адреса (но, смотрите ниже, для исключений).</p>
+<p>Во-вторых, когда достигнут предел <strong>hosts_max_try</strong>, Exim просматривает вниз список хостов, чтобы найти есть ли последующие хосты с иным (более высоким) значением MX. Если они есть, этот хост рассматривается следующим, и текущий IP-адрес используется, но не подсчитывается. Это поведение - помощь в случае, когда домен с правилами повтора, которые почти никогда не задерживают никакие хосты, как - сейчас будет объяснено:</p>
+<p>Рассмотрите случай длинного списка хостов, с одним значением MX, и нескольких с более высоким значением MX. Если <strong>hosts_max_try</strong> - маленькое (значение по умолчанию - 5), вначале будут опробованы лишь несколько хостов вверху списка. С правилами по умолчанию повторов, определяющими увеличивающееся время повтора, в конечном счёте, пробуются более высокие MX-хосты, после того, как те, что наверху списка пропущены, поскольку они не достигли их времени повтора.</p>
+<p>Однако, это, - обычная практика для помещения короткого фиксированного времени повтора в доменах крупных ISP, на том основании, что что их сервера редко лежат очень долго. К сожалению, они - как раз те домены, которые имеют тенденцию к резольвингу в длинные списки хостов. Короткое время повтора - что самые самые маленькие MX-хосты пробуются чаще всего. Попытки могут быть в различном порядке, из-за случайной сортировки, но без специальной проверки MX, высшие MX-хосты бы никогда не пробовались, до тех пор, пока все низшие MX-хосты имеют таймаут (который может быть несколько дней), поскольку всегда есть каки-либо низшие MX-хосты, с наступившим временем повтора. Со специальной проверкой, Exim рассматривает по крайней мере один IP-адрес от каждого значения MX, при каждой попытке доставки, даже если уже был достигнут предел <strong>hosts_max_try</strong>.</p>
+<p>Вышеупомянутая логика означает, что <strong>hosts_max_try</strong> - не является жёстким пределом, и в частности, обычно, Exim пробует все адреса, до таймаута адреса электронной почты. Когда <strong>hosts_max_try</strong> была осуществлена, это казалось разумной вещью. Однако, недавно, некоторые сумасшедшие конфигурации DNS были установлены с сотнями IP-адресов для некоторых доменов. Это, действительно, может занять очень длительное время для таймаута адресов, в этих случаях.</p>
+<p>Параметр <strong>hosts_max_try_hardlimit</strong> была добавлена для помощи при таких проблемах. Exim никогда не пробует больше этого числа IP-адресов; если он достигает этого предела, и у всех них был таймаут, почтовый адрес срывается <a class="footnote-reference" href="#id19" id="id11">[8]</a> , даже несмотря на то, что не все возможные IP-адреса были попробованы.</p>
+<table class="docutils footnote" frame="void" id="id12" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id3">[1]</a></td><td>в виде рикошета - прим. lissyara</td></tr>
+</tbody>
+</table>
+<table class="docutils footnote" frame="void" id="id13" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id4">[2]</a></td><td>генерится рикошет - прим. lissyara</td></tr>
+</tbody>
+</table>
+<table class="docutils footnote" frame="void" id="id14" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id5">[3]</a></td><td>резервные, чтоли... - прим. lissyara</td></tr>
+</tbody>
+</table>
+<table class="docutils footnote" frame="void" id="id15" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id6">[4]</a></td><td>изменён их порядок, случайным образом - прим. lissyara</td></tr>
+</tbody>
+</table>
+<table class="docutils footnote" frame="void" id="id16" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id7">[5]</a></td><td>видимо - нешифрованную - прим. lissyara</td></tr>
+</tbody>
+</table>
+<table class="docutils footnote" frame="void" id="id17" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id9">[6]</a></td><td>тут применялось другое словечко - multihomed, но думаю, так будет ясней - прим. lissyara</td></tr>
+</tbody>
+</table>
+<table class="docutils footnote" frame="void" id="id18" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id10">[7]</a></td><td>Internet Service Provider, провайдеров интернета - прим. lissyara</td></tr>
+</tbody>
+</table>
+<table class="docutils footnote" frame="void" id="id19" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id11">[8]</a></td><td>генерится рикошет - прим. lissyara</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Содержание</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Транспорт <strong>smtp</strong></a><ul>
+<li><a class="reference internal" href="#ch30-01">Несколько сообщений в одном соединении</a></li>
+<li><a class="reference internal" href="#host-host-address">Использование переменных $host и $host_address</a></li>
+<li><a class="reference internal" href="#tls-cipher-tls-peerdn">Использование $tls_cipher и $tls_peerdn</a></li>
+<li><a class="reference internal" href="#ch30-04">Частные параметры для <strong>smtp</strong></a></li>
+<li><a class="reference internal" href="#ch30-05">Как ограничить число хостов используемых для проверки</a></li>
+</ul>
+</li>
+</ul>
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="ch29.html" title="предыдущая глава">Транспорт <strong>pipe</strong></a></li>
+      <li>Next: <a href="ch31.html" title="следующая глава">Перезапись адресов</a></li>
+  </ul></li>
+</ul>
+  <h3>На этой странице</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/ch30.txt"
+           rel="nofollow">Показать исходный текст</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Быстрый поиск</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Искать" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Введите слова для поиска или имя модуля, класса или функции.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy; Copyright 2011, Exim Maintainers.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a>.
+    </div>
+  </body>
+</html>

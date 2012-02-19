@@ -1,0 +1,1052 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Общие параметры для маршрутизаторов &mdash; Specification of the Exim Mail Transfer Agent 4.70 documentation</title>
+    
+    <link rel="stylesheet" href="_static/flasky.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '4.70',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/translations.js"></script>
+    <link rel="top" title="Specification of the Exim Mail Transfer Agent 4.70 documentation" href="index.html" />
+    <link rel="next" title="Маршрутизатор accept" href="ch16.html" />
+    <link rel="prev" title="Главная конфигурация" href="ch14.html" />
+   
+  
+  <link media="only screen and (max-device-width: 480px)" href="_static/small_flask.css" type= "text/css" rel="stylesheet" />
+
+  </head>
+  <body>
+    <div class="related">
+      <h3>Просмотр</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="Словарь-указатель"
+             accesskey="I">словарь</a></li>
+        <li class="right" >
+          <a href="ch16.html" title="Маршрутизатор accept"
+             accesskey="N">следующий</a> |</li>
+        <li class="right" >
+          <a href="ch14.html" title="Главная конфигурация"
+             accesskey="P">предыдущий</a> |</li>
+        <li><a href="index.html">Specification of the Exim Mail Transfer Agent 4.70 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="ch15-00">
+<span id="id1"></span><h1>Общие параметры для маршрутизаторов<a class="headerlink" href="#ch15-00" title="Ссылка на этот заголовок">¶</a></h1>
+<p>Эта глава описывает общие параметры, применяемые ко всем маршрутизаторам.  Те, которые являются предварительными условиями, помечены символом “‡”, в поле “использование”.</p>
+<p>Для общего описания, как работает маршрутизатор, смотрите раздел <a class="reference internal" href="ch03.html#ch03-10"><em>3.10</em></a> и <a class="reference internal" href="ch03.html#ch03-12"><em>3.12</em></a>. Последний, определяет порядок в котором проверяются предварительные условия. Порядок раскрытия параметров, которые предоставляют данные для транспортов, таков: <strong>errors_to</strong>, <strong>headers_add</strong>, <strong>headers_remove</strong>, <strong>transport</strong>.</p>
+<table border="1" class="docutils" id="index-0">
+<colgroup>
+<col width="29%" />
+<col width="22%" />
+<col width="24%" />
+<col width="25%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>address_data</strong></td>
+<td>Use: routers</td>
+<td>Type: string†</td>
+<td>Default: unset</td>
+</tr>
+</tbody>
+</table>
+<p>Строка раскрывается лишь до запуска маршрутизатора, т.е. после успешного прохождения всех тестов предварительных условий. Если раскрытие принудительно неудачно, маршрутизатор отклоняется, значение <strong>address_data</strong> остаётся неизменённым, и параметр  <strong>more</strong> контролирует, что происходит дальше. Другие ошибки раскрытия вызывают задержку доставки адреса.</p>
+<p>Когда раскрытие успешно, значение сохраняется вместе с адресом, и может быть доступно использованием переменной $address_data в текушем маршрутизаторе,последующих маршрутизаторах, и возможном окончательном транспорте.</p>
+<div class="admonition warning">
+<p class="first admonition-title">Предупреждение</p>
+<p class="last">Если текущий, или последующий маршрутизатор - маршрутизатор <strong>redirect</strong>, выполняющий файл фильтра пользователя, содержимое $address_data доступно в фильтре. Обычно, это не проблема, поскольку обычно, эти данные не конфиденциальны, или они принадлежат текущему пользователю, но если вы помещаете конфиденциальные данные в $address_data, вы должны помнить о этом пункте.</p>
+</div>
+<p>Даже если маршрутизатор отклоняется или принимается, значение $address_data остаётся с адресом, хотя оно может быть изменено, путём установки иной $address_data в последующем маршрутизаторе. Если маршрутизатор создает дочерние адреса, значение $address_data размножается на них. Также это применяется к специальному виду “детей”, которые создается маршрутизаторами с параметром <strong>unseen</strong>.</p>
+<p>Идея <strong>address_data</strong> в том, что вы можете использовать её для поиска большого количества данных за раз, и позднее выбирать части данных. Для примера, вы можете использовать один поиск в LDAP, для возврата строки формы</p>
+<div class="highlight-python"><pre>uid=1234 gid=5678 mailbox=/mail/xyz forward=/home/xyz/.forward</pre>
+</div>
+<p>В транспорте, вы могли бы выбрать почтовый ящик установкой типа</p>
+<div class="highlight-python"><pre>file = ${extract{mailbox}{$address_data}}</pre>
+</div>
+<p>Это делает конфигурационный файл менее грязным, и также уменьшает число поисков (хотя Exim кэширует поиски).</p>
+<p>Средство <strong>address_data</strong> также полезно как средство передачи информации от одного маршрутизатора к другому, и от маршрутизатора к транспорту. В дополнение, если <strong>address_data</strong> установлен маршрутизатор при проверке адреса получателя из ACL, она остаётся доступной для использования в остальной части утверждения ACL. После проверки отправителя, значение передаётся в $sender_address_data.</p>
+<table border="1" class="docutils" id="index-1">
+<colgroup>
+<col width="29%" />
+<col width="23%" />
+<col width="23%" />
+<col width="25%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>address_test</strong></td>
+<td>Use: routers‡</td>
+<td>Type: boolean</td>
+<td>Default: true</td>
+</tr>
+</tbody>
+</table>
+<p>Если этот параметр установлен в ложь, маршрутизатор пропускается, когда маршрутизация тестируется при помощи параметра командной строки <strong>-bt</strong>. Это может быть удобным, когда ваш первый маршрутизатор посылает сообщения на внешний сканер, поскольку он сохраняет необходимость установки индикатора “already scanned”, при тестировании реальной маршрутизации адреса</p>
+<table border="1" class="docutils" id="index-2">
+<colgroup>
+<col width="38%" />
+<col width="19%" />
+<col width="21%" />
+<col width="22%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>cannot_route_message</strong></td>
+<td>Use: routers</td>
+<td>Type: string†</td>
+<td>Default: unset</td>
+</tr>
+</tbody>
+</table>
+<p>Этот параметр определяет текстовое сообщение, используемое когда адрес не может быть смаршрутизирован, поскольку Exim исчерпал все маршруты. Сообщение по умолчанию - “Unrouteable address”. Этот параметр полезен лишь в маршрутизаторах, где параметр <strong>more</strong> установлен в ложь, или последнем маршрутизаторе конфигурации, поскольку используемое значение берётся из последнего просматриваемого маршрутизатора. Она включает маршрутизаторы, которые были пропущены, поскольку не соответствовали их предварительные условия, также как и отклоняемые маршрутизаторы. Например, используя конфигурацию по умолчанию, вы могли бы поместить:</p>
+<div class="highlight-python"><pre>cannot_route_message = Remote domain not found in DNS</pre>
+</div>
+<p>в первом маршрутизаторе, являющемся маршрутизатором <strong>dnslookup</strong>, с параметром <strong>more</strong> установленной в ложь, и</p>
+<div class="highlight-python"><pre>cannot_route_message = Unknown local user</pre>
+</div>
+<p>в последнем маршрутизаторе, где проверяются локальные пользователи. Если раскрытие строки этого параметра неудачно, используется сообщение по умолчанию. Если ошибка раскрытия не была неудачной принудительно, сообщение о ошибке пишется в главный лог и лог паники, в дополнение к обычному сообщению о ошибке маршрутизации.</p>
+<table border="1" class="docutils" id="index-3">
+<colgroup>
+<col width="36%" />
+<col width="20%" />
+<col width="21%" />
+<col width="23%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>caseful_local_part</strong></td>
+<td>Use: routers</td>
+<td>Type: boolean</td>
+<td>Default: false</td>
+</tr>
+</tbody>
+</table>
+<p>По умолчанию, маршрутизаторы обрабатывают локальную часть адреса в регистронезависимой манере, хотя фактический регистр сохраняется, для передачи с сообщением. Если вы хотите, чтобы регистр букв был важен в маршрутизаторе, вы должны установить этот параметр в истину. Для индивидуальных параметров маршрутизатора, которые содержат адреса, или списки локальных частей (например, <strong>local_parts</strong>), сравнение с учётом регистра может быть включено путём <tt class="docutils literal"><span class="pre">+caseful</span></tt>, как элемента списка. Смотрите раздел <a class="reference internal" href="ch10.html#ch10-20"><em>10.20</em></a>, для получения дополнительных деталей.</p>
+<p>Значение переменной $local_part принудительно приводится к нижнему регистру, когда маршрутизатор запущен без установленного параметра <strong>caseful_local_part</strong>. Когда маршрутизатор назначает адрес на транспортировку, когда транспорт выполняется, значение $local_part такое же. Точно также, когда маршрутизатор создает дочерний адрес путём перенаправления или подстановки синонима, значение $original_local_part и $parent_local_part те, которые использовались маршрутизатором <strong>redirect</strong>.</p>
+<p>Эти параметры применяются к обработке адресов маршрутизатором. Когда адрес получателя обрабатывается в ACL, есть отдельный модификатор <strong>control</strong>, который может использоваться для задания регистрозависимой обработки в пределах ACL (смотрите раздел <a class="reference internal" href="ch40.html#ch40-20"><em>40.20</em></a>).</p>
+<table border="1" class="docutils" id="index-4">
+<colgroup>
+<col width="33%" />
+<col width="22%" />
+<col width="22%" />
+<col width="23%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>check_local_user</strong></td>
+<td>Use: routers‡</td>
+<td>Type: boolean</td>
+<td>Default: false</td>
+</tr>
+</tbody>
+</table>
+<p>Когда этот параметр истинна, Exim проверяет, что локальная часть адреса получателя (с удалёнными аффиксами, если они есть) - имя учётной записи в локальной системе. Проверка производиться путём вызова функции <em>getpwnam()</em>, вместо попытки напрямую прочитать <em>/etc/passwd</em>. Это означает, что другие методы проверки данных пароля (типа NIS), также поддерживаются. Если локальная часть - локальный пользователь, переменная $home устанавливается из данных пароля, и может быть проверена в других предварительных условиях, оцениваемых после этого (порядок оценки даётся в разделе <a class="reference internal" href="ch03.html#ch03-12"><em>3.12</em></a>). Однако, значение $home может быть замещено <strong>router_home_directory</strong>. Если локальная часть - не локальный пользователь, маршрутизатор пропускается.</p>
+<p>Если вы хотите проверить, что локальная часть является именем пользователя, или совпадает с чем-то ещё, вы не можете объединять <strong>check_local_user</strong> с установкой <strong>local_parts</strong>, поскольку это определяет логическое “и” этих условий. Однако, вы можете использовать поиск <strong>passwd</strong> в установке <strong>local_parts</strong>, для достижения этого. Например:</p>
+<div class="highlight-python"><pre>local_parts = passwd;$local_part : lsearch;/etc/other/users</pre>
+</div>
+<p>Отметьте, однако, что побочные эффекты <strong>check_local_user</strong> (типа установки домашней директории) не происходят, когда поиск <strong>passwd</strong> используется в <strong>local_parts</strong> (или любых других) предварительных условиях.</p>
+<table border="1" class="docutils" id="index-5">
+<colgroup>
+<col width="25%" />
+<col width="25%" />
+<col width="25%" />
+<col width="26%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>condition</strong></td>
+<td>Use: routers‡</td>
+<td>Type: string†</td>
+<td>Default: unset</td>
+</tr>
+</tbody>
+</table>
+<p>Этот параметр определяет главный тест предварительного условия, который должен быть успешным, для вызова маршрутизатора. Параметр <strong>condition</strong> - последнее предварительное условие, для оценки (смотрите раздел <a class="reference internal" href="ch03.html#ch03-12"><em>3.12</em></a>). Строка раскрывается, и если результат принудительно неудачен, или пустая строка, или одна из строк “0”, или “no”, или “false” (проверяется без учёта регистра), маршрутизатор пропускается, и адрес предлагается следующему.</p>
+<p>Если результат - любое другое значение, маршрутизатор запускается (поскольку это - последнее предварительное условие для оценки, все другие предварительные условия должны быть истинными).</p>
+<p>Параметр <strong>condition</strong> предоставляет средство применения персональных условий для запуска маршрутизаторов. Отметьте, что в случае простого раскрытия, значение раскрытия по умолчанию - именно то что требуется. Например:</p>
+<div class="highlight-python"><pre>condition = ${if &gt;{$message_age}{600}}</pre>
+</div>
+<p>Из-за поведения по умолчанию раскрытия строки, это эквивалентно</p>
+<div class="highlight-python"><pre>condition = ${if &gt;{$message_age}{600}{true}{}}</pre>
+</div>
+<p>Если раскрытие неудачно (кроме принудительной неудачи), поставка отсрочена. Некоторые другие параметры предварительные условий - общие специальные случаи, которые могли быть фактически определены, используя <strong>condition</strong>.</p>
+<table border="1" class="docutils" id="index-6">
+<colgroup>
+<col width="28%" />
+<col width="22%" />
+<col width="24%" />
+<col width="26%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>debug_print</strong></td>
+<td>Use: routers</td>
+<td>Type: string†</td>
+<td>Default: unset</td>
+</tr>
+</tbody>
+</table>
+<p>Если этот параметр установлен, и отладка включена (смотрите параметр командной строки - <strong>-d</strong>), строка раскрывается и включается в отладочный вывод. Если раскрытие строки неудачно, сообщение о ошибке записывается в отладочный вывод, и Exim продолжает обработку. Этот параметр предоставлен для помощи проверки значения переменных, и т.п. при отладке конфигурации маршрутизатора. Например, если кажется, что параметр <strong>condition</strong> не работает, <strong>debug_print</strong> может использоваться для вывода ссылающихся на неё переменных. Вывод происходит после проверки <strong>domains</strong>, <strong>local_parts</strong> и <strong>check_local_user</strong>, но до проверки любых других предварительных условий. Новая строка добавляется к тексту, если она не оканчивается этим символом.</p>
+<table border="1" class="docutils" id="index-7">
+<colgroup>
+<col width="33%" />
+<col width="21%" />
+<col width="22%" />
+<col width="24%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>disable_logging</strong></td>
+<td>Use: routers</td>
+<td>Type: boolean</td>
+<td>Default: false</td>
+</tr>
+</tbody>
+</table>
+<p>Если этот параметр установлен в истину, ничего не записывается в лог для любых ошибок маршрутизации или для любых доставок, вызванных этим маршрутизатором. Вы не должны устанавливать этот параметр, если вы не понимаете что вы делаете. Также смотрите общий параметр транспортов, с тем же именем.</p>
+<table border="1" class="docutils" id="index-8">
+<colgroup>
+<col width="20%" />
+<col width="23%" />
+<col width="32%" />
+<col width="25%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>domains</strong></td>
+<td>Use: routers‡</td>
+<td>Type: domain list†</td>
+<td>Default: unset</td>
+</tr>
+</tbody>
+</table>
+<p>Если этот параметр установлен, маршрутизатор пропускается, когда текущий домен не совпадает со списком. Если совпадение произошло путём поиска по файлу, данные возвращённые поиском для домена, помещаются в $domain_data, для использования в раскрытиях строки частных параметров драйвера. Смотрите раздел <a class="reference internal" href="ch03.html#ch03-12"><em>3.12</em></a>, для списка в каком порядке оцениваются предварительные условия.</p>
+<table border="1" class="docutils" id="index-9">
+<colgroup>
+<col width="21%" />
+<col width="25%" />
+<col width="25%" />
+<col width="29%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>driver</strong></td>
+<td>Use: routers</td>
+<td>Type: string</td>
+<td>Default: unset</td>
+</tr>
+</tbody>
+</table>
+<p>Этот параметр всегда должен быть установлен. Он определяет, какой из доступных маршрутизаторов должен использоваться.</p>
+<table border="1" class="docutils" id="index-10">
+<colgroup>
+<col width="25%" />
+<col width="23%" />
+<col width="25%" />
+<col width="27%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>errors_to</strong></td>
+<td>Use: routers</td>
+<td>Type: string†</td>
+<td>Default: unset</td>
+</tr>
+</tbody>
+</table>
+<p>Если маршрутизатор успешно обрабатывает адрес, он может назначить адрес на транспорт для доставки, или он может создать дочерний адрес. В обоих случаях, если происходят проблемы доставки в более поздних процессах обработки, результирующее сообщение рикошета посылается по адресу, являющемуся результатом раскрытия этой строки, при условии успешной проверки адреса. Параметр <strong>errors_to</strong> раскрывается до <strong>headers_add</strong>, <strong>headers_remove</strong> и <strong>transport</strong>.</p>
+<p>Установка <strong>errors_to</strong>, связанная с адресом, может быть замещена, при последующем прохождении через другие маршрутизаторы, обладающие своими настройками <strong>errors_to</strong>, или если сообщение доставляется транспортом с установкой <strong>return_path</strong>.</p>
+<p>Если <strong>errors_to</strong> незадана, или раскрытие принудительно неудачно, или ошибка при проверке результата раскрытия, используется адрес для ошибок связанный со входящим адресом. На верхнем уровне, это - отправитель конверта. Непринудительная ошибка раскрытия вызывает задержку доставки.</p>
+<p>Если адрес, для которого установлена <strong>errors_to</strong>, завершается передачей через SMTP, отправитель конверта, для этой доставки, - значение <strong>errors_to</strong>, таким образом, любые рикошеты, созданые другими MTA на маршруте доставки, шлются туда же. Вы можете установить <strong>errors_to</strong> в пустую строку любой из этих установок:</p>
+<div class="highlight-python"><pre>errors_to =
+errors_to = ""</pre>
+</div>
+<p>Элемент раскрытия, приводящий к пустой строке, имеет тот же эффект. Если вы так делаете, локально обнаруженная ошибка доставки для адресов, обработанных этим маршрутизатором, не даёт начала рикошету; от ошибки отказываются. Если адрес доставляется на удалённый хост, путь возврата устанавливается в “&lt;&gt;”, если это не отменяется параметром <strong>return_path</strong> в транспорте.</p>
+<p>Если по каким-то причинам вы хотите отказаться от локальных ошибок, но использовать не пустую команду MAIL для удалённой доставки, вы можете сохранить оригинальный обратный путь в $address_data маршрутизатора, и восстановить его в транспорте, установкой <strong>return_path</strong>.</p>
+<p>Самое общее использование <strong>errors_to</strong> - прямой список список рассылки рикошетов к менеджерам списка, как описано в разделе <a class="reference internal" href="ch47.html#ch47-02"><em>47.2</em></a>, или для осуществления VERP (Variable Envelope Return Paths) (смотрите раздел <a class="reference internal" href="ch47.html#ch47-06"><em>47.6</em></a>).</p>
+<table border="1" class="docutils" id="index-11">
+<colgroup>
+<col width="17%" />
+<col width="28%" />
+<col width="28%" />
+<col width="28%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>expn</strong></td>
+<td>Use: routers‡</td>
+<td>Type: boolean</td>
+<td>Default: true</td>
+</tr>
+</tbody>
+</table>
+<p>Если этот параметр выключен, маршрутизатор пропускается когда тестируется адрес как результат обработки команды SMTP EXPN. Вы могли бы, например, захотеть включить её на маршрутизаторе для пользовательских файлов <em>.forward</em>, когда оставляете их для файлов системных синонимов. Смотрите раздел <a class="reference internal" href="ch03.html#ch03-12"><em>3.12</em></a>, для получения порядка, в котором оцениваются предварительные условия.</p>
+<p>Использование команды SMTP EXPN контролируется путём ACL (смотрите главу <a class="reference internal" href="ch40.html#ch40-00"><em>40</em></a>). Когда Exim запускается командой EXPN, это подобно проверке адреса с <strong>-bt</strong>. Сравните VRFY, дубликат которой <strong>-bv</strong>.</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="28%" />
+<col width="22%" />
+<col width="24%" />
+<col width="26%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>fail_verify</strong></td>
+<td>Use: routers</td>
+<td>Type: boolean</td>
+<td>Default: false</td>
+</tr>
+</tbody>
+</table>
+<p>Установка этого параметра создаёт эффект установки обоих параметров <strong>fail_verify_sender</strong> и <strong>fail_verify_recipient</strong> в тоже значение.</p>
+<table border="1" class="docutils" id="index-12">
+<colgroup>
+<col width="39%" />
+<col width="19%" />
+<col width="20%" />
+<col width="22%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>fail_verify_recipient</strong></td>
+<td>Use: routers</td>
+<td>Type: boolean</td>
+<td>Default: false</td>
+</tr>
+</tbody>
+</table>
+<p>Если этот параметр установлен в истину, и адрес принимается этим маршрутизатором когда проверяется получатель, проверка будет неудачна.</p>
+<table border="1" class="docutils" id="index-13">
+<colgroup>
+<col width="36%" />
+<col width="20%" />
+<col width="21%" />
+<col width="23%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>fail_verify_sender</strong></td>
+<td>Use: routers</td>
+<td>Type: boolean</td>
+<td>Default: false</td>
+</tr>
+</tbody>
+</table>
+<p>Если этот параметр установлен в истину, и адрес принимается этим маршрутизатором когда проверяется отправитель, проверка будет неудачна.</p>
+<table border="1" class="docutils" id="index-14">
+<colgroup>
+<col width="30%" />
+<col width="20%" />
+<col width="28%" />
+<col width="23%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>fallback_hosts</strong></td>
+<td>Use: routers</td>
+<td>Type: string list</td>
+<td>Default: unset</td>
+</tr>
+</tbody>
+</table>
+<p>Раскрытие строки не применяется к этому параметру. Аргумент должен быть списком имён хостов, или IP-адресов разделённых двоеточиями. Разделитель списка может быть изменён (смотрите раздел <a class="reference internal" href="ch06.html#ch06-19"><em>6.19</em></a>), и порт может быть задан с каждым именем или адресом. Фактически, формат каждого элемента, точно такой же, как в списке хостов маршрутизатора <strong>manualroute</strong> (смотрите раздел <a class="reference internal" href="ch20.html#ch20-05"><em>20.5</em></a>).</p>
+<p>Если маршрутизатор стоит в очереди на адрес для удалённого транспорта, этот список хостов ассоциирован с адресом, и используется вместо запасного списка хостов транспорта. Если <strong>hosts_randomize</strong> установлена в транспорте, порядок списка случаен для каждого использования. Смотрите параметр <strong>fallback_hosts</strong> транспорта <strong>smtp</strong>, для дальнейших деталей.</p>
+<table border="1" class="docutils" id="index-15">
+<colgroup>
+<col width="17%" />
+<col width="23%" />
+<col width="25%" />
+<col width="35%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>group</strong></td>
+<td>Use: routers</td>
+<td>Type: string†</td>
+<td>Default: see below</td>
+</tr>
+</tbody>
+</table>
+<p>Когда маршрутизатор стоит в очереди на адрес для транспорта, и транспорт не определяет группу, используется группа данная тут, когда работает процесс доставки. Группа может быть задана в цифровой форме, или по имени. Если раскрытие неудачно, ошибка записывается в лог, и доставка задерживается. По умолчанию, она не задана, если не установлена <strong>check_local_user</strong>, когда значение по умолчанию берётся из информации о пароле. Также смотрите <strong>initgroups</strong>, и <strong>user</strong>, и обсуждение в главе <a class="reference internal" href="ch23.html#ch23-00"><em>23</em></a>.</p>
+<table border="1" class="docutils" id="index-16">
+<colgroup>
+<col width="28%" />
+<col width="22%" />
+<col width="24%" />
+<col width="26%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>headers_add</strong></td>
+<td>Use: routers</td>
+<td>Type: string†</td>
+<td>Default: unset</td>
+</tr>
+</tbody>
+</table>
+<p>Этот параметр задаёт строку текста, который раскрывается во время маршрутизации, и ассоциирован с любым адресом, который принят маршрутизатором. Однако, этот параметр не имеет никакого эффекта, когда адрес лишь проверяется. Способ, которым используется текст для добавления строк заголовков в транспорте, описан в разделе <a class="reference internal" href="ch44.html#ch44-17"><em>44.17</em></a>. Фактически, новые строки заголовков не добавлены, пока сообщение в процессе транспортировки. Это означает, что ссылки на строки заголовков, в раскрытиях строк, в конфигурации транспорта продолжают “видеть” оригинальные заголовки <a class="footnote-reference" href="#id6" id="id2">[1]</a>.</p>
+<p>Параметр <strong>headers_add</strong> раскрывается после <strong>errors_to</strong>, но до <strong>headers_remove</strong> и <strong>transport</strong>. Если раскрытая строка пуста, или если раскрытие принудительно неудачно, параметр не имеет эффекта. Другие ошибки раскрытия обрабатываются как ошибки конфигурации.</p>
+<div class="admonition warning">
+<p class="first admonition-title">Предупреждение</p>
+<p class="last">Параметр <strong>headers_add</strong> не может использоваться для маршрутизатора <strong>redirect</strong>, в котором установлен параметр <strong>one_time</strong>.</p>
+</div>
+<div class="admonition warning">
+<p class="first admonition-title">Предупреждение</p>
+<p class="last">Если в маршрутизаторе установлен параметр <strong>unseen</strong>, все дополнения заголовков удаляются, при передаче следующему маршрутизатору. Для маршрутизатора <strong>redirect</strong>, если сгеренированный адрес - тот же самый что и входящий, это может указывать на дублирование адресов с различными модификациями заголовков. Exim не дублирует доставки (за исключением определённых случаев, в трубы - смотрите раздел <a class="reference internal" href="ch22.html#ch22-07"><em>22.7</em></a>), но нездано от какого дубликата отказаться, таким образом этой неопределённой ситуации необходимо избегать. Может быть полезным параметр <strong>repeat_use</strong>, маршрутизатора <strong>redirect</strong>.</p>
+</div>
+<table border="1" class="docutils" id="index-17">
+<colgroup>
+<col width="32%" />
+<col width="21%" />
+<col width="23%" />
+<col width="25%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>headers_remove</strong></td>
+<td>Use: routers</td>
+<td>Type: string†</td>
+<td>Default: unset</td>
+</tr>
+</tbody>
+</table>
+<p>Этот параметр задаёт строку текста, который ракрывается во время маршрутизации, и ассоциирован с любым адресом, который принят маршрутизатором. Однако, этот параметр не имеет никакого эффекта, когда адрес лишь проверяется. Способ, которым используется текст для удаления строк заголовков в транспорте, описан в разделе <a class="reference internal" href="ch44.html#ch44-17"><em>44.17</em></a>. Фактически, строки заголовков не удалены, пока сообщение в процессе транспортировки. Это означает, что ссылки на строки заголовков, в раскрытиях строк, в конфигурации транспорта продолжают “видеть” оригинальные заголовки <a class="footnote-reference" href="#id7" id="id3">[2]</a>.</p>
+<p>Параметр <strong>headers_remove</strong> раскрывается после <strong>errors_to</strong> и <strong>headers_add</strong>, но до <strong>transport</strong>. Если раскрытие принудительно неудачно, параметр не имеет эффекта. Другие ошибки раскрытия обрабатываются как ошибки конфигурации.</p>
+<div class="admonition warning">
+<p class="first admonition-title">Предупреждение</p>
+<p class="last">Параметр <strong>headers_remove</strong> не может использоваться для маршрутизатора <strong>redirect</strong>, в котором установлен параметр <strong>one_time</strong>.</p>
+</div>
+<div class="admonition warning">
+<p class="first admonition-title">Предупреждение</p>
+<p class="last">Если в маршрутизаторе установлен параметр <strong>unseen</strong>, все запросы на удаление заголовков удаляются, при передаче следующему маршрутизатору, и это может указывать на проблему с дубликатами - смотрите подобное предупреждение выше, для <strong>headers_add</strong>.</p>
+</div>
+<table border="1" class="docutils" id="index-18">
+<colgroup>
+<col width="35%" />
+<col width="18%" />
+<col width="25%" />
+<col width="22%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>ignore_target_hosts</strong></td>
+<td>Use: routers</td>
+<td>Type: host list†</td>
+<td>Default: unset</td>
+</tr>
+</tbody>
+</table>
+<p>Хотя этот параметр - список хостов, обычно он содержит IP-адреса, а не имена. Если любой хост, который ищется маршрутизатором имеет IP-адрес совпадающий с элементом этого списка, Exim ведёт себя так, будто этот IP-адрес не существует. Этот параметр позволяет вам справляться с мошенническими DNS-записями, типа</p>
+<div class="highlight-python"><pre>remote.domain.example.  A  127.0.0.1</pre>
+</div>
+<p>устанавливая</p>
+<div class="highlight-python"><pre>ignore_target_hosts = 127.0.0.1</pre>
+</div>
+<p>на релевантном маршрутизаторе. Если все хосты найденные маршрутизатором <strong>dnslookup</strong> забракованы таким образом, маршрутизатор отклоняется. В обычной конфигурации, попытка отправки почты на такой домен, обычно вызывает ошибку “unrouteable domain”, и попытка проверить адрес в домене будет неудачной. Точно также, если в маршрутизаторе <strong>ipliteral</strong> установлен параметр <strong>ignore_target_hosts</strong>, маршрутизатор отклоняется если представлен один из перечисленных адресов.</p>
+<p>Вы можете использовать этот параметр для отключения использования IPv4 или IPv6 для доставки почты, путём первого или второго параметра настройки, соответственно:</p>
+<div class="highlight-python"><pre>ignore_target_hosts = 0.0.0.0/0
+ignore_target_hosts = &lt;; 0::0/0</pre>
+</div>
+<p>Шаблон в первой строке совпадает со всеми адресами IPv4, тогда как шаблон во второй строке совпадает со всеми адресами IPv6.</p>
+<p>Этот параметр также может быть полезен для игнорирования локальных связей и локальных сайтов адресов IPv6. Поскольку, как и все списки хостов, значение <strong>ignore_target_hosts</strong> раскрывается до использования в качестве списка, возможно сделать его зависимым от маршрутизируемого домена.</p>
+<p>В процессе раскрытия, $host_address устанавливается в проверяемый IP-адрес.</p>
+<table border="1" class="docutils" id="index-19">
+<colgroup>
+<col width="26%" />
+<col width="23%" />
+<col width="25%" />
+<col width="26%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>initgroups</strong></td>
+<td>Use: routers</td>
+<td>Type: boolean</td>
+<td>Default: false</td>
+</tr>
+</tbody>
+</table>
+<p>Если маршрутизатор стоит в очереди на адрес для транспорта, и этот параметр истинна, и uid, предоставленный маршрутизатором не замещен транспортом, при работе транспорта вызывается функция <em>initgroups()</em> , для гарантии, что установлены любые дополнительные группы ассоциированные с uid. Также смотрите обсуждение <strong>group</strong> и <strong>user</strong> в главе <a class="reference internal" href="ch23.html#ch23-00"><em>23</em></a>.</p>
+<table border="1" class="docutils" id="index-20">
+<colgroup>
+<col width="32%" />
+<col width="20%" />
+<col width="26%" />
+<col width="22%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>local_part_prefix</strong></td>
+<td>Use: routers‡</td>
+<td>Type: string list</td>
+<td>Default: unset</td>
+</tr>
+</tbody>
+</table>
+<p>Если этот параметр установлен, маршрутизатор пропускается, если локальная часть не начинается с одной из заданных строк, или если <strong>local_part_prefix_optional</strong> истинна. Смотрите раздел <a class="reference internal" href="ch03.html#ch03-12"><em>3.12</em></a> для получения списка в котором оцениваются предварительные условия.</p>
+<p>Список сканируется слева направо, и используется первый совпавший префикс. Доступна ограниченная форма подстановочных знаков; если префикс начинается со звёздочки, он совпадает с самой длинной последовательностью символов в начале локальной части. Поэтому, звёздочка всегда должна сопровождаться каким-то символом, который не встречается в нормальных локальных частях. Подстановочные символы могут использоваться для установки многопользовательских почтовых ящиков, как описано в разделе <a class="reference internal" href="ch47.html#ch47-08"><em>47.8</em></a>.</p>
+<p>В процессе тестирования параметра <strong>local_parts</strong>, и когда маршрутизатор запущен, префикс удаляется из локальной части, и он доступен в переменной раскрытия $local_part_prefix. Когда сообщение доставляется, если маршрутизатор принимает адрес, это остаётся истинным в процессе последующей доставки транспортом. В частности, локальная часть, передаваемая командой RCPT для доставок LMTP, SMTP, и BSMTP, по умолчанию, удаляет префикс. Это поведение может быть перезадано путём установки <strong>rcpt_include_affixes</strong> в истину, в соответствующем транспорте.</p>
+<p>Когда адрес проверяется, <strong>local_part_prefix</strong> затрагивает лишь поведение маршрутизатора. Если используется обратный вызов, это означает, что полный адрес, включая префикс, будет использоваться в обратном вызове.</p>
+<p>Префиксы, обычно, используются для обработки локальных частей вида “owner-something”. Другое частое использование - поддержка локальных частей формы “real-username” для обхода пользовательского файла <em>.forward</em> - полезно, когда тяжело сказать пользователю, что его форвардинг кривой - путём помещения маршрутизатора типа такого, сразу до маршрутизатора, обрабатывающего файлы <em>.forward</em>:</p>
+<div class="highlight-python"><pre>real_localuser:
+       driver = accept
+       local_part_prefix = real-
+       check_local_user
+       transport = local_delivery</pre>
+</div>
+<p>В целях безопасности, возможно, хорошей идеей было бы ограничить использование этого маршрутизатора локально созданными сообщениями, используя условие типа такого:</p>
+<div class="highlight-python"><pre>condition = ${if match {$sender_host_address}\
+                       {\N^(|127\.0\.0\.1)$\N}}</pre>
+</div>
+<p>Если оба <strong>local_part_prefix</strong> и <strong>local_part_suffix</strong> установлены для маршрутизатора, оба условия должны быть не дополнительными. Нужно быть осторожным, если подстановочный знак используется в обоих - префиксе и суффиксе в одном маршрутизаторе. Должны использоваться различные символы как разделители, для избежания двусмысленности.</p>
+<table border="1" class="docutils" id="index-21">
+<colgroup>
+<col width="43%" />
+<col width="17%" />
+<col width="19%" />
+<col width="20%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>local_part_prefix_optional</strong></td>
+<td>Use: routers</td>
+<td>Type: boolean</td>
+<td>Default: false</td>
+</tr>
+</tbody>
+</table>
+<p>Смотрите выше, параметр <strong>local_part_prefix</strong>.</p>
+<table border="1" class="docutils" id="index-22">
+<colgroup>
+<col width="32%" />
+<col width="20%" />
+<col width="26%" />
+<col width="22%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>local_part_suffix</strong></td>
+<td>Use: routers‡</td>
+<td>Type: string list</td>
+<td>Default: unset</td>
+</tr>
+</tbody>
+</table>
+<p>Этот параметр работает точно также как и <strong>local_part_prefix</strong>, за исключением, что локальная часть должна заканчиваться (а не начинаться) данной строкой, параметр <strong>local_part_suffix_optional</strong> определяет, какой суффикс обязателен, и подстановочный символ “*”, если присутствует, должен быть последним символом суффикса. Это необязательное средство обычно используется для обработки локальных частей формы “something-request”, и многопользовательских почтовых ящиков вида “username-foo”.</p>
+<table border="1" class="docutils" id="index-23">
+<colgroup>
+<col width="43%" />
+<col width="17%" />
+<col width="19%" />
+<col width="20%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>local_part_suffix_optional</strong></td>
+<td>Use: routers</td>
+<td>Type: boolean</td>
+<td>Default: false</td>
+</tr>
+</tbody>
+</table>
+<p>Смотрите выше, параметр <strong>local_part_suffix</strong>.</p>
+<table border="1" class="docutils" id="index-24">
+<colgroup>
+<col width="23%" />
+<col width="20%" />
+<col width="34%" />
+<col width="22%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>local_parts</strong></td>
+<td>Use: routers‡</td>
+<td>Type: local part list†</td>
+<td>Default: unset</td>
+</tr>
+</tbody>
+</table>
+<p>Маршрутизатор запускается лишь если локальная часть адреса совпадает с этим списком. Смотрите раздел <a class="reference internal" href="ch03.html#ch03-12"><em>3.12</em></a>, для получения порядка, в котором оцениваются предварительные условия, и раздел <a class="reference internal" href="ch10.html#ch10-21"><em>10.21</em></a> для обсуждения списков локальных частей. Поскольку строка раскрывается, возможно сделать её зависимой от домена, например:</p>
+<div class="highlight-python"><pre>local_parts = dbm;/usr/local/specials/$domain</pre>
+</div>
+<p>Если поиском достигнуто соответствие, данные, возвращённые поиском для локальных частей, помещаются в переменную $local_part_data для использования в раскрытии частных параметров маршрутизатора. Вы могли бы использовать этот параметр, например, если у вас много локальных виртуальных доменов, и вы хотите слать всю почту постмастера в одно место, без необходимости установки синонима в каждом виртуальном домене:</p>
+<div class="highlight-python"><pre>postmaster:
+   driver = redirect
+   local_parts = postmaster
+   data = postmaster@real.domain.example</pre>
+</div>
+<table border="1" class="docutils" id="index-25">
+<colgroup>
+<col width="27%" />
+<col width="20%" />
+<col width="22%" />
+<col width="31%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>log_as_local</strong></td>
+<td>Use: routers</td>
+<td>Type: boolean</td>
+<td>Default: see below</td>
+</tr>
+</tbody>
+</table>
+<p>Exim имеет два стиля записи в лог для доставки, с целью более явно отделить локальные доставки от удалённых. В “локальном” стиле,  адрес получателя даётся так же как и локальная часть, без домена. Использование этого стиля контролируется этим параметром. По умолчанию, она истинна для маршрутизатора <strong>accept</strong>, и ложна для всех остальных. Этот параметр применяется лишь когда маршрутизатор назначает адрес транспорту. Она не оказывает эффекта на маршрутизаторы, переадресовывающие адреса.</p>
+<table border="1" class="docutils" id="index-26">
+<colgroup>
+<col width="17%" />
+<col width="26%" />
+<col width="30%" />
+<col width="28%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>more</strong></td>
+<td>Use: routers</td>
+<td>Type: boolean†</td>
+<td>Default: true</td>
+</tr>
+</tbody>
+</table>
+<p>Результат раскрытия строки, для этого параметра, должен быть допутимым булевым значением, т.е. одна из строк “yes”, “no”, “true”, или “false”. Любой другой результат вызывает ошибку, и доставка задерживается. Если раскрытие принудительно неудачное, используется значение по умолчанию(истина) параметра. Другие ошибки вызывают задержку доставки.</p>
+<p>Если этот параметр установлен в ложь, и маршрутизатор отказывается обрабатывать адрес, дальнейшие маршрутизаторы не проверяются, маршрутизация неудачна, и сообщение рикошетит <a class="footnote-reference" href="#id8" id="id4">[3]</a> . Однако, если маршрутизатор явно передаёт адрес следующему маршрутизатору, путём установки</p>
+<div class="highlight-python"><pre>self = pass</pre>
+</div>
+<p>или иначе, установка <strong>more</strong> игнорируется. Кроме того, установка <strong>more</strong> не затрагивает поведение, если одна из предварительных проверок неудачна. В этом случае, адрес всегда передаётся следующему маршрутизатору.</p>
+<p>Отметьте, что <strong>address_data</strong> не является предварительным условием. Если это раскрытие принудительно неудачно, маршрутизатор отклоняется, и значение <strong>more</strong> контролирует, что происходит дальше.</p>
+<table border="1" class="docutils" id="index-27">
+<colgroup>
+<col width="33%" />
+<col width="21%" />
+<col width="22%" />
+<col width="24%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>pass_on_timeout</strong></td>
+<td>Use: routers</td>
+<td>Type: boolean</td>
+<td>Default: false</td>
+</tr>
+</tbody>
+</table>
+<p>Если у маршрутизатора таймаут в процессе поиска хоста, обычно это вызывает задержку адреса. Если установлена <strong>pass_on_timeout</strong>, адрес передаётся следующему маршрутизатору, отменяя <strong>more</strong>. Это может быть полезным для систем, которые периодически связаны с интернетом, или тем, которые хотят передавать умному хосту любые сообщение, которые не могут быть немедленно доставлены.</p>
+<p>Тут могут быть другие случайные временные ошибки, которые могут произойти при поиске в DNS. Они обрабатываются таким же образом как таймауты, и этот параметр применяется ко всем ним.</p>
+<table border="1" class="docutils" id="index-28">
+<colgroup>
+<col width="28%" />
+<col width="23%" />
+<col width="23%" />
+<col width="26%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>pass_router</strong></td>
+<td>Use: routers</td>
+<td>Type: string</td>
+<td>Default: unset</td>
+</tr>
+</tbody>
+</table>
+<p>Маршрутизаторы, которые распознают общие параметра (<strong>dnslookup</strong>, <strong>ipliteral</strong> и <strong>manualroute</strong>) способны вернуть <strong>pass</strong>, принудительно продолжая маршрутизацию сообщения, и замещая ложную установку <strong>more</strong>. Когда один из этих маршрутизаторов возвращает <strong>pass</strong>, адрес обычно передаётся следующему маршрутизатору в последовательности. Это может быть изменено путём установки <strong>pass_router</strong> в имя другого маршрутизатора. Однако (в отличие от <strong>redirect_router</strong>), названный маршрутизатор должен быть ниже текущего маршрутизатора, для избежания петель. Отметьте, что этот параметр применяется лишь к специальному случаю <strong>pass</strong>. Он не применяется, когда маршрутизатор возвращает <em>decline</em>.</p>
+<table border="1" class="docutils" id="index-29">
+<colgroup>
+<col width="33%" />
+<col width="21%" />
+<col width="21%" />
+<col width="25%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>redirect_router</strong></td>
+<td>Use: routers</td>
+<td>Type: string</td>
+<td>Default: unset</td>
+</tr>
+</tbody>
+</table>
+<p>Иногда администратор знает, что бессмысленно заново подвергать переработке адреса в том же самом маршрутизаторе, которые были созданы из файлов синонимов или перенаправлений. Например, если файл синонимов переводит реальные имена в идентификаторы логинов, нет смысла искать по файлу синонимов второй раз, особенно если это большой файл.</p>
+<p>Параметр <strong>redirect_router</strong> может быть установлен в имя любого маршрутизатора. Это заставляет маршрутизацию любого созданного адреса начаться с именованного маршрутизатора, вместо первого маршрутизатора. Этот параметр не имеет эффекта, если есть маршрутизатор, в котором он установлена, не создает новые адреса.</p>
+<table border="1" class="docutils" id="index-30">
+<colgroup>
+<col width="27%" />
+<col width="21%" />
+<col width="29%" />
+<col width="23%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>require_files</strong></td>
+<td>Use: routers‡</td>
+<td>Type: string list†</td>
+<td>Default: unset</td>
+</tr>
+</tbody>
+</table>
+<p>Этот параметр предоставляет главный механизм для утверждения работы маршрутизатора, на существовании или отсутствии определённых файлов или директорий. До запуска маршрутизатора, как одна из предварительных проверок, Exim обрабатывает этот способ через список <strong>require_files</strong>, отдельно раскрывая каждый его элемент.</p>
+<p>Поскольку список разбивается до ракрытия, любые двоеточия в элементах раскрытия должны быть удвоены, или должно использоваться средство иного разделителя списка. Если какое-то раскрытие принудительно неудачно, этот элемент игнорируется. Другие ошибки раскрытия вызывают задержку маршрутизации адреса.</p>
+<p>Если какая-либо раскрытая строка пуста, она игнорируется. Иначе, кроме как описано ниже, каждая строка должна быть полным путём к файлу, с необязательно предшествующим символом “!”. Пути передаются на тестирование функции <em>stat()</em>, для проверки существования файлов или каталогов. Маршрутизатор пропускается, если какой-либо путь, которому не предшествует “!”, не существует, или существует любой путь, с предшествующим “!”.</p>
+<p>Если <em>stat()</em> не может определить, существует файл или нет, доставка сообщения задерживается. Это может произойти, если недоступны смонтированные по NFS файловые системы.</p>
+<p>Этот параметр проверяется после параметра <strong>domains</strong>, <strong>local_parts</strong> и <strong>senders</strong>, таким образом, вы не можете её использовать для проверки существования файла, в котором ищется домен, локальная часть адреса, или отправитель. (Смотрите раздел <a class="reference internal" href="ch03.html#ch03-12"><em>3.12</em></a>, для получения порядка, в котором оцениваются предварительные условия.) Однако, поскольку все эти параметры являются раскрываемыми, вы можете использовать условие раскрытия <strong>exists</strong>, для создания таких проверок. Параметр <strong>require_files</strong> предназначен для проверки файлов, которые маршрутизатор может быть будет использовать внутри себя, или которые необходимы транспорту (например, <em>.procmailrc</em>).</p>
+<p>В процессе доставки, функция <em>stat()</em> выполняется от root`a, но есть средство для некоторых проверок доступности файла от другого пользователя. Это не точная проверка разрешений, а “грубая” проверка, работающая следующим образом:</p>
+<p>Если элемент в списке <strong>require_files</strong> не содержит символов прямого слэша, он берётся как пользователь (и необязательная группа, отделённая двоеточием) для проверки последующих файлов в списке. Если группа не задана, но пользователь задан символически, используется gid ассоциированный с uid. Например:</p>
+<div class="highlight-python"><pre>require_files = mail:/some/file
+require_files = $local_part:$home/.procmailrc</pre>
+</div>
+<p>Если имя пользователя или группы в <strong>require_files</strong> не существует, условие <strong>require_files</strong> неуспешно. Exim выполняет проверку путём сканирования компонентов пути файла, и проверяя доступ для данных gid и uid. Это проверка на “x” для директорий, и “r” для финального файла. Отметьте, это означает, что при поддержке файловых ACL, они игнорируются.</p>
+<div class="admonition warning">
+<p class="first admonition-title">Предупреждение</p>
+<p class="last">Когда маршрутизатор начинает работу по проверке адресов для входящего SMTP-сообщения, Exim не работает от root`a, а под своим собственным uid. Это может затронуть результта проверки <strong>require_files</strong>. В частности, <em>stat()</em> может привести к ошибке EACCES (“Permission denied”). Это означает, что пользователю exim`a не разрешено читать одну из директорий в пути файла.</p>
+</div>
+<div class="admonition warning">
+<p class="first admonition-title">Предупреждение</p>
+<p class="last">Даже когда Exim выполняется от root`a при доставке сообщения, <em>stat()</em> может привести к EACCES для файлов в NFS директории, смонтированной без доступа root`y. В этом случае, если запрошена проверка на доступ специфического пользователя, exim создаёт субпроцесс, который работает от пользователя, и снова пробует проверить в этом процессе.</p>
+</div>
+<p>Действие по умолчанию для обработки EACCES полагает, что это вызвано конфигурационной ошибкой, и маршрутизация задерживается, поскольку существование или отсутствие файла не может быть определено. Однако, в некоторых обстоятельствах, может быть желательным обработать это условие, как будто файл не существовал. Например:</p>
+<div class="highlight-python"><pre>require_files = +/some/file</pre>
+</div>
+<p>Если маршрутизатор - не основная часть проверки (например, он обрабатывает пользовательские файлы <em>.forward</em>), иное решение - установить установить параметр <strong>verify</strong> в ложь, тогда маршрутизатор был пропущен при проверке.</p>
+<table border="1" class="docutils" id="index-31">
+<colgroup>
+<col width="36%" />
+<col width="18%" />
+<col width="19%" />
+<col width="27%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>retry_use_local_part</strong></td>
+<td>Use: routers</td>
+<td>Type: boolean</td>
+<td>Default: see below</td>
+</tr>
+</tbody>
+</table>
+<p>Когда с доставкой присходит временная ошибка маршрутизации, в базе хинтов Exim`a создаётся запись о повторею Для адресов, маршрутизация которых зависит лишь от домена, ключ для записи повтора не должен содержать локальную часть, но для других адресов, обе - доменная и локальная части должны быть включены. Обычно, удалённая маршрутизация первого вида, и локальная маршрутизация - последнего.</p>
+<p>Этот параметр контролирует, используется ли локальная часть для формирования подсказок <a class="footnote-reference" href="#id9" id="id5">[4]</a> для адресов, которые подверглись временным ошибкам, будучи обработанными этим маршрутизатором. Значение по умолчанию - истина для любого маршрутизатора, который имеет установленную <strong>check_local_user</strong>, и ложь, в противном случае. Отметьте, что этот параметр не применяется к ключам подсказок для транспортных задержек; они контролируются одноимённой общей транспортным параметром.</p>
+<p>Установка параметра <strong>retry_use_local_part</strong> применяется лишь к маршрутизатору, в котором он фигурирует. Если маршрутизатор создает дочерний адрес, они маршрутизируются независимо; эта установка не прилагается к ним.</p>
+<table border="1" class="docutils" id="index-32">
+<colgroup>
+<col width="39%" />
+<col width="19%" />
+<col width="20%" />
+<col width="22%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>router_home_directory</strong></td>
+<td>Use: routers</td>
+<td>Type: string†</td>
+<td>Default: unset</td>
+</tr>
+</tbody>
+</table>
+<p>Этот параметр устанавливает домашнюю  директорию, для использования при работе маршрутизатора. (Сравните <strong>transport_home_directory</strong>, который устанавливает домашнюю директорию для более поздней транспортировки.) В частности, если используется маршрутизатор <strong>redirect</strong>, этот параметр устанавливает значение $home, когда работает фильтр. Значение раскрывается; принудительная ошибка раскрытия вызывает игнорирование параметра - другие ошибки вызывают задержку маршрутизации.</p>
+<p>Раскрытие <strong>router_home_directory</strong> происходит сразу после проверки <strong>check_local_user</strong> (если настроено), до любых будущих раскрытий. (Смотрите раздел <a class="reference internal" href="ch03.html#ch03-12"><em>3.12</em></a>, для получения порядка, в котором оцениваются предварительные условия.) Когда маршрутизатор работает, <strong>router_home_directory</strong> замещает значение $home, пришедшее из <strong>check_local_user</strong>.</p>
+<p>Когда маршрутизатор принимает адрес и назначает его локальному транспорту (включая случаи, когда маршрутизатор <strong>redirect</strong> создает трубу, файл, или доставку автоответа), установка домашней директории для транспорта берётся из первого установленного значения:
+* Параметра <strong>home_directory</strong> в транспорте;
+* Параметра <strong>transport_home_directory</strong> в маршрутизаторе;
+* Данных пароля, если параметр <strong>check_local_user</strong> установлен в маршрутизаторе;
+* Параметра <strong>router_home_directory</strong>, в маршрутизаторе.</p>
+<p>Другими словами, <strong>router_home_directory</strong> замещает данные пароля для маршрутизатора, но не для транспорта.</p>
+<table border="1" class="docutils" id="index-33">
+<colgroup>
+<col width="17%" />
+<col width="26%" />
+<col width="26%" />
+<col width="32%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>self</strong></td>
+<td>Use: routers</td>
+<td>Type: string</td>
+<td>Default: freeze</td>
+</tr>
+</tbody>
+</table>
+<p>Этот параметр применяется к тем маршрутизаторам, которые используют адрес получателя для нахождения списка удалённых хостов. В настоящее время, это маршрутизаторы <strong>dnslookup</strong>, <strong>ipliteral</strong> и <strong>manualroute</strong>. Определённые конфигурации маршрутизатора <strong>queryprogram</strong> также могут задавать список удалённых хостов. Обычно, такие маршрутизаторы сконфигурированы для посылки сообщения к удалённому хосту через <strong>smtp</strong> транспорт. Параметр <strong>self</strong> задаёт, что происходит когда первый хост в списке оказывается локальным хостом. Способ проверки локального хоста Exim`ом, описан в разделе <a class="reference internal" href="ch13.html#ch13-08"><em>13.8</em></a>.</p>
+<p>Обычно, эта ситуация указывает на ошибку конфигурации в Exim`e (например, маршрутизатор должен быть настроен не обрабатывать этот домен), или ошибку в DNS (например, MX не должен указывать на этот хост). По этой причине, действие по умолчанию - записать в лог инцидент, задержать адрес, и заморозить сообщение. Следующие альтернативы предоставляются для использования в специальных случаях:</p>
+<ul>
+<li><p class="first"><strong>defer</strong>
+Сообщение пробуется ещё раз доставить, позднее, но оно не заморожено.</p>
+</li>
+<li><p class="first"><strong>reroute:</strong> &lt;domain&gt;
+Домен изменяется на данный домен, и адрес передаётся назад, для обработки маршрутизаторами. Перезапись заголовков не производится. По существу, это поведение - переназначение.</p>
+</li>
+<li><p class="first"><strong>reroute:</strong> <strong>rewrite:</strong> &lt;domain&gt;
+Домен изменяется на заданный домен, и адрес возвращается назад, для повторной обработки маршрутизатором. Любые заголовки, которые содержат оригинальный домен, перезаписываются.</p>
+</li>
+<li><p class="first"><strong>pass</strong>
+Маршрутизатор передаёт адрес следующему маршрутизатору, или маршрутизатору названному в параметре <strong>pass_router</strong>, если она установлена. Это замещает <strong>no_more</strong>. В течение последующей маршрутизации и доставки, переменная $self_hostname содержит имя локального хоста, с которым столкнулся маршрутизатор. Это может использоваться для различения различных случаев, для хостов с несколькими именами. Комбинация</p>
+<div class="highlight-python"><pre>self = pass
+       no_more</pre>
+</div>
+<p>гарантирует, что передаются лишь те адреса, которые маршрутизировались к локальному хосту. Без <strong>no_more</strong>, адреса отклонённые по иным причинам, также будут передаваться следующему маршрутизатору.</p>
+</li>
+<li><p class="first"><strong>fail</strong>
+Доставка неудачна и создается отчёт о ошибке.</p>
+</li>
+<li><p class="first"><strong>send</strong>
+Аномалия игнорируется, и адрес ставиться в очередь для транспорта. Эта установка должна использоваться с критическим предостережением. Для транспорта <strong>smtp</strong>, это имеет смысл лишь в случаях, когда программа, слушающая SMTP-порт, не эта версия Exim`a. Таким образом,это должен быть какой-то иной MTA, или Exim с иным конфигурационным файлом, который обрабатывает домен иным способом.</p>
+</li>
+</ul>
+<table border="1" class="docutils" id="index-34">
+<colgroup>
+<col width="19%" />
+<col width="23%" />
+<col width="33%" />
+<col width="25%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>senders</strong></td>
+<td>Use: routers‡</td>
+<td>Type: address list†</td>
+<td>Default: unset</td>
+</tr>
+</tbody>
+</table>
+<p>Если этот параметр установлен, маршрутизатор пропускается, если адрес отправителя сообщения не совпадает с чем-то в списке. Смотрите раздел <a class="reference internal" href="ch03.html#ch03-12"><em>3.12</em></a>, для получения порядка, в котором оцениваются предварительные условия.</p>
+<p>Существуют проблемы относительно проверки, когда работа маршрутизаторов зависит от отправителя. Когда Exim проверяет адрес в установке <strong>errors_to</strong>, он устанавливает отправителя в нулевую (null) строку. Когда для проверки конфигурационного файла используется параметр командной строки <strong>-bt</strong>, также необходимо использовать параметр <strong>-f</strong>, для установки соответствующего отправителя. Для входящей почты, отправитель не установлен, когда проверяется отправитель, но он доступен, когда проверяется любой получатель. Если включена команда SMTP VRFY, она должна использоваться после MAIL, если имеет значение адрес отправителя.</p>
+<table border="1" class="docutils" id="index-35">
+<colgroup>
+<col width="38%" />
+<col width="19%" />
+<col width="21%" />
+<col width="22%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>translate_ip_address</strong></td>
+<td>Use: routers</td>
+<td>Type: string†</td>
+<td>Default: unset</td>
+</tr>
+</tbody>
+</table>
+<p>Существует несколько редких сетевых ситуаций (например, пакетная радиосвязь), когда полезна возможность транслировать IP-адрес, созданный нормальными механизмами маршрутизации, в другие IP-адреса, выполняя свого рода ручную маршрутизацию. Это должно быть сделано, лишь если нормальная IP-маршрутизация TCP/IP стека неадекватна, или не работает. Поскольку это - чрезвычайно необычное требование, код для поддержки этого параметра не включается в исполняемый файл Exim`a, если в <em>Local/Makefile</em> не установлен параметр</p>
+<div class="highlight-python"><pre>SUPPORT_TRANSLATE_IP_ADDRESS=yes.</pre>
+</div>
+<p>Строка <strong>translate_ip_address</strong> раскрывается для каждого IP-адреса созданного маршрутизатором, с установкой созданного IP-адреса в $host_address. Если раскрытие принудительно неудачно, никаких действий не предпринимается. Для любых других ошибок раскрытия, доставка сообщения задерживается. Если результат раскрытия - IP-адрес, он заменяет оригинальный адрес; иначе, предполагается что результат является именем хоста, он ищется используя <em>gethostbyname()</em> (или <em>getipnodebyname()</em>, когда она доступна) для создания одного и более замещающих IP-адресов. Например, для отмены всех адресов в некоторых сетях, к маршрутизатору может быть добавлено такое:</p>
+<div class="highlight-python"><pre>translate_ip_address = \
+   ${lookup{${mask:$host_address/26}}lsearch{/some/file}\
+           {$value}fail}}</pre>
+</div>
+<p>Файл содержал бы такие строки:</p>
+<div class="highlight-python"><pre>10.2.3.128/26    some.host
+10.8.4.34/26     10.44.8.15</pre>
+</div>
+<p>Вы не должны использовать это средство, если вы не понимаете, что оно делает.</p>
+<table border="1" class="docutils" id="index-36">
+<colgroup>
+<col width="25%" />
+<col width="23%" />
+<col width="25%" />
+<col width="27%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>transport</strong></td>
+<td>Use: routers</td>
+<td>Type: string†</td>
+<td>Default: unset</td>
+</tr>
+</tbody>
+</table>
+<p>Этот параметр определяет транспорт который будет использован когда маршрутизатор принимает адрес, и устанавливает его для доставки. Транспорт никогда не бывает нужен, если маршрутизатор используется лишь для проверки. Значение параметра раскрывается во время маршрутизации, после раскрытия <strong>errors_to</strong>, <strong>headers_add</strong> и <strong>headers_remove</strong>, и результта должен быть именем одного из настроенных транспортов. Если это не так, доставка задерживается.</p>
+<p>Параметр <strong>transport</strong> не используется маршрутизатором <strong>redirect</strong>, но он имеет некоторые частные параметры которые устанавливают транспорты для трубы (pipe) и доставки в файл (смотрите главу <a class="reference internal" href="ch22.html#ch22-00"><em>22</em></a>).</p>
+<table border="1" class="docutils" id="index-37">
+<colgroup>
+<col width="44%" />
+<col width="17%" />
+<col width="19%" />
+<col width="20%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>transport_current_directory</strong></td>
+<td>Use: routers</td>
+<td>Type: string†</td>
+<td>Default: unset</td>
+</tr>
+</tbody>
+</table>
+<p>Этот параметр ассоциирует текущую директорию с любым адресом, который маршрутизируется локальным транспортом. Это может происходить потому, что транспорт явно сконфигурирован для маршрутизатора, или потому что моздается доставка в файл или трубу. В течение процесса доставки (т.е. в транспортное время), строка этого параметра раскрывается и устанавливает текущую директорию, исключая замещения установкой транспорта. Если раскрытие неудачно по любой причине, включая принудительную неудачу, ошибка записывается в лог и доставка задерживается. Смотрите главу <a class="reference internal" href="ch23.html#ch23-00"><em>23</em></a>, для получения деталей о окружении локальной доставки.</p>
+<table border="1" class="docutils" id="index-38">
+<colgroup>
+<col width="39%" />
+<col width="17%" />
+<col width="18%" />
+<col width="25%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>transport_home_directory</strong></td>
+<td>Use: routers</td>
+<td>Type: string†</td>
+<td>Default: see below</td>
+</tr>
+</tbody>
+</table>
+<p>Этот параметр ассоциирует домашнюю директорию с любым адресом, который маршрутизируется локальным транспортом. Это может происходить потому, что транспорт явно сконфигурирован для маршрутизатора, или потому что создается доставка в файл или трубу. В течение процесса доставки (т.е. в транспортное время), строка этого параметра раскрывается и устанавливает домашнюю директорию, исключая замещения установкой <strong>home_directory</strong> в транспорте. Если раскрытие неудачно по любой причине, включая принудительную неудачу, ошибка записывается в лог и доставка задерживается.</p>
+<p>Если транспорт не определяет домашнюю директорию, и <strong>transport_home_directory</strong> не установлена для маршрутизатора, домашняя директория для транспорта берётся из данных пароля, если для маршрутизатора установлен параметр <strong>check_local_user</strong>. Иначе, она берётся из <strong>router_home_directory</strong>, если она установлена; если нет - домашняя директория для транспорта не устанавливается.</p>
+<p>Смотрите главу <a class="reference internal" href="ch23.html#ch23-00"><em>23</em></a>, для получения деталей о окружении локальной доставки.</p>
+<table border="1" class="docutils" id="index-39">
+<colgroup>
+<col width="20%" />
+<col width="24%" />
+<col width="28%" />
+<col width="28%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>unseen</strong></td>
+<td>Use: routers</td>
+<td>Type: boolean†</td>
+<td>Default: false</td>
+</tr>
+</tbody>
+</table>
+<p>Результат раскрытия строки, для этого параметра, должен быть допустимым булевым значением, т.е. одной из строк “yes”, “no”, “true”, или “false”. Любой другой результат вызывает ошибку, и доставка задерживается. Если раскрытие принудительно неудачно, используется значение по умолчанию этого параметра(ложь). Другие ошибки вызывают задержку доставки.</p>
+<p>Когда этот параметр установлен в истину, маршрутизация не прекращается, если маршрутизатор принимает адрес. Вместо этого, копия входящего адреса передаётся следующему маршрутизатору, замещая ложную установку параметра <strong>more</strong>. Есть небольшая точка, в установке <strong>more</strong> в ложь, если <strong>unseen</strong> всегда истинно, но это может быть полезным в случаях, когда значение <strong>unseen</strong> содержит раскрываемый элемент (поэтому, оно иногда истинно, а иногда ложно).</p>
+<p>Установка параметра <strong>unseen</strong> имеет эффект подобный команде <strong>unseen</strong> в файлых фильтров. Она может использоваться для доставки копий сообщений на другой адрес, когда, также, необходимо выполнить нормальную доставку. В действительности, текущий адрес превращается в “родителя”, имеющего двух детей - один из которых доставляется как задано в маршрутизаторе, и клон, продолжающий дальнейшую маршрутизацию. Поэтому, <strong>unseen</strong> не может быть объединён с параметром <strong>one_time</strong>, в маршрутизаторе <strong>redirect</strong>.</p>
+<div class="admonition warning">
+<p class="first admonition-title">Предупреждение</p>
+<p class="last">Добавленные к адресу строки заголовков (или определённые для удаления), этим или предыдущим маршрутизаторами, затрагивают лишь “невидимую” копию сообщения. Клон, который продолжает обрабатываться будущими маршрутизаторами, не содержит добавленный или определённых на удаление заголовков. Для маршрутизатора <strong>redirect</strong>, если моздан адрес - такой же как и входящий адрес, это может индицировать дубликацию адресов с различной модификацией заголовков. Exim не дублирует доставки (за исключением определённых случаев, в трубы - смотрите раздел <a class="reference internal" href="ch22.html#ch22-07"><em>22.7</em></a>), но нездано от какого дубликата отказаться, таким образом этой неопределённой ситуации необходимо избегать. Может быть полезен параметр <strong>repeat_use</strong>, маршрутизатора <strong>redirect</strong>.</p>
+</div>
+<p>В отличие от обработки модификации заголовков, любые данные установленные параметром <strong>address_data</strong> в текущем или предыдущем маршрутизаторе, передаются последующим маршрутизаторам.</p>
+<table border="1" class="docutils" id="index-40">
+<colgroup>
+<col width="16%" />
+<col width="24%" />
+<col width="25%" />
+<col width="35%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>user</strong></td>
+<td>Use: routers</td>
+<td>Type: string†</td>
+<td>Default: see below</td>
+</tr>
+</tbody>
+</table>
+<p>Когда маршрутизатор стоит в очереди на адрес для транспорта, и транспорт не определяет пользователя, заданный тут пользователь используется при работе процесса доставки. Пользователь может быть задан числом или по имени. Если раскрытие неудачно, ошибка записывается в лог и доставка задерживается. Также, этот пользователь используется маршрутизатором <strong>redirect</strong>, при работе файла фильтра. По умолчанию она не задана, кроме случаев когда установлен параметр <strong>check_local_user</strong>. В этом случае, значение по умолчанию берётся из информации пароля. Если пользователь задан по имени, и “group” не задана, группа ассоциируется с используемым пользователем. Смотрите обсуждение <strong>initgroups</strong> и <strong>initgroups</strong> в главе <a class="reference internal" href="ch23.html#ch23-00"><em>23</em></a>.</p>
+<table border="1" class="docutils" id="index-41">
+<colgroup>
+<col width="20%" />
+<col width="27%" />
+<col width="27%" />
+<col width="27%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>verify</strong></td>
+<td>Use: routers‡</td>
+<td>Type: boolean</td>
+<td>Default: true</td>
+</tr>
+</tbody>
+</table>
+<p>Установка этого параметра имеет эффект установки <strong>verify_sender</strong> и <strong>verify_recipient</strong> в тоже значение.</p>
+<table border="1" class="docutils" id="index-42">
+<colgroup>
+<col width="27%" />
+<col width="24%" />
+<col width="24%" />
+<col width="25%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>verify_only</strong></td>
+<td>Use: routers‡</td>
+<td>Type: boolean</td>
+<td>Default: false</td>
+</tr>
+</tbody>
+</table>
+<p>Если этот параметр установлен, маршрутизатор используется лишь для проверки адреса, или тестирования с параметром <strong>-bv</strong>, не для фактической доставки, тестирования с параметром <strong>-bt</strong>, или запуска команды SMTP EXPN. Далее, она может быть ограничена только проверкой отправителя или получателя, путём <strong>verify_sender</strong> и <strong>verify_recipient</strong>.</p>
+<div class="admonition warning">
+<p class="first admonition-title">Предупреждение</p>
+<p class="last">Когда маршрутизатор работает проверяя адрес входящего SMTP сообщения, Exim не работает от root`a, а под своим собственным uid.  Если маршрутизатор обращается к каким-то файлам, вы должны удостовериться, что они доступны пользователю или группе Exim`a.</p>
+</div>
+<table border="1" class="docutils" id="index-43">
+<colgroup>
+<col width="34%" />
+<col width="22%" />
+<col width="22%" />
+<col width="22%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>verify_recipient</strong></td>
+<td>Use: routers‡</td>
+<td>Type: boolean</td>
+<td>Default: true</td>
+</tr>
+</tbody>
+</table>
+<p>Если этот параметр ложь, маршрутизатор пропускается при проверке адреса получателя, или тестировании проверки получателя, с использованием параметра командной строки <strong>-bv</strong>. Смотрите раздел <a class="reference internal" href="ch03.html#ch03-12"><em>3.12</em></a>, для получения порядка, в котором оцениваются предварительные условия.</p>
+<table border="1" class="docutils" id="index-44">
+<colgroup>
+<col width="30%" />
+<col width="23%" />
+<col width="23%" />
+<col width="23%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>verify_sender</strong></td>
+<td>Use: routers‡</td>
+<td>Type: boolean</td>
+<td>Default: true</td>
+</tr>
+</tbody>
+</table>
+<p>Если этот параметр ложь, маршрутизатор пропускается при проверке адреса отправителя, или тестировании проверки отправителя, с использованием параметра командной строки <strong>-bvs</strong>. Смотрите раздел <a class="reference internal" href="ch03.html#ch03-12"><em>3.12</em></a>, для получения порядка, в котором оцениваются предварительные условия.</p>
+<table class="docutils footnote" frame="void" id="id6" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id2">[1]</a></td><td>т.е. не видят добавленные - прим. lissyara</td></tr>
+</tbody>
+</table>
+<table class="docutils footnote" frame="void" id="id7" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id3">[2]</a></td><td>т.е. видят удалённые - прим. lissyara</td></tr>
+</tbody>
+</table>
+<table class="docutils footnote" frame="void" id="id8" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id4">[3]</a></td><td>посылается рикошет - прим. lissyara</td></tr>
+</tbody>
+</table>
+<table class="docutils footnote" frame="void" id="id9" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id5">[4]</a></td><td>хинтов - прим. lissyara</td></tr>
+</tbody>
+</table>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper"><h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="ch14.html" title="предыдущая глава">Главная конфигурация</a></li>
+      <li>Next: <a href="ch16.html" title="следующая глава">Маршрутизатор <strong>accept</strong></a></li>
+  </ul></li>
+</ul>
+  <h3>На этой странице</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/ch15.txt"
+           rel="nofollow">Показать исходный текст</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Быстрый поиск</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Искать" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Введите слова для поиска или имя модуля, класса или функции.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy; Copyright 2011, Exim Maintainers.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a>.
+    </div>
+  </body>
+</html>

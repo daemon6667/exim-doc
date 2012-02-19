@@ -1,0 +1,121 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Добавление новых драйверов или типов поисков &mdash; Specification of the Exim Mail Transfer Agent 4.70 documentation</title>
+    
+    <link rel="stylesheet" href="_static/flasky.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '4.70',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/translations.js"></script>
+    <link rel="top" title="Specification of the Exim Mail Transfer Agent 4.70 documentation" href="index.html" />
+    <link rel="prev" title="Поддержка DKIM (DOMAINKEYS IDENTIFIED MAIL (почты идентифицированной доменными ключами)) - RFC 4871" href="ch54.html" />
+   
+  
+  <link media="only screen and (max-device-width: 480px)" href="_static/small_flask.css" type= "text/css" rel="stylesheet" />
+
+  </head>
+  <body>
+    <div class="related">
+      <h3>Просмотр</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="Словарь-указатель"
+             accesskey="I">словарь</a></li>
+        <li class="right" >
+          <a href="ch54.html" title="Поддержка DKIM (DOMAINKEYS IDENTIFIED MAIL (почты идентифицированной доменными ключами)) - RFC 4871"
+             accesskey="P">предыдущий</a> |</li>
+        <li><a href="index.html">Specification of the Exim Mail Transfer Agent 4.70 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="ch55-00">
+<span id="id1"></span><h1>Добавление новых драйверов или типов поисков<a class="headerlink" href="#ch55-00" title="Ссылка на этот заголовок">¶</a></h1>
+<p>Следующие действия должны быть предприняты для добавления нового маршрутизатора, транспорта, аутентификатора или типа поиска к Exim`y:</p>
+<ol class="arabic">
+<li><p class="first">Выберите название для драйвера или типа поиска, которое не конфиликтует с любыми существующими именами; в дальнейшем, я буду использовать “newdriver”.</p>
+</li>
+<li><p class="first">Добавьте в <em>src/EDITME</em> строку:</p>
+<div class="highlight-python"><pre>&lt;type&gt;_NEWDRIVER=yes</pre>
+</div>
+<p>где “&lt;type&gt;” - ROUTER, TRANSPORT, AUTH, или LOOKUP. Если, по умолчанию, код не должен быть включен в исполняемый файл, закомментируте эту строку. Также вы должны добавить любые уместные комментарии о драйвере или типе поиска.</p>
+</li>
+<li><p class="first">Добавьте в <em>src/config.h.defaults</em> строку:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="c">#define &lt;type&gt;_NEWDRIVER</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">Отредактируйте <em>src/drtables.c</em>, добавьте условный код к частному заголовку и создайте запись в таблице как сделано для всех других драйверов и типов поиска.</p>
+</li>
+<li><p class="first">Отредактируйте <em>Makefile</em> в соответствующий подкаталог (<em>src/routers</em>, <em>src/transports</em>, <em>src/auths</em> или <em>src/lookups</em>); добавьте строку для нового драйвера или типа поиска, и добавьте его к определению OBJ.</p>
+</li>
+<li><p class="first">Создайте <em>newdriver.h</em> и <em>newdriver.c</em> в соответствующем подкаталоге <em>src</em>.</p>
+</li>
+<li><p class="first">Отредактируйте <em>scripts/MakeLinks</em> и добавьте команды для связи файлов <em>.h</em> и <em>.c</em>, как для других драйверов и поисков.</p>
+</li>
+</ol>
+<p>Затем, всё что вам нужно сделать - написать код! Хороший способ начать, состоит в том, чтобы сделать проформу путём копирования существующего модуля того же типа, глобально изменяя все встречи с именем, и вырезая большинство кода. Отметьте, что любые создаваемые вами параметры должны быть перечислены в алфавитном порядке, поскольку поиск по таблицам производится с использованием бинарной процедуры <em>chop</em>.</p>
+<p>Ожидается, что в каждом подкаталоге <em>src</em> присутствует файл <em>README</em>.</p>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper"><h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="ch54.html" title="предыдущая глава">Поддержка DKIM (DOMAINKEYS IDENTIFIED MAIL (почты идентифицированной доменными ключами)) - <strong>RFC 4871</strong></a></li>
+  </ul></li>
+</ul>
+  <h3>На этой странице</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/ch55.txt"
+           rel="nofollow">Показать исходный текст</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Быстрый поиск</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Искать" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Введите слова для поиска или имя модуля, класса или функции.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy; Copyright 2011, Exim Maintainers.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a>.
+    </div>
+  </body>
+</html>

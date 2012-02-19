@@ -1,0 +1,159 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Встроенный Perl &mdash; Specification of the Exim Mail Transfer Agent 4.70 documentation</title>
+    
+    <link rel="stylesheet" href="_static/flasky.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '4.70',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/translations.js"></script>
+    <link rel="top" title="Specification of the Exim Mail Transfer Agent 4.70 documentation" href="index.html" />
+    <link rel="next" title="Запуск сервиса, и использование сетевых интерфейсов" href="ch13.html" />
+    <link rel="prev" title="Раскрываемые строки" href="ch11.html" />
+   
+  
+  <link media="only screen and (max-device-width: 480px)" href="_static/small_flask.css" type= "text/css" rel="stylesheet" />
+
+  </head>
+  <body>
+    <div class="related">
+      <h3>Просмотр</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="Словарь-указатель"
+             accesskey="I">словарь</a></li>
+        <li class="right" >
+          <a href="ch13.html" title="Запуск сервиса, и использование сетевых интерфейсов"
+             accesskey="N">следующий</a> |</li>
+        <li class="right" >
+          <a href="ch11.html" title="Раскрываемые строки"
+             accesskey="P">предыдущий</a> |</li>
+        <li><a href="index.html">Specification of the Exim Mail Transfer Agent 4.70 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="perl">
+<span id="ch12-00"></span><h1>Встроенный Perl<a class="headerlink" href="#perl" title="Ссылка на этот заголовок">¶</a></h1>
+<p>Exim может быть собран с встроенным интерпретатором perl. Когда это сделано, подпрограммы Perl можно вызывать как часть процесса раскрытия. Для использования поддержки Perl, в системе должен быть установлен Perl, версии не ниже 5.004, или более новой. Для включения встроенного интерпретатора perl в бинарный файл Exim&#8217;a, включите строку:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">EXIM_PERL</span> <span class="o">=</span> <span class="n">perl</span><span class="o">.</span><span class="n">o</span>
+</pre></div>
+</div>
+<p>в ваш <em>Local/Makefile</em>, и затем соберите Exim обычным способом.</p>
+<div class="section" id="ch12-01">
+<span id="id1"></span><h2>Настройка использования Perl<a class="headerlink" href="#ch12-01" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Доступ к подпрограммам Perl осуществляется через глобальную конфигурационный параметр  <strong>perl_startup</strong>, и оператор раскрытия <strong>${perl ...}</strong>. Если параметр <strong>perl_startup</strong> отсутствует в конфигурационном файле Exim, тогда интерпретатор Perl не запускается, и для Exim почти нет накладных расходов (т.к. ни одна библиотек Perl не использует страницы памяти). Если параметр <strong>perl_startup</strong> присутствует, тогда ассоциированное значение берётся чтобы быть кодом Perl, выполняемым во вновь созданном интерпретаторе Perl.</p>
+<p>Значение <strong>perl_startup</strong> не раскрывается Exim&#8217;ом, таким образом, вам не нужно добавлять символ обратного слэша перед символами имеющими специальное значение. Параметр, обычно, выглядит так:</p>
+<div class="highlight-python"><pre>perl_startup = do '/etc/exim.pl'</pre>
+</div>
+<p>где <em>/etc/exim.pl</em> - код Perl, определяющий любые подпрограммы, которые вы хотите использовать с Exim. Exim может быть сконфигурирован как для немедленного запуска интерпретатора Perl сразу, так и для запуска интерпретатора Perl при первом обращении к нему. Старт интерпретатора в начале, гарантирует, что действие будет сделано в то время, когда Exim имеет setuid привилегии, но может вызвать ненужные накладные расходы, если Perl, фактически, не используется в выполняемой части. Кроме этого, отметьте, что это не означает, что Exim работает от root`a, при вызове Perl`a в более поздние моменты времени. По умолчанию, интерпретатор запускается только когда он необходим, и это может быть изменено в двух местах:</p>
+<ul class="simple">
+<li>Установкой параметра <strong>perl_at_start</strong> (булев параметр) в конфигурации запрашивается запуск при начале работы Exim`a.</li>
+<li>Параметр командной строки <strong>-ps</strong>, также вызывает запуск вместе с Exim`ом, перезаписывая значение <strong>perl_at_start</strong>.</li>
+</ul>
+<p>Также, есть параметр командной строки <strong>-pd</strong> (для задержки), подавляющая начальный запуск, даже если установлена <strong>perl_at_start</strong>.</p>
+</div>
+<div class="section" id="ch12-02">
+<span id="id2"></span><h2>Вызов подпрограмм Perl<a class="headerlink" href="#ch12-02" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Когда конфигурационный файл включает параметр <strong>perl_startup</strong>, вы можете использовать элемент раскрытия строк для вызова подпрограмм Perl, заданных кодом <strong>perl_startup</strong>. Оператор используется в любой из следующих форм:</p>
+<div class="highlight-python"><pre>${perl{foo}}
+${perl{foo}{argument}}
+${perl{foo}{argument1}{argument2} ... }</pre>
+</div>
+<p>вызывающих подпрограмму <strong>foo</strong> с заданными параметрами. Может быть передано, максимум, восемь параметров. Передача большего числа приводит к ошибке раскрытия, с сообщением об ошибке, такой формы:</p>
+<div class="highlight-python"><pre>Too many arguments passed to Perl subroutine "foo" (max is 8)</pre>
+</div>
+<p>Возвращаемое значение подпрограммы Perl оценивается в скалярных величинах до возвращения его Exim`у, чтобы быть вставленным в раскрытую строку. Если возвращённое значение - <em>undef</em>, раскрытие терпит принудительную неудачу таким же образом, как и явный “fail” в элементе <strong>if</strong> или <strong>lookup</strong>. Если подпрограмма прерывается повинуясь функции Perl`a <strong>die</strong>, раскрытие неудачно, с сообщением об ошибке, которое передано <strong>die</strong>.</p>
+</div>
+<div class="section" id="exim-a-perl-a">
+<span id="ch12-03"></span><h2>Вызов функций Exim`a из Perl`a<a class="headerlink" href="#exim-a-perl-a" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Внутри любого кода Perl, вызванного из Exim, доступна функция <em>Exim::expand_string()</em>, для обратного вызова в функцию раскрытия Exim. Для примера, код Perl</p>
+<div class="highlight-python"><pre>my $lp = Exim::expand_string('$local_part');</pre>
+</div>
+<p>сделает текущую переменную Exim`a <tt class="docutils literal"><span class="pre">$local_part</span></tt>, доступной в переменной Perl <tt class="docutils literal"><span class="pre">$lp</span></tt>. Отметтьте, что тут одиночные кавычки, а не двойные, для предотвращения интепретации <tt class="docutils literal"><span class="pre">local_part</span></tt> как переменной Perl.</p>
+<p>Если раскрытие строки принудительно сделано неуспешным, элементом “fail”, результат <em>Exim::expand_string()</em> - <strong>undef</strong>. Если в строке раскрытия есть синтаксическая ошибка, из оригинального раскрытия строки вызывается ошибка Perl, с соответсвующим сообщением об ошибке, таким же образом как будто использовалось <strong>die</strong>.</p>
+<p>Внутри кода Perl доступны две другие функции Exim. <em>Exim::debug_write()</em> записывает строку в стандартный поток ошибок, если включена отладка Exim. Если вы хотите добавлять в конец строки символ новой строки, вы его должны подставить. <em>Exim::log_write()</em> пишет строки в основной лог Exim`a, добавляя в начале метку времени. В этом случае, вам не нужно добавлять перевод строки.</p>
+</div>
+<div class="section" id="ch12-04">
+<span id="id3"></span><h2>Использование стандартного вывода и ошибок Perl`ом<a class="headerlink" href="#ch12-04" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Вы не должны записывать в стандартный поток ошибок, или стандартный вывод изнутри вашего кода Perl, поскольку не заданы их установки. В версиях Exim до 4.50, это возможно для стандартного вывода или стандартного потока ошибок, для ссылки на SMTP-соединение в течение приёма сообщения даемоном.Запись в этот поток вызывает хаос. С Exim 4.50, прогресс, стандартные потоки ошибок и вывода соединены с <em>/dev/null</em>, в даемоне. Хаос отсутствует, но вывод потерян.</p>
+<p>Утверждение Perl <strong>warn</strong>, по умолчанию, пишется в стандартный поток ошибок. Вызовы <strong>warn</strong> могут быть встроены в модули Perl, которые вы используете, но которые не контролируете. Когда Exim запускает интерпретатор Perl, он принимает меры для записи вывода утверждений <strong>warn</strong> в главный лог Exim`a. Вы можете изменить это, путём включения соответствующего параметра Perl где-то внутри кода. Например, чтобы полностью отказаться от вывода <strong>warn</strong>, вам необходимо:</p>
+<div class="highlight-python"><pre>$SIG{__WARN__} = sub { };</pre>
+</div>
+<p>Всякий раз, когда появляется <strong>warn</strong>, вызывается безымянная программа. В этом примере, код программы пуст, таким образом, она ничего не делает, но вы можете включить любой код Perl, который вам нравится. Текст сообщения <strong>warn</strong> передаётся как первый параметра подпрограммы.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Содержание</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Встроенный Perl</a><ul>
+<li><a class="reference internal" href="#ch12-01">Настройка использования Perl</a></li>
+<li><a class="reference internal" href="#ch12-02">Вызов подпрограмм Perl</a></li>
+<li><a class="reference internal" href="#exim-a-perl-a">Вызов функций Exim`a из Perl`a</a></li>
+<li><a class="reference internal" href="#ch12-04">Использование стандартного вывода и ошибок Perl`ом</a></li>
+</ul>
+</li>
+</ul>
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="ch11.html" title="предыдущая глава">Раскрываемые строки</a></li>
+      <li>Next: <a href="ch13.html" title="следующая глава">Запуск сервиса, и использование сетевых интерфейсов</a></li>
+  </ul></li>
+</ul>
+  <h3>На этой странице</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/ch12.txt"
+           rel="nofollow">Показать исходный текст</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Быстрый поиск</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Искать" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Введите слова для поиска или имя модуля, класса или функции.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy; Copyright 2011, Exim Maintainers.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a>.
+    </div>
+  </body>
+</html>

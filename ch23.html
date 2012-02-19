@@ -1,0 +1,184 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Среда для работы локальных транспортов &mdash; Specification of the Exim Mail Transfer Agent 4.70 documentation</title>
+    
+    <link rel="stylesheet" href="_static/flasky.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '4.70',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/translations.js"></script>
+    <link rel="top" title="Specification of the Exim Mail Transfer Agent 4.70 documentation" href="index.html" />
+    <link rel="next" title="Общие параметры для транспортов" href="ch24.html" />
+    <link rel="prev" title="Маршрутизатор redirect" href="ch22.html" />
+   
+  
+  <link media="only screen and (max-device-width: 480px)" href="_static/small_flask.css" type= "text/css" rel="stylesheet" />
+
+  </head>
+  <body>
+    <div class="related">
+      <h3>Просмотр</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="Словарь-указатель"
+             accesskey="I">словарь</a></li>
+        <li class="right" >
+          <a href="ch24.html" title="Общие параметры для транспортов"
+             accesskey="N">следующий</a> |</li>
+        <li class="right" >
+          <a href="ch22.html" title="Маршрутизатор redirect"
+             accesskey="P">предыдущий</a> |</li>
+        <li><a href="index.html">Specification of the Exim Mail Transfer Agent 4.70 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="ch23-00">
+<span id="id1"></span><h1>Среда для работы локальных транспортов<a class="headerlink" href="#ch23-00" title="Ссылка на этот заголовок">¶</a></h1>
+<p>Локальные транспорты обрабатывают доставки в файлы и трубы (pipe). (О транспорте <strong>autoreply</strong> можно думать как о доставке в трубу.) Exim всегда выполняет транспорты в субпроцессах, под заданным gid и uid. Типичная доставка в локальные почтовые ящики выполняется под gid и uid локального пользователя.</p>
+<p>Также, Exim устанавливает специфическую текущую директорию, когда работает транспорт; для некоторых транспортов, также уместна установка домашней директории. Единственный транспорт, устанавливающий переменные окружения - <strong>pipe</strong>; для получения дополнительных деталей, смотрите раздел <a class="reference internal" href="ch29.html#ch29-04"><em>29.4</em></a>.</p>
+<p>Значение, используемое для uid, gid, и директорий может приходить из нескольких различных мест. Во многих случаях, маршрутизатор, обрабатывающий адрес, ассоциирует настройки этого адреса как результат его параметра <strong>check_local_user</strong>, <strong>group</strong> или <strong>user</strong>. Однако, значения также можно задать в собственной конфигурации транспорта, и они замещают любые приходящие из маршрутизатора.</p>
+<div class="section" id="ch23-01">
+<span id="id2"></span><h2>Одновременные доставки<a class="headerlink" href="#ch23-01" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Если одновременно приходят два различных сообщения, для одного и того же пользователя, то, вероятно, два процесса доставки выполнятся одновременно. Когда для записи в файл используется транспорт <strong>appendfile</strong>, Exim применяет правила блокировки, чтобы помешать одновременным процессам записывать в один файл одновременно.</p>
+<p>Однако, когда вы используете транспорт <strong>pipe</strong>, вам решать, как упорядочивать необходимую блокировку. Вот, глупый пример:</p>
+<div class="highlight-python"><pre>my_transport:
+  driver = pipe
+  command = /bin/sh -c 'cat &gt;&gt;/some/file'</pre>
+</div>
+<p>Он, должен записывать сообщение в конце файла. Однако, если придут два сообщения одновременно, в файле будет свалка. Вы можете использовать утилиту <em>exim_lock</em> (смотрите раздел <a class="reference internal" href="ch50.html#ch50-15"><em>50.15</em></a>), для блокировки файла с использованием того же алгоритма, который использует Exim.</p>
+</div>
+<div class="section" id="uid-gid">
+<span id="ch23-02"></span><h2>Uid`ы и gid`ы<a class="headerlink" href="#uid-gid" title="Ссылка на этот заголовок">¶</a></h2>
+<p>У всех транспортов есть параметр <strong>group</strong> и <strong>user</strong>. Если установлен <strong>group</strong>, он замещает любую группу, заданную маршрутизатором в адресе, даже если для транспорта не задана параметр <strong>user</strong>. Это позволяет, например, производить локальную доставку почты под uid получателя (установленного маршрутизатором), но в специальной группе (установленной транспортом). Например:</p>
+<div class="highlight-python"><pre># Routers ...
+# User/group are set by check_local_user in this router
+local_users:
+  driver = accept
+  check_local_user
+  transport = group_delivery
+
+# Transports ...
+# This transport overrides the group
+group_delivery:
+  driver = appendfile
+  file = /var/spool/mail/$local_part
+  group = mail</pre>
+</div>
+<p>Если для транспорта установлен параметр <strong>user</strong>, её значение переопределяет, то, что установлено маршрутизатором в адресе. Если <strong>user</strong> задано не в виде числа, и незадана <strong>group</strong>, gid ассоциируется с используемым пользователем. Если <strong>user</strong> в виде числа, <strong>group</strong> должна быть задана.</p>
+<p>Когда uid берётся из конфигурации транспорта, для связанных с этим uid групп вызывается функция <em>initgroups()</em>, если для транспорта установлен параметр <strong>initgroups</strong>. Когда uid не задан транспортом, но ассоциирован маршрутизатором с адресом, параметр для вызова <em>initgroups()</em> берётся из конфигурации маршрутизатора.</p>
+<p>Транспорт <strong>pipe</strong> содержит специальный параметр - <strong>pipe_as_creator</strong>. Если она задана, и не задана <strong>user</strong>, используется uid процесса, вызвавшего Exim для передачи сообщения, и если не задана <strong>group</strong>, также используется оригинальный gid.</p>
+<p>Это - предпочтительный детализованный порядок получения gid; используется первый из установленных значений:</p>
+<ul class="simple">
+<li>Параметра <strong>group</strong> транспорта;</li>
+<li>Параметра <strong>group</strong> маршрутизатора;</li>
+<li>Gid ассоциированный с пользовательской настройкой маршрутизатора, или как результат <strong>check_local_user</strong>, или явного нечислового значения парамтера <strong>user</strong>;</li>
+<li>Группа, ассоциированная с нечисловым значением параметра <strong>user</strong> транспорта;</li>
+<li>В транспорте <strong>pipe</strong>, gid создателя, если <strong>deliver_as_creator</strong> установлена, и uid - uid создателя;</li>
+<li>Gid Exim`a, если по умолчанию используется uid Exim`a.</li>
+</ul>
+<p>Если, например, пользователь определён в маршрутизаторе в цифровой форме, и в нём нет установок группы, нет доступного gid. В этой ситуации, происходит ошибка. Это отличается от uid, для которого всегда есть значение по умолчанию. Используется первая из установленных значний:</p>
+<ul class="simple">
+<li>Параметра <strong>user</strong> транспорта;</li>
+<li>В транспорте <strong>pipe</strong>, uid создателя, если установлен параметр <strong>deliver_as_creator</strong>;</li>
+<li>Параметра <strong>user</strong> маршрутизатора;</li>
+<li>Параметра <strong>check_local_user</strong> маршрутизатора;</li>
+<li>Uid Exim`a.</li>
+</ul>
+<p>Разумеется, всё равно будет ошибка, если выбранный uid в списке <strong>never_users</strong>.</p>
+</div>
+<div class="section" id="ch23-03">
+<span id="id3"></span><h2>Текущая и домашняя директории<a class="headerlink" href="#ch23-03" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Маршрутизаторы могут устанавливать текущую и домашнюю директории для локальных транспортов путём установки параметра <strong>transport_current_directory</strong> и <strong>transport_home_directory</strong>. Однако, если для транспорта установлены параметры <strong>current_directory</strong> и <strong>home_directory</strong>, они переопределяют значения маршрутизатора. В деталях, домашняя директория для локального транспорта берётся из первого установленного значения:</p>
+<ul class="simple">
+<li>Параметра <strong>home_directory</strong>, в транспорте;</li>
+<li>Параметра <strong>transport_home_directory</strong> в маршрутизаторе;</li>
+<li>Данных пароля, если в маршрутизаторе установлена <strong>check_local_user</strong>;</li>
+<li>Параметра <strong>router_home_directory</strong>, в маршрутизаторе.</li>
+</ul>
+<p>Текущая директория берётся из первого установленного значения:</p>
+<ul class="simple">
+<li>Параметра транспорта <strong>current_directory</strong>;</li>
+<li>Параметра <strong>transport_current_directory</strong>, маршрутизатора.</li>
+</ul>
+<p>Если ни маршрутизатор, ни транспорт не устанавливают текущую директорию, Exim использует значение домашней директории, если оно установлено. Иначе, до работы локального транспорта, он устанавливает текущую директорию в “/”.</p>
+</div>
+<div class="section" id="ch23-04">
+<span id="id4"></span><h2>Переменные раскрытия произведённые из адреса<a class="headerlink" href="#ch23-04" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Обычно, локальная доставка обрабатывает один адрес, и в этом случае, переменные типа $domain и $local_part установлены в течение локальных доставок. Однако, в некоторых обстоятельствах, может быть обработано более одного адреса за раз (например, при записи пакетного SMTP для дальнейшей передачи другими средствами). В этом случае, переменные, ассоциированные с локальной частью, никогда не устанавливаются, $domain устанавливается лишь если адреса имеют одинаковый домен, $original_domain не устанавливается никогда.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Содержание</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Среда для работы локальных транспортов</a><ul>
+<li><a class="reference internal" href="#ch23-01">Одновременные доставки</a></li>
+<li><a class="reference internal" href="#uid-gid">Uid`ы и gid`ы</a></li>
+<li><a class="reference internal" href="#ch23-03">Текущая и домашняя директории</a></li>
+<li><a class="reference internal" href="#ch23-04">Переменные раскрытия произведённые из адреса</a></li>
+</ul>
+</li>
+</ul>
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="ch22.html" title="предыдущая глава">Маршрутизатор <strong>redirect</strong></a></li>
+      <li>Next: <a href="ch24.html" title="следующая глава">Общие параметры для транспортов</a></li>
+  </ul></li>
+</ul>
+  <h3>На этой странице</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/ch23.txt"
+           rel="nofollow">Показать исходный текст</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Быстрый поиск</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Искать" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Введите слова для поиска или имя модуля, класса или функции.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy; Copyright 2011, Exim Maintainers.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a>.
+    </div>
+  </body>
+</html>

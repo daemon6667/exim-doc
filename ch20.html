@@ -1,0 +1,416 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Маршрутизатор manualroute &mdash; Specification of the Exim Mail Transfer Agent 4.70 documentation</title>
+    
+    <link rel="stylesheet" href="_static/flasky.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '4.70',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/translations.js"></script>
+    <link rel="top" title="Specification of the Exim Mail Transfer Agent 4.70 documentation" href="index.html" />
+    <link rel="next" title="Маршрутизатор queryprogram" href="ch21.html" />
+    <link rel="prev" title="Маршрутизатор iplookup" href="ch19.html" />
+   
+  
+  <link media="only screen and (max-device-width: 480px)" href="_static/small_flask.css" type= "text/css" rel="stylesheet" />
+
+  </head>
+  <body>
+    <div class="related">
+      <h3>Просмотр</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="Словарь-указатель"
+             accesskey="I">словарь</a></li>
+        <li class="right" >
+          <a href="ch21.html" title="Маршрутизатор queryprogram"
+             accesskey="N">следующий</a> |</li>
+        <li class="right" >
+          <a href="ch19.html" title="Маршрутизатор iplookup"
+             accesskey="P">предыдущий</a> |</li>
+        <li><a href="index.html">Specification of the Exim Mail Transfer Agent 4.70 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="manualroute">
+<span id="ch20-00"></span><h1>Маршрутизатор <strong>manualroute</strong><a class="headerlink" href="#manualroute" title="Ссылка на этот заголовок">¶</a></h1>
+<p>Маршрутизатор <strong>manualroute</strong> назван таким образом потому что он предоставляет возможность “ручной” маршрутизации (manual routing) адреса в соответствии с его доменом. Главным образом он используется в случае, когда вы хотите маршрутизировать почту на удаленные узлы по собственным правилам, в обход обыкновенной DNS-маршрутизации, механизм которой выполняет поиск MX-записей. Однако, маршрутизатор <strong>manualroute</strong> также может выполнять маршрутизацию на локальные транспорты, такая возможность может оказаться полезной, если вы хотите сохранять сообщения для входящих (dial-in) узлов в локальных файлах.</p>
+<p>Маршрутизатор <strong>manualroute</strong> сравнивает список доменных шаблонов с доменной частью адреса, который он пытается маршрутизировать. Если совпадения не найдено, то маршрутизатор отклоняется. Каждый шаблон, ассоциированный с маршрутизатором представляет собой список узлов, а также другую дополнительную информацию, в которую может входить транспорт. Комбинация шаблона и других его данных называется “правилом маршрутизации”. Для шаблонов, не имеющих ассоциированного с ними транспорта, общий параметр маршрутизаторов <strong>transport</strong> должн определять соответствующий транспорт, если только маршрутизатор не используется исключительно для проверки (verification) (см. параметр <strong>verify_only</strong>).</p>
+<p>В случае, если маршрутизатор используется для проверки, то совпадения с доменным шаблоном достаточно для того, чтобы маршрутизатор принял адрес. В действительности, при маршрутизации адреса для доставки, доменная часть которого совпала с  доменным шаблоном, адрес помещается в очередь ассоциированного с маршрутизатором транспорта. Если транспорт не является локальным, то с шаблоном должен быть ассоциирован список узлов (host list); выполняется разрешение имен в IP-адреса, которые затем передаются транспорту вместе с почтовым адресом. Для локального транспорта список узлов (host list) является необязательным. Если он присутствует, то он передается в переменной $host как простая текстовая строка.</p>
+<p>Список правил маршрутизации может быть определен как строка, включенная (inline string) в параметр <strong>route_list</strong>, либо как данные, полученные путем поиска домена в файле или базе данных, определенных параметров <strong>route_data</strong>. Только одна из них может быть определена в пределах одного экземпляра маршрутизатор <strong>manualroute</strong>. Формат правил маршрутизации описан ниже, вслед за списком частных параметров <strong>manualroute</strong>.</p>
+<div class="section" id="ch20-01">
+<span id="id1"></span><h2>Частные парметры <strong>manualroute</strong><a class="headerlink" href="#ch20-01" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Частные параметры для <strong>manualroute</strong> таковы:</p>
+<table border="1" class="docutils" id="index-0">
+<colgroup>
+<col width="32%" />
+<col width="26%" />
+<col width="19%" />
+<col width="23%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>host_all_ignored</strong></td>
+<td>Use: manualroute</td>
+<td>Type: string</td>
+<td>Default: defer</td>
+</tr>
+</tbody>
+</table>
+<p>Смотрите <strong>host_find_failed</strong>.</p>
+<table border="1" class="docutils" id="index-1">
+<colgroup>
+<col width="32%" />
+<col width="25%" />
+<col width="19%" />
+<col width="24%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>host_find_failed</strong></td>
+<td>Use: manualroute</td>
+<td>Type: string</td>
+<td>Default: freeze</td>
+</tr>
+</tbody>
+</table>
+<p>Этот параметр управляет тем, что происходит когда <strong>manualroute</strong> пытается найти IP-адрес узла, а его не существует. Параметру может быть дано одно из следующих значений:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">decline</span>
+<span class="n">defer</span>
+<span class="n">fail</span>
+<span class="n">freeze</span>
+<span class="n">ignore</span>
+<span class="k">pass</span>
+</pre></div>
+</div>
+<p>Значение по умолчанию (freeze”) предполагает, что данное состояние - серьезная конфигурационная ошибка. Разница между значениями “pass” и “decline” состоит в том, что предыдущий пункт принудительно передает адрес следующему маршрутизатору (либо маршрутизатору, указанному в параметру <strong>pass_router</strong>), перекрывая параметр <strong>no_more</strong>, тогда как в недавнем прошлом адрес передавался следующему маршрутизатору только в случае истинности параметра <strong>more</strong>.</p>
+<p>Значение “ignore” заставляет Exim полностью игнорировать хост, чей IP адрес не может быть найден. Если все хосты в списке проигнорированы, поведение контролируется параметром <strong>host_all_ignored</strong>. Она может принимать те же самые значения, что и <strong>host_find_failed</strong>, за исключением того, что этот параметр не может быть установлена в “ignore”.</p>
+<p>Параметр <strong>host_find_failed</strong> применяется только к состоянию “не существует”; если поиск узла выдает временную ошибку, то доставка откладывается, только если не установлена общий параметр <strong>pass_on_timeout</strong>.</p>
+<table border="1" class="docutils" id="index-2">
+<colgroup>
+<col width="31%" />
+<col width="26%" />
+<col width="21%" />
+<col width="23%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>hosts_randomize</strong></td>
+<td>Use: manualroute</td>
+<td>Type: boolean</td>
+<td>Default: false</td>
+</tr>
+</tbody>
+</table>
+<p>Если установлен этот параметр, то порядок элементов в списке узлов внутри правила маршрутизации каждый раз выбирается случайным образом при обращении к нему, если не перекрывается параметром в самом правиле маршрутизации (см. ниже). Выбор порядка узлов в списке случайным образом может быть использован для первичного распределения нагрузки. Однако, если один и тот же маршрутизатор маршрутизирует более одного почтового адреса на один и тот же список узлов, то списки должны быть одинаковыми (даже если они расположены в случайном порядке) для решения о том, помещать ли несколько доставок в одну SMTP-транзакцию.</p>
+<p>В случае если параметр <strong>hosts_randomize</strong> истинна, список узлов может быть разделен на группы, порядок которых отдельно устанавливается случайным образом. Это делает возможным установить MX-подобное поведение. Границы между группами помечаются символом “+” в списке узлов. Например,</p>
+<div class="highlight-python"><pre>route_list = * host1:host2:host3:+:host4:host5</pre>
+</div>
+<p>Порядок, в котором сортируются первые три узла и порядок сортировки последних двух выбирается случайным образом при каждом использовании, но первая группа всегда располагается перед второй. Если параметр <strong>hosts_randomize</strong> не установлена, символ разделителя “+” в списке игнорируется. Если такой список узлов со случайной внутренней сортировкой, предается транспорту <strong>smtp</strong>, который также имеет подобный параметр <strong>hosts_randomize</strong>, то список заново не создается в случайном порядке.</p>
+<table border="1" class="docutils" id="index-3">
+<colgroup>
+<col width="25%" />
+<col width="28%" />
+<col width="23%" />
+<col width="25%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>route_data</strong></td>
+<td>Use: manualroute</td>
+<td>Type: string†</td>
+<td>Default: unset</td>
+</tr>
+</tbody>
+</table>
+<p>Если этот параметр определен, то ее значение должно раскрываться, т.к. она определяет данные правила маршрутизации. Обычно, раскрываемая строка включает в себя поиск на основе домена. Например:</p>
+<div class="highlight-python"><pre>route_data = ${lookup{$domain}dbm{/etc/routes}}</pre>
+</div>
+<p>Если раскрытие строки принудительно завершилось неудачей, либо результатом явилась пустая строка, то маршрутизатор пропускается. Другие причины неудачного раскрытия ведут к откладыванию доставки.</p>
+<table border="1" class="docutils" id="index-4">
+<colgroup>
+<col width="23%" />
+<col width="26%" />
+<col width="28%" />
+<col width="23%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>route_list</strong></td>
+<td>Use: manualroute</td>
+<td>Type: string list</td>
+<td>Default: unset</td>
+</tr>
+</tbody>
+</table>
+<p>Эта строка является списком правил маршрутизации в форме, определенной ниже. Обратите внимание, что в отличие от большинства списков строк, элементы здесь разделяются символом “;”. Так сделано, потому что данный список может содержать разделенные символом “:” списки узлов.</p>
+<table border="1" class="docutils" id="index-5">
+<colgroup>
+<col width="39%" />
+<col width="23%" />
+<col width="18%" />
+<col width="20%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>same_domain_copy_routing</strong></td>
+<td>Use: manualroute</td>
+<td>Type: boolean</td>
+<td>Default: false</td>
+</tr>
+</tbody>
+</table>
+<p>Обычно, адреса с одинаковой доменной частью маршрутизируются маршрутизатором <strong>manualroute</strong> на один и тот же список узлов. Однако, это не может быть допустимо, поскольку параметр и предусловия маршрутизатора могут использовать локальную часть адреса. Поэтому по умолчанию Exim маршрутизирует каждый адрес в сообщении независимо. DNS-серверы используют кэши, поэтому повторяющиеся DNS-запросы не являются помехой, и в любом случае личные сообщения редко имеют много получателей.</p>
+<p>Если у вас функционируют списки рассылки с большим количеством подписчиков из одного домена, и вы используете маршрутизатор <strong>manualroute</strong>, который не зависит от локальной части почтового адреса, то вы можете установить параметр <strong>same_domain_copy_routing</strong> во избежание повторяющихся DNS-запросов для одного и того же домена получателя в сообщении. В этом случае, если маршрутизатор <strong>manualroute</strong> маршрутизирует адрес удаленному транспорту, то все оставшиеся несмаршрутизированные адреса в сообщении, имеющие тот же домен получателя, перенаправляются автоматически без независимой обработки. Однако, это выполняется только в том случае, если не установлены параметры <strong>headers_add</strong> и <strong>headers_remove</strong>.</p>
+</div>
+<div class="section" id="route-list">
+<span id="ch20-02"></span><h2>Правила маршрутизации в параметре <strong>route_list</strong><a class="headerlink" href="#route-list" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Значением параметра <strong>route_list</strong> является строка, состоящая из последовательности правил маршрутизации, разделенных символом “;”. Если “;” указывается внутри самого правила, то оно должно быть представлено как “;;”. Пустые правила игнорируются. Формат каждого правила - следующий:</p>
+<div class="highlight-python"><pre>&lt;шаблон домена&gt;  &lt;список узлов&gt;  &lt;параметры&gt;</pre>
+</div>
+<p>Следующий пример состоит из двух правил, каждое из которых содержит простой доменный шаблон и не содержит параметров:</p>
+<div class="highlight-python"><pre>route_list = \
+       dict.ref.example  mail-1.ref.example:mail-2.ref.example ; \
+       thes.ref.example  mail-3.ref.example:mail-4.ref.example</pre>
+</div>
+<p>Три части правила разделяются пробелами. Шаблон домена и список узлов могут быть, если это необходимо, заключены в кавычки, и если это так, то применяются обычные правила для кавычек (quoting rules). Каждое правило параметра <strong>route_list</strong> должно начинаться с шаблона домена (domain pattern), единственного обязательного элемента в правиле. Шаблон должен быть указан в том же формате, что и элемент в доменном списке (domain list) (см. раздел <a class="reference internal" href="ch10.html#ch10-08"><em>10.8</em></a>), за тем исключением, что он не может быть именем включаемого файла. То есть, он может содержать просто шаблон, либо регулярное выражение, либо поиск в файле или базе данных (с двойным символом “;”, из-за использования “;” как разделителя в параметре <strong>route_list</strong>).</p>
+<p>Правила в <strong>route_list</strong> просматриваются до первого совпадения доменного шаблона с маршрутизируемым доменом. Затем, как описано ниже, используются список узлов и параметров.  Если совпадений не найдено, то маршрутизатор пропускается. Если установлен параметр <strong>route_list</strong>, то не должна быть определен параметр <strong>route_data</strong>.</p>
+</div>
+<div class="section" id="route-data">
+<span id="ch20-03"></span><h2>Правила маршрутизации в параметре <strong>route_data</strong><a class="headerlink" href="#route-data" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Использование параметра <strong>route_list</strong> подходит в случае использования небольшого количества правил маршрутизации. Для больших объемов проще использовать файл или базу данных для хранения информации о маршрутах и вместо нее использовать параметр <strong>route_data</strong>. Значением параметра <strong>route_data</strong> является список узлов со следующими за ним необязательными параметрами. Чаще всего <strong>route_data</strong> определяется как строка, содержащая раскрываемый поиск (expansion lookup). Например, представьте что вы поместили 2 правила маршрутизации в файл:</p>
+<div class="highlight-python"><pre>dict.ref.example:  mail-1.ref.example:mail-2.ref.example
+thes.ref.example:  mail-3.ref.example:mail-4.ref.example</pre>
+</div>
+<p>Эти данные могут быть доступными путем установки:</p>
+<div class="highlight-python"><pre>route_data = ${lookup{$domain}lsearch{/the/file/name}}</pre>
+</div>
+<p>Не увенчавшийся успехом поиск возвращает пустую строку, вследствие этого маршрутизатор пропускается. Однако, не стоит использовать поиск в <strong>route_data</strong>. Единственное требование здесь, это то, что результатом преобразования строки должен быть список узлов, возможно со следующими за ним параметрами, разделенные пробелами. Если список узлов содержит пробелы, то он должен быть заключен в кавычки.</p>
+</div>
+<div class="section" id="ch20-04">
+<span id="id2"></span><h2>Формат списка узлов<a class="headerlink" href="#ch20-04" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Список узлов, полученный либо через <strong>route_data</strong>, либо через <strong>route_list</strong>, всегда раскрыватся отдельно перед использованием. Если раскрытие завершается неудачно, то маршрутизатор пропускается. Результат преобразования должен быть списком имен и/или IP-адресов. IP-адреса в скобки не помещаются.</p>
+<ul>
+<li><p class="first">Если список узлов получен из параметра <strong>route_list</strong>, то во время преобразования устанавливаются следующие переменные:</p>
+</li>
+<li><p class="first">Если домен удовлетворяет регулярному выражению, то могут быть установлены числовые переменные “$1”, “$2”, и т.д.</p>
+<div class="highlight-python"><pre>route_list = ^domain(\d+) host-$1.text.example</pre>
+</div>
+</li>
+<li><p class="first">“$0” всегда содержит имя домена целиком.</p>
+</li>
+<li><p class="first">“$1” также устанавливается в случае неполного совпадения при поиске в файле.</p>
+</li>
+<li><p class="first">Если шаблон, с которым совпал домен, был элементом поиска (lookup item), то данные, поиск которых производился, доступны в переменной “$value”. Например:</p>
+<div class="highlight-python"><pre>route_list = lsearch;;/some/file.routes $value</pre>
+</div>
+</li>
+</ul>
+<p>Заметьте, что удвоение “;” в шаблоне является обязательным, т.к. “;” - разделитель списка по умолчанию.</p>
+</div>
+<div class="section" id="ch20-05">
+<span id="id3"></span><h2>Формат одного элемента хоста<a class="headerlink" href="#ch20-05" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Каждый элемент в списке хостов является или именем хоста или адресом IP, необязательно, с номером порта. При отсутствии номера порта, адрес даётся без квадратных скобок. Когда порт задан, то это отменяет спецификацию порта на транспорте. Порт отделяется от адреса двоеточием. Это приводит к некоторым осложнениям:</p>
+<ul>
+<li><p class="first">Поскольку двоеточие - разделитель по умолчанию списка хостов, то либо необходимо удвоить двоеточия отделяющие номер порта, или изменить разделитель. Следующие два примера одинаковы:</p>
+<div class="highlight-python"><pre>route_list = * "host1.tld::1225 : host2.tld::1226"
+route_list = * "&lt;+ host1.tld:1225 + host2.tld:1226"</pre>
+</div>
+</li>
+<li><p class="first">Когда используются адреса IPv6, всё ставиться ещё хуже, т.к. в них используются двоеточия. Чтобы облегчить такие случаи, разрешено помещать адрес IPv6 или IPv4 в квадратные скобки, если за ним следует номер порта. Например:</p>
+<div class="highlight-python"><pre>route_list = * "&lt;/ [10.1.1.1]:1225 / [::1]:1226"</pre>
+</div>
+</li>
+</ul>
+</div>
+<div class="section" id="ch20-06">
+<span id="id4"></span><h2>Как используется список узлов<a class="headerlink" href="#ch20-06" title="Ссылка на этот заголовок">¶</a></h2>
+<p>В процессе маршрутизации адреса на транспорт <strong>smtp</strong> при помощи <strong>manualroute</strong>, пробуется каждый из узлов в определенном порядке.  Однако, порядок может быть изменен параметром <strong>hosts_randomize</strong> либо в конфигурации маршрутизатора (см. раздел <a class="reference internal" href="#ch20-01"><em>20.1</em></a> выше), либо в конфигурации транспорта.</p>
+<p>Узлы могут быть перечислены по именам или по IP-адресам. Имя в списке узлов интерпретируется как имя узла. Имя с последующим за ним суффиксом “/MX” интерпретируется как косвенная ссылка на подсписок узлов, полученный путем поиска MX-записей в DNS. Например,</p>
+<div class="highlight-python"><pre>route_list = *  x.y.z:p.q.r/MX:e.f.g</pre>
+</div>
+<p>Если в списке узлов присутствует порт, он должен указываться в последнею очередь:</p>
+<div class="highlight-python"><pre>route_list = * dom1.tld/mx::1225</pre>
+</div>
+<p>Если установлен параметр <strong>hosts_randomize</strong>, то перед любым поиском порядок элементов в списке сортируется случайным образом. Затем Exim просматривает список; для всех имен без суффикса “/MX”, он выполняет поиск IP-адреса. Если им оказывается адрес интерфейса локальной машины и элемент в списке не стоит первым, то поведение определяется параметром маршрутизатора <strong>self</strong>.</p>
+<p>Имя в списке с суффиксом “/MX” заменяется списком узлов, полученных в результате поиска MX-записей для имени. Это всегда выполняется посредством DNS-запроса; параметры <strong>bydns</strong> и <strong>byname</strong> здесь неуместны. Порядок этих узлов определяется, как обычно, по значениям приоритета MX-записей. Поскольку случайная сортировка выполняется перед MX-поиском, то она не влияет на порядок, определенный MX-записями DNS.</p>
+<p>Если локальная машина присутствует в подсписке, полученном путем просмотра MX-записей, но не является наиболее предпочитаемым узлом в нем, то она и узлы равного и меньшего приоритета удаляются из подсписка перед тем, как он вставляется в главный список.</p>
+<p>Если локальная машина - наиболее предпочтительный узел в MX-списке, то все зависит от того, где в главном списке узлов стоит элемент “/MX”. Если он не является в нем первым элементом (потому как в списке перед ним есть узлы), то Exim отвергает это имя, а также все последующие элементы в главном списке.</p>
+<p>Если MX-элемент стоит первым в списке, и локальная машина является наиболее предпочтительным узлом, то все зависит от параметра маршрутизатора <strong>self</strong>.</p>
+<p>Неудачные результаты поиска MX-записей в DNS обрабатываются так же как и при поиске IP-адресов: там где это необходимо используются параметры <strong>pass_on_timeout</strong> и <strong>host_find_failed</strong>.</p>
+<p>Общий параметр <strong>ignore_target_hosts</strong> применяется ко всем узлам в списке, независимо получены ли он путем поиска MX-записей или нет.</p>
+</div>
+<div class="section" id="ch20-07">
+<span id="id5"></span><h2>Как используются параметры<a class="headerlink" href="#ch20-07" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Параметр - это последовательность слов; на практике - присутствует не более трех. Одно из слов может быть именем транспорта, перекрывая парметр маршрутизатора <strong>transport</strong> лишь для данного правила маршрутизации. Другие слова управляют случайной сортировкой списка узлов по каждому правилу отдельно, а также тем как ищутся IP-адреса узлов в процессе маршрутизации на удаленный транспорт. Эти параметры следующие:</p>
+<ul class="simple">
+<li><strong>randomize</strong>: случайно сортировать порядок узлов в списке, перекрывая параметр <strong>hosts_randomize</strong> только для этого правила маршрутизации.</li>
+<li><strong>no_randomize</strong>: не сортировать случайным образом порядок узлов в списке, перекрывая параметр <strong>hosts_randomize</strong> только для этого правила маршрутизации.</li>
+<li><strong>byname</strong>: использовать <em>getipnodebyname()</em> (<em>gethostbyname()</em> на старых системах) для поиска IP-адресов. Эта функция может в конечном счете сделать DNS-запрос, хотя она может выполнить поиск в <em>/etc/hosts</em> или в других источниках подобной информации.</li>
+<li><strong>bydns</strong>: искать адресные записи для узлов в DNS, неудачный исход - в случае отсутствия таковых. Если существует временная ошибка DNS (например, таймаут), то доставка откладывается.</li>
+</ul>
+<p>Например:</p>
+<div class="highlight-python"><pre>route_list = domain1  host1:host2:host3  randomize bydns;\
+             domain2  host4:host5</pre>
+</div>
+<p>Если ни параметр <strong>byname</strong>, ни параметр <strong>bydns</strong> не определены, то Exim ведет себя следующим образом: Сначала выполняется DNS-запрос. Если возвращается что-либо отличное от HOST_NOT_FOUND, то используется этот результат. В противном случае, Exim пытается вызвать <em>getipnodebyname()</em> или <em>gethostbyname()</em>, и результатом поиска становится результат, возвращенный этим вызовом.</p>
+<div class="admonition warning">
+<p class="first admonition-title">Предупреждение</p>
+<p class="last">На некоторых системах обнаружено, что если в результате DNS-запроса, производимого через функцию <em>getipnodebyname()</em>, происходит таймаут, то возвращается HOST_NOT_FOUND вместо TRY_AGAIN. Вот почему по умолчанию сначала выполняется DNS-запрос. Локальная функция вызывается только в том случае, если ответом на него является “no such host”.</p>
+</div>
+<p>Если для узла не найдено IP-адреса, то дальнейшие действия управляются параметром <strong>host_find_failed</strong>.</p>
+<p>В случае, когда адрес маршрутизируется на локальный транспорт, поиск IP-адресов не производится. Список узлов передается транспорту в переменной “$host”.</p>
+</div>
+<div class="section" id="ch20-08">
+<span id="id6"></span><h2>Примеры manualroute<a class="headerlink" href="#ch20-08" title="Ссылка на этот заголовок">¶</a></h2>
+<p>В некоторых из нижеследующих примеров подразумевается присутствие транспорта <strong>remote_smtp</strong>, как это определено в файле конфигурации по умолчанию:</p>
+<ul>
+<li><p class="first">Маршрутизатор <strong>manualroute</strong> может быть использован для перенаправления всей входящей почты на т.н. “быстрый узел” (“smart host”). Если в главной части конфигурации описан именованный список доменов (named domain list), содержащий к примеру,</p>
+<div class="highlight-python"><pre>domainlist local_domains = my.domain.example</pre>
+</div>
+<p>то вы можете указать для всех остальных доменов отправлять почту на смартхост, при этом ваш первый маршрутизатор будет выглядеть примерно так:</p>
+<div class="highlight-python"><pre>smart_route:
+  driver = "manualroute"
+  domains = !+local_domains
+  transport = remote_smtp
+  route_list = * smarthost.ref.example</pre>
+</div>
+<p>В результате этого все адреса, не входящие в список <strong>local_domains</strong>, будут направляться на узел “smarthost.ref.example”. Если указан разделенный “:” список узлов, то они пробуются все по порядку (однако вы можете использовать параметр <strong>hosts_randomize</strong> для того, чтобы изменять порядок каждый раз). Другой способ конфигурации той же самой задачи таков:</p>
+<div class="highlight-python"><pre>smart_route:
+  driver = "manualroute"
+  transport = remote_smtp
+  route_list = !+local_domains  smarthost.ref.example</pre>
+</div>
+<p>Разницы в поведении между этими маршрутизаторами нет. Однако, они ведут себя по-разному если добавить к обоим маршрутизаторам параметр <strong>no_more</strong>. В первом примере, маршрутизатор будет пропущен, если если домен не совпадает с предусловием <strong>domains</strong>; и пробуется всегда следующий маршрутизатор. Если маршрутизатор запускается, то он всегда совпадает с доменом и поэтому никогда не может быть быть отклонен. Поэтому <strong>no_more</strong> не будет иметь эффекта в данном случае. Во втором случае маршрутизатор никогда не пропускается; он всегда выполняется. Однако, если совпадения с доменом не происходит, то маршрутизатор отклоняется. В этом случае параметр <strong>no_more</strong> предотвратит запуск последующих маршрутизаторов.</p>
+</li>
+<li><p class="first">“Почтовый концентратор” - это узел, который получает почту для нескольких доменов через MX-записи в DNS и доставляет их через свой механизм маршрутизации. Часто пункты назначения находятся за брандмауэром, с “почтовым концентратором” располагающимся на одной машине, которая может соединяться с машинами внутри и снаружи брандмауэра. Маршрутизатор <strong>manualroute</strong> обычно используют на “почтовом концентраторе” для маршрутизации входящих сообщений на корректные узлы. Для небольшого количества доменов маршрутизация может быть включением (inline) в параметр <strong>route_list</strong>, но для большого количества доменов проще управлять поиском в файле и базе данных.</p>
+<p>Если имена доменов фактически являются именами машин, на которые отправляется почта почтовым концентратором, то конфигурация может быть простой. Например,</p>
+<div class="highlight-python"><pre>hub_route:
+  driver = "manualroute"
+  transport = remote_smtp
+  route_list = *.rhodes.tvs.example  $domain</pre>
+</div>
+<p>Эта конфигурация маршрутизирует домены, совпадающие с шаблоном “*.rhodes.tvs.example” на узлы, чьи имена такие же как и почтовые домены. Похожий результат может быть получен если имя узла извлекается из имени домена путем манипуляции со строкой. Как альтернативный вариант, можно использовать поиск узла на основе домена:</p>
+<div class="highlight-python"><pre>through_firewall:
+  driver = "manualroute"
+  transport = remote_smtp
+  route_data = ${lookup {$domain} cdb {/internal/host/routes}}</pre>
+</div>
+<p>Результатом поиска должно быть имя узла(узлов) или его IP-адрес на который должен быть смаршрутизирован проверяемый адрес. Если поиск завершается неудачей, то данные о маршрутах оказываются пустыми, в результате чего маршрутизатор отклоняется. Затем адрес передается следующему маршрутизатору.</p>
+</li>
+<li><p class="first">Вы можете использовать <strong>manualroute</strong> для доставки сообщений в трубы (pipes) или в файлы в пакетном формате SMTP для дальнейшей транспортировки по каким-либо причинам. Это способ хранения почты для dial-up узла в течение времени когда он не подключен к сети. Запись <strong>route_list</strong> может быть просто доменным именем, например так:</p>
+<div class="highlight-python"><pre>save_in_file:
+  driver = "manualroute"
+  transport = batchsmtp_appendfile
+  route_list = saved.domain.example</pre>
+</div>
+<p>Хотя часто шаблон используется для описания более одного домена. Если есть несколько доменов или групп доменов с различными транспортными требованиями, то разные транспорты могут быть перечислены в информации о маршрутах:</p>
+<div class="highlight-python"><pre>save_in_file:
+  driver = "manualroute"
+
+  route_list = \
+    *.saved.domain1.example  $domain  batch_appendfile; \
+    *.saved.domain2.example  \
+    ${lookup{$domain}dbm{/domain2/hosts}{$value}fail} \
+    batch_pipe</pre>
+</div>
+<p>Первый из них просто передает домен в переменную “$host”, которая не очень полезна (т.к. домен находится также в переменной “$domain”), но второй шаблон выполняет поиск в файле для нахождения переменной для передачи, заставляя маршрутизатор отклонять обработку адреса если поиск завершится неудачно.</p>
+</li>
+<li><p class="first">Маршрутизация почты прямиком на программный пакет UUCP - это особый вариант использования <strong>manualroute</strong> в роли шлюза в другое почтовое окружение. Вот пример способа как можно это сделать:</p>
+<div class="highlight-python"><pre># Transport
+uucp:
+  driver = pipe
+  user = nobody
+  command = /usr/local/bin/uux -r - \
+    ${substr_-5:$host}!rmail ${local_part}
+  return_fail_output = true
+
+
+# Router
+uucphost:
+  transport = uucp
+  driver = "manualroute"
+  route_data = \
+    ${lookup{$domain}lsearch{/usr/local/exim/uucphosts}}</pre>
+</div>
+<p>Файл <em>/usr/local/exim/uucphosts</em> состоит из записей вида:</p>
+<div class="highlight-python"><pre>darksite.ethereal.example:           darksite.UUCP</pre>
+</div>
+<p>Можно описать это проще без добавления и удаления “.UUCP” но этот способ показывает различие между именем домена “darksite.ethereal.example” и именем UUCP-станции “darksite”.</p>
+</li>
+</ul>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Содержание</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Маршрутизатор <strong>manualroute</strong></a><ul>
+<li><a class="reference internal" href="#ch20-01">Частные парметры <strong>manualroute</strong></a></li>
+<li><a class="reference internal" href="#route-list">Правила маршрутизации в параметре <strong>route_list</strong></a></li>
+<li><a class="reference internal" href="#route-data">Правила маршрутизации в параметре <strong>route_data</strong></a></li>
+<li><a class="reference internal" href="#ch20-04">Формат списка узлов</a></li>
+<li><a class="reference internal" href="#ch20-05">Формат одного элемента хоста</a></li>
+<li><a class="reference internal" href="#ch20-06">Как используется список узлов</a></li>
+<li><a class="reference internal" href="#ch20-07">Как используются параметры</a></li>
+<li><a class="reference internal" href="#ch20-08">Примеры manualroute</a></li>
+</ul>
+</li>
+</ul>
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="ch19.html" title="предыдущая глава">Маршрутизатор <strong>iplookup</strong></a></li>
+      <li>Next: <a href="ch21.html" title="следующая глава">Маршрутизатор <strong>queryprogram</strong></a></li>
+  </ul></li>
+</ul>
+  <h3>На этой странице</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/ch20.txt"
+           rel="nofollow">Показать исходный текст</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Быстрый поиск</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Искать" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Введите слова для поиска или имя модуля, класса или функции.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy; Copyright 2011, Exim Maintainers.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a>.
+    </div>
+  </body>
+</html>

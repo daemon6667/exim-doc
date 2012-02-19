@@ -1,0 +1,466 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Введение &mdash; Specification of the Exim Mail Transfer Agent 4.70 documentation</title>
+    
+    <link rel="stylesheet" href="_static/flasky.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '4.70',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/translations.js"></script>
+    <link rel="top" title="Specification of the Exim Mail Transfer Agent 4.70 documentation" href="index.html" />
+    <link rel="next" title="Включенный код" href="ch02.html" />
+    <link rel="prev" title="Документация MTA EXIM" href="index.html" />
+   
+  
+  <link media="only screen and (max-device-width: 480px)" href="_static/small_flask.css" type= "text/css" rel="stylesheet" />
+
+  </head>
+  <body>
+    <div class="related">
+      <h3>Просмотр</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="Словарь-указатель"
+             accesskey="I">словарь</a></li>
+        <li class="right" >
+          <a href="ch02.html" title="Включенный код"
+             accesskey="N">следующий</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Документация MTA EXIM"
+             accesskey="P">предыдущий</a> |</li>
+        <li><a href="index.html">Specification of the Exim Mail Transfer Agent 4.70 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="ch01-00">
+<span id="id1"></span><h1>Введение<a class="headerlink" href="#ch01-00" title="Ссылка на этот заголовок">¶</a></h1>
+<p>Exim - агент передачи почтовых сообщений (MTA <a class="footnote-reference" href="#id13" id="id2">[1]</a>) для UNIX или UNIX-подобных
+операционных систем. Он был спроектирован с расчётом на то, что будет
+выполняться на серверах, постоянно соединённых с Интернетом, однако, может
+использоваться и в системах, не имеющих постоянного подключения к Интернету,
+после соответствующего изменения настроек.</p>
+<p>В настоящее время файлы конфигурации существуют для следующих операционных
+систем: AIX, BSD/OS (иначе - BSDI), Darwin (Mac OS X), DGUX, DragonflyBSD,
+FreeBSD, GNU/Hurd, GNU/Linux, HI-OSF (Hitachi), HI-UX, HP-UX, IRIX, MIPS RISCOS,
+NetBSD, OpenBSD, OpenUNIX, QNX, SCO, SCO SVR4.2 (иначе - UNIX-SV), Solaris (она
+же SunOS5), SunOS4, Tru64-Unix (formerly Digital UNIX, formerly DEC-OSF1),
+Ultrix, и Unixware. Некоторые из этих операционных систем более не используются
+и работоспособность файлов конфигурации для них не может быть легко проверена.
+Поэтому имейте в виду, что они, возможно, нерабочие.</p>
+<p>Также есть файлы конфигурации для сборки Exim в среде Cygwin, установленной на
+системах под управлением ОС Windows. Однако этот документ не содержит какой бы
+то ни было информации о работе Exim в среде Cygwin.</p>
+<p>Условия и ограничения на использование и распространение Exim содержатся в файле
+<em>NOTICE</em>. Exim распространяется в соответствии с GNU General Public Licence,
+копия которой может быть найдена в файле <em>LICENCE</em>.</p>
+<p>Использование, поставка, или реклама Exim для массовой рассылки нежелательной
+электронной почты несовместимы с основными целями программы, которые
+сосредоточены вокруг бесплатного предоставления услуг, для повышения качества
+личного общения. Автор Exim расценивает массовую беспорядочную рассылку
+электронной почты как антиобщественное, безответственное злоупотребление
+Интернетом.</p>
+<p>Exim многим обязан Smail 3 и его автору, Рону Карру (Ron Karr). Без опыта
+запуска и работы с кодом Smail 3, я, возможно, никогда бы и не собрался писать
+новый MTA. Многие из идей и пользовательских интерфейсов были первоначально
+взяты из Smail 3, хотя актуальный код Exim является полностью новым и развился
+далеко за пределы начальной концепции.</p>
+<p>Много людей и в Кембридже, и во всём мире внесли свой вклад в разработку и
+тестирование Exim, а также адаптацию его на различные операционные системы. Я
+благодарен им всем. Дистрибутив теперь содержит файл с именем <em>ACKNOWLEDGMENTS</em>,
+в котором я начал запись имён всех, кто помог.</p>
+<div class="section" id="exim">
+<span id="ch01-01"></span><h2>Документация Exim<a class="headerlink" href="#exim" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Эта редакция спецификации Exim применима к версии 4.70. Различия с версией 4.69
+отмечены в некоторых вариантах документа; этот параграф отмечен таким же образом
+в тех местах, где есть отличия. <a class="footnote-reference" href="#id14" id="id3">[2]</a></p>
+<p>Этот документ - справочное руководство; это не обучающий документ.
+Предполагается, что читатель уже имеет некоторое представление о почтовом
+протоколе SMTP и общем администрировании UNIX-систем. Информация по большей
+части организована для облегчения поиска, а не в естественном порядке для
+последовательного чтения, хотя в некоторых местах есть обсуждения и примеры.
+Кроме того, это руководство стремится подробно охватить каждый аспект Exim,
+включая множество редко используемых особенностей специального назначения,
+которые вряд ли будут представлять широкий интерес.</p>
+<p>Более “простое” обсуждение Exim, с более многосторонними пояснениями и вводными
+материалами может быть найдено в книге “The Exim SMTP Mail Server” (вторая
+редакция, 2007 год), изданной в Кембридже (<a class="reference external" href="http://www.uit.co.uk/exim-book/">http://www.uit.co.uk/exim-book/</a>).</p>
+<p>Также эта книга содержит главу, дающую общее введение в SMTP и интернет-почту.
+Неизбежно, что книга вряд ли будет полностью совместима с последним выпуском
+Exim. (Отметьте, что более ранняя книга об Exim, изданная O’Reilly, посвящена
+Exim 3 и за прошедшее с тех пор время в Exim 4 появилось много особенностей.)</p>
+<p>Если Вы используете сборку Exim для дистрибутива Debian, Вы можете найти
+информацию об особенностях использования Exim с этим дистрибутивом в файле
+<em>/usr/share/doc/exim4-base/README.Debian</em>. Команда <strong>man update-exim.conf</strong> -
+ещё один источник специфичной для debian информации.</p>
+<p>Поскольку программа развивается, в новых версиях могут быть особенности, которые
+ещё не внесены в этот документ, обновляемый при изменении версии Exim&#8217;a.
+Спецификации новых возможностей, не включённые в этот документ, помещены в файл
+<em>doc/NewStuff</em> дистрибутива Exim.</p>
+<p>Некоторые возможности классифицируются как “экспериментальные”. В ходе
+разработки они могут несовместимо измениться, или вообще быть убраны. Поэтому
+они не описаны в этом руководстве. Информацию об экспериментальных возможностях
+можно найти в файле <em>doc/experimental.txt</em>.</p>
+<p>Все изменения в программе (новые возможности, исправления ошибок, и т.п.) кратко
+описаны в файле <em>doc/ChangeLog</em>.</p>
+<p>Эта спецификация доступна в качестве ASCII файла <em>doc/spec.txt</em>, таким образом
+его просмотр легко осуществим любым текстовым редактором. Другие файлы в
+директории doc:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="27%" />
+<col width="73%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td>OptionLists.txt</td>
+<td>список всех параметров в алфавитном порядке</td>
+</tr>
+<tr class="row-even"><td>dbm.discuss.txt</td>
+<td>обсуждение библиотек DBM</td>
+</tr>
+<tr class="row-odd"><td>exim.8</td>
+<td>man-страница параметров командной строки Exim</td>
+</tr>
+<tr class="row-even"><td>experimental.txt</td>
+<td>документация экспериментальных возможностей</td>
+</tr>
+<tr class="row-odd"><td>filter.txt</td>
+<td>спецификация языка фильтра</td>
+</tr>
+<tr class="row-even"><td>Exim3.upgrade</td>
+<td>примечания обновления с релиза 2 до релиза 3</td>
+</tr>
+<tr class="row-odd"><td>Exim4.upgrade</td>
+<td>примечания обновления с релиза 3 до релиза 4</td>
+</tr>
+</tbody>
+</table>
+<p>Главная спецификация и спецификация языка фильтрации также доступны в других
+форматах (HTML, PostScript, PDF, и Texinfo). Раздел 1.6 ниже описывает как
+получить их.</p>
+</div>
+<div class="section" id="ftp-web">
+<span id="ch01-02"></span><h2>FTP и WEB сайты<a class="headerlink" href="#ftp-web" title="Ссылка на этот заголовок">¶</a></h2>
+<p>В настоящее время главным сайтом по распространению исходных кодов Exim является
+FTP-сайт университета Кембриджа, содержание которого описано ниже, <a class="reference internal" href="ch07.html#ch07-00"><em>Где
+найти дистрибутив Exim7</em></a>. Кроме того, есть веб- и ftp-сайт exim.org,
+он расположен на площадке университета Кембриджа. Раньше сайт exim.org
+располагался много лет на Energis Squared, ранее Planet Online Ltd, технической
+поддержке которых я благодарен.</p>
+<p>Кроме файлов tar, дистрибутива Exim, веб-сайт Exim`a содержит множество различно
+отформатированных версий документации. Недавнее дополнение к онлайн-документации
+Exim - wiki (<a class="reference external" href="http://wiki.exim.org/">http://wiki.exim.org/</a>), которая содержит различные FAQ, а также
+разнообразные примеры, подсказки, руководства к действию</p>
+<p>Bugzilla Exim&#8217;a находиться по адресу: <a class="reference external" href="http://bugs.exim.org">http://bugs.exim.org</a>. Вы можете
+использовать её для сообщений об ошибках, а также для ваших пожеланий. Только
+сначала воспользуйтесь поиском, пожалуйста, чтобы убедиться, что вы не создаёте
+дубликата проблемы.</p>
+</div>
+<div class="section" id="ch01-03">
+<span id="id4"></span><h2>Листы рассылки<a class="headerlink" href="#ch01-03" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Существуют следующие списки рассылки Exim&#8217;a:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="31%" />
+<col width="69%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><a class="reference external" href="mailto:exim-users&#37;&#52;&#48;exim&#46;org">exim-users<span>&#64;</span>exim<span>&#46;</span>org</a></td>
+<td>обсуждение общих вопросов</td>
+</tr>
+<tr class="row-even"><td><a class="reference external" href="mailto:exim-dev&#37;&#52;&#48;exim&#46;org">exim-dev<span>&#64;</span>exim<span>&#46;</span>org</a></td>
+<td>обсуждение ошибок, расширений и т.п.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference external" href="mailto:exim-announce&#37;&#52;&#48;exim&#46;org">exim-announce<span>&#64;</span>exim<span>&#46;</span>org</a></td>
+<td>модерируемый, небольшой по объёму список анонсов</td>
+</tr>
+<tr class="row-even"><td><a class="reference external" href="mailto:exim-future&#37;&#52;&#48;exim&#46;org">exim-future<span>&#64;</span>exim<span>&#46;</span>org</a></td>
+<td>дискуссии о долгосрочной разработке</td>
+</tr>
+</tbody>
+</table>
+<p>Вы можете подписаться на эти списки, изменить ваши существующие подписки, а
+также просматривать или искать в архивах списков рассылок на домашней странице
+Exim. Если вы используете сборку Exim&#8217;a для дистрибутива Debian, вы можете
+подписаться на рассылку этой сборки <em>pkg-exim4-users&#64;lists.alioth.debian.org</em>,
+используя эту страницу:
+<a class="reference external" href="http://lists.alioth.debian.org/mailman/listinfo/pkg-exim4-users">http://lists.alioth.debian.org/mailman/listinfo/pkg-exim4-users</a></p>
+<p>Пожалуйста, задавайте специфические для Debian вопросы в данной рассылке, а не в
+общем списке рассылок Exim.</p>
+</div>
+<div class="section" id="ch01-04">
+<span id="id5"></span><h2>Курсы Exim<a class="headerlink" href="#ch01-04" title="Ссылка на этот заголовок">¶</a></h2>
+<p>До ухода в отставку автора Exim&#8217;a в университете Кембриджа (Англии) проводились
+тренировочные курсы. На момент написания, не существовало планов на проведение
+курсов по Exim в Кембридже. Однако, в случае изменений, релевантная информация
+может быть найдена на этой странице: <a class="reference external" href="http://www-tus.csx.cam.ac.uk/courses/exim/">http://www-tus.csx.cam.ac.uk/courses/exim/</a>.</p>
+</div>
+<div class="section" id="ch01-05">
+<span id="id6"></span><h2>Сообщения об ошибках<a class="headerlink" href="#ch01-05" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Сообщения об очевидных ошибках могут быть отправлены по электронной почте на
+адрес <em>bugs&#64;exim.org</em>, или созданы в Bugzilla. Однако, если вы не уверены, что
+это поведение является ошибкой, лучше всего будет отправить сообщение на лист
+рассылки <em>exim-dev</em> и обсудить его.</p>
+</div>
+<div class="section" id="ch01-06">
+<span id="id7"></span><h2>Где найти дистрибутив Exim<a class="headerlink" href="#ch01-06" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Главный ftp-сайт дистрибутива Exim это:</p>
+<div class="highlight-python"><pre>ftp://ftp.csx.cam.ac.uk/pub/software/email/exim</pre>
+</div>
+<p>Это его зеркало:</p>
+<div class="highlight-python"><pre>ftp://ftp.exim.org/pub/exim</pre>
+</div>
+<p>Ссылки на файлы даны относительно директории <em>exim</em> на этом сайте. Также есть
+много независимых зеркал по всему миру. Те, которые я знаю, перечислены в файле
+<em>Mirrors</em>.</p>
+<p>Внутри каталога <em>exim</em> есть подкаталоги с именами <em>exim3</em> (для предыдущего
+дистрибутива Exim 3), <em>exim4</em> (для последнего дистрибутива Exim 4) и <em>Testing</em> -
+для тестовых версий. в подкаталоге <em>exim4</em>, всегда может быть найден текущая
+версия в файлах с именами:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">exim</span><span class="o">-</span><span class="n">n</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">tar</span><span class="o">.</span><span class="n">gz</span>
+<span class="n">exim</span><span class="o">-</span><span class="n">n</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">tar</span><span class="o">.</span><span class="n">bz2</span>
+</pre></div>
+</div>
+<p>где “n.nn” - самый большой номер версии в директории. Два файла содержат
+идентичные данные; различие лишь в типе компрессии. Файл “.bz2” обычно намного
+меньше чем “.gz”.</p>
+<p>В настоящее время дистрибутивы подписываются GPG ключом Nigel Metheringham&#8217;a.
+Соответствующий открытый ключ доступен на множестве ключевых серверов, и также
+скопирован в файл “nigel-pubkey.asc”. Подписи для tar находятся в:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">exim</span><span class="o">-</span><span class="n">n</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">tar</span><span class="o">.</span><span class="n">gz</span><span class="o">.</span><span class="n">asc</span>
+<span class="n">exim</span><span class="o">-</span><span class="n">n</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">tar</span><span class="o">.</span><span class="n">bz2</span><span class="o">.</span><span class="n">asc</span>
+</pre></div>
+</div>
+<p>Для каждой выпущенной версии лог изменений доступен отдельно в директории
+<em>ChangeLogs</em>, таким образом об изменениях можно узнать без необходимости
+загружать весь дистрибутив.</p>
+<p>Главный дистрибутив содержит ASCII версию этой спецификации и другую
+документацию; другие форматы документации доступны на FTP-сайте, внутри
+директории <em>exim4</em>, в отдельных файлах:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">exim</span><span class="o">-</span><span class="n">html</span><span class="o">-</span><span class="n">n</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">tar</span><span class="o">.</span><span class="n">gz</span>
+<span class="n">exim</span><span class="o">-</span><span class="n">pdf</span><span class="o">-</span><span class="n">n</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">tar</span><span class="o">.</span><span class="n">gz</span>
+<span class="n">exim</span><span class="o">-</span><span class="n">postscript</span><span class="o">-</span><span class="n">n</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">tar</span><span class="o">.</span><span class="n">gz</span>
+<span class="n">exim</span><span class="o">-</span><span class="n">texinfo</span><span class="o">-</span><span class="n">n</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">tar</span><span class="o">.</span><span class="n">gz</span>
+</pre></div>
+</div>
+<p>Эти tar-файлы содержат только директорию <em>doc</em>, а не полный дистрибутив, и также
+доступны в форматах <em>.bz2</em> и <em>.gz</em>.</p>
+</div>
+<div class="section" id="ch01-07">
+<span id="id8"></span><h2>Ограничения<a class="headerlink" href="#ch01-07" title="Ссылка на этот заголовок">¶</a></h2>
+<ul class="simple">
+<li>Exim спроектирован как MTA для использования в Интернете, и поэтому
+обрабатывает адреса только в формате доменов по <span class="target" id="index-0"></span><a class="rfc reference external" href="http://tools.ietf.org/html/rfc2822.html"><strong>RFC 2822</strong></a>. Он не может
+обрабатывать адреса UUCP с восклицательными знаками, хотя простые
+двухкомпонентные адреса с восклицательными знаками могут быть конвертированы
+конфигурацией перезаписи адресов. Это ограничение не препятствует привязке
+Exim`a через интерфейс к UUCP как транспортного механизма при условии, что
+используются адреса доменов.  * Exim настаивает на прикреплении к каждому
+обрабатываемому адресу домена. Для входящих локальных сообщений адреса без
+домена автоматически дополняются доменом, указанным в конфигурации. В
+конфигурации также определяются удалённые системы, от которых допускается
+приём писем с адресами без домена. Тогда они дополняются по прибытии.</li>
+<li>Единственные внешние транспортные механизмы, реализованные на данный момент,
+это SMTP и LMTP по сети TCP/IP (включая поддержку IPv6). Однако доступен
+транспорт pipe и есть средства для записи сообщений в файлы и трубы (pipe),
+необязательно в пакетном SMTP-формате; эти средства могут использоваться для
+отсылки сообщений другим транспортным механизмам, типа UUCP, если они могут
+обработать адреса в доменном стиле. Также обслуживается пакетный SMTP.  * Exim
+не спроектирован для хранения почты для хостов, соединяющихся по модему. При
+большом объёме такой почты лучше доставлять сообщения в файлы (т.е. убирать из
+очереди Exim`a) и впоследствии передавать её дозванивающимся хостам другими
+средствами.</li>
+<li>Хотя Exim имеет базовые возможности для сканирования входящих сообщений, они
+не являются достаточными для полной проверки на вирусы и спам. Такие операции
+лучше осуществлять, используя программные пакеты сторонних производителей.
+Если вы скомпилируете Exim с расширением проверки контента, то будет
+предоставлен простой интерфейс для ряда общих анализаторов.</li>
+</ul>
+</div>
+<div class="section" id="ch01-08">
+<span id="id9"></span><h2>Рабочая (выполняемая) конфигурация<a class="headerlink" href="#ch01-08" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Рабочая конфигурация Exim`a находится в одном текстовом файле, разделённом на
+множество секций. Элементы (записи) этого файла состоят из ключевых слов и
+значений в стиле файла конфигурации Smail 3. Файл конфигурации по умолчанию,
+поставляемый с дистрибутивом, подходит для простых вариантов и описан далее в
+главе <a class="reference internal" href="ch07.html#ch07-00"><em>7</em></a>.</p>
+</div>
+<div class="section" id="ch01-09">
+<span id="id10"></span><h2>Интерфейс вызова<a class="headerlink" href="#ch01-09" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Как и множество других MTA, Exim имеет sendmail-совместимый интерфейс командной
+строки, чтобы он мог быть прямой заменой для <em>/usr/lib/sendmail</em> или
+<em>/usr/sbin/sendmail</em> при отправке почты, но вы не нуждаетесь в каких-либо
+знаниях о sendmail для запуска Exim. Для других действий, кроме отсылки почты,
+также существуют sendmail-совместимые параметры, но те, которые производят вывод
+(например, <strong>-bp</strong>, которая выводит сообщения находящиеся в очереди) делают это
+в собственном формате Exim`a. Также есть дополнительные параметры, совместимые с
+Smail 3 и некоторые дополнительные параметры, являющиеся новыми в Exim&#8217;e. Глава
+<a class="reference internal" href="ch05.html#ch05-00"><em>5</em></a> документирует все параметры командной строки Exim. Из этой
+информации автоматически составляется man-страница, являющаяся частью
+дистрибутива Exim.</p>
+<p>Управление сообщениями, находящимися в очереди, может осуществляться через
+привилегированные параметры командной строки. Также существует дополнительная
+программа, называющаяся <em>eximon</em>, предназначенная для работы в X window и
+предоставляющая графический интерфейс для некоторых административных параметров
+командной строки Exim.</p>
+</div>
+<div class="section" id="ch01-10">
+<span id="id11"></span><h2>Терминология<a class="headerlink" href="#ch01-10" title="Ссылка на этот заголовок">¶</a></h2>
+<p><em>Тело</em> (<em>body</em>) сообщения - это фактические данные, которые хочет передать
+отправитель. Это последняя часть сообщения, она отделена от <em>заголовка</em>
+(<em>header</em>, см. ниже) пустой линией.</p>
+<p>Когда сообщение не может быть доставлено, то обычно оно возвращается отправителю
+в виде сообщения об ошибке доставки или <em>сообщения о недоставке</em> (<em>non-delivery
+report</em> - NDR). Для этого действия обычно используется термин <em>рикошет</em>
+(<em>bounce</em>) и отчёты об ошибках часто называют <em>рикошетами</em> (<em>bounce messages</em>).
+Это - короткая запись <em>ошибочного сообщения о неудаче доставки</em> (<em>delivery
+failure error report</em>). Такие сообщения обычно имеют пустой адрес отправителя в
+<em>конверте</em> сообщения (<em>envelope</em> - см. ниже), чтобы исключить рикошеты
+рикошетов.</p>
+<p>Термин <em>по-умолчанию</em> (<em>default</em>) часто появляется в этом руководстве. Он
+используется для определения значения, которое будет использовано при отсутствии
+настроек <a class="footnote-reference" href="#id15" id="id12">[3]</a> в конфигурационном файле. Другими словами, оно может задать
+действие, выполняемое при условии, что в конфигурационном файле не указано иное.</p>
+<p>Термин <em>отсрочка</em> (<em>defer</em>, иногда - задержка) используется, когда доставка
+сообщения адресату не может быть осуществлена немедленно по каким-либо причинам
+(хост может быть недоступен или переполнен локальный почтовый ящик
+пользователя). Такие доставки <em>отсрочиваются</em> (<em>deferred</em>, или - задерживаются)
+до более позднего времени.</p>
+<p>Слово <em>домен</em> (<em>domain</em>) иногда используется для обозначения всего, кроме
+первого компонента имени хоста. В данном документе оно обычно означает часть
+e-mail адреса, следующую за символом <em>&#64;</em>.</p>
+<p>Сообщение, находящееся в пути, имеет связанный <em>конверт</em> (<em>envelope</em>), также как
+заголовок и тело. Конверт содержит адрес отправителя (тот, кому будут
+доставляться рикошеты), и любое число адресов получателей. Ссылки на отправителя
+или получателей сообщения, обычно означают адреса в конверте. MTA использует
+именно эти, а не фигурирующие в строках заголовков адреса для доставки писем и
+для возвращения рикошетов.</p>
+<p><em>Заголовок</em> (<em>header</em>) сообщения - это первая часть текста сообщения, состоящая
+из множества строк, каждая из которых имеет имя, типа <em>From:</em>, <em>To:</em>, <em>Subject:</em>
+и т.п. Длинные строки заголовка могут быть разбиты на несколько строк, с
+выравниванием отступами. Заголовок отделён от тела пустой строкой.</p>
+<p>Термин <em>локальная часть</em> (<em>local part</em>), взятый из <span class="target" id="index-1"></span><a class="rfc reference external" href="http://tools.ietf.org/html/rfc2822.html"><strong>RFC 2822</strong></a>, используется для
+того, чтобы обозначить часть адреса электронной почты, предшествующую символу
+<em>&#64;</em>. Часть следующая за <em>&#64;</em>, называется <em>домен</em> (<em>domain</em>) или <em>почтовый домен</em>
+(<em>mail domain</em>).</p>
+<p>Термины <em>локальная доставка</em> (<em>local delivery</em>) и <em>удалённая доставка</em> (<em>remote
+delivery</em>) используются, чтобы отличать доставку в файл или трубу (pipe) на
+локальном хосте от доставки по SMTP через TCP/IP на другой хост. Все хосты кроме
+того, на котором запущен Exim, считаются <em>удалёнными</em> (<em>remote</em>).</p>
+<p><em>Обратный путь</em> (<em>Return path</em>) - другое имя, использующееся для адреса
+отправителя в конверте сообщения.</p>
+<p>Термин <em>очередь</em> (<em>queue</em>) используется для того, чтобы ссылаться на набор
+(совокупность) сообщений, ожидающих доставку. Этот термин широко используется в
+контексте MTA. Однако в случае Exim, <em>очередь</em> больше походит на объединение,
+пул сообщений, потому что обычно нет упорядочивания ожидающих сообщений.</p>
+<p>Термин <em>обработчик очереди</em> (<em>queue runner</em>) используется для описания процесса,
+просматривающего очередь и пытающегося доставить те сообщения, у которых
+наступило время доставки. Этот термин используется и в других MTA, и также имеет
+отношение к команде <strong>runq</strong>, но в Exim ожидающие сообщения обычно
+обрабатываются в непредсказуемом порядке.</p>
+<p>Термин <em>буферный каталог</em> (<em>spool directory</em>) используется для обозначения
+каталога, в котором Exim сохраняет сообщения своей очереди, т.е. те, которые
+находятся в процессе доставки. Не путайте с каталогом, в котором хранятся
+локальные почтовые ящики, и который некоторые люди также называют <em>spool
+directory</em>. В документации Exim слово <em>spool</em> всегда используется в первом
+смысле.</p>
+<table class="docutils footnote" frame="void" id="id13" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id2">[1]</a></td><td>не так :-|</td></tr>
+</tbody>
+</table>
+<table class="docutils footnote" frame="void" id="id14" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id3">[2]</a></td><td>MTA   -   Mail   Transfer   Agent   или   Message   Transfer   Agent</td></tr>
+</tbody>
+</table>
+<table class="docutils footnote" frame="void" id="id15" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id12">[3]</a></td><td>этой конкретной опции - прим. lissyara</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Содержание</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Введение</a><ul>
+<li><a class="reference internal" href="#exim">Документация Exim</a></li>
+<li><a class="reference internal" href="#ftp-web">FTP и WEB сайты</a></li>
+<li><a class="reference internal" href="#ch01-03">Листы рассылки</a></li>
+<li><a class="reference internal" href="#ch01-04">Курсы Exim</a></li>
+<li><a class="reference internal" href="#ch01-05">Сообщения об ошибках</a></li>
+<li><a class="reference internal" href="#ch01-06">Где найти дистрибутив Exim</a></li>
+<li><a class="reference internal" href="#ch01-07">Ограничения</a></li>
+<li><a class="reference internal" href="#ch01-08">Рабочая (выполняемая) конфигурация</a></li>
+<li><a class="reference internal" href="#ch01-09">Интерфейс вызова</a></li>
+<li><a class="reference internal" href="#ch01-10">Терминология</a></li>
+</ul>
+</li>
+</ul>
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="index.html" title="предыдущая глава">Документация MTA EXIM</a></li>
+      <li>Next: <a href="ch02.html" title="следующая глава">Включенный код</a></li>
+  </ul></li>
+</ul>
+  <h3>На этой странице</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/ch01.txt"
+           rel="nofollow">Показать исходный текст</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Быстрый поиск</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Искать" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Введите слова для поиска или имя модуля, класса или функции.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy; Copyright 2011, Exim Maintainers.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a>.
+    </div>
+  </body>
+</html>

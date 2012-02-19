@@ -1,0 +1,391 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>SMTP-аутентификация &mdash; Specification of the Exim Mail Transfer Agent 4.70 documentation</title>
+    
+    <link rel="stylesheet" href="_static/flasky.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '4.70',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/translations.js"></script>
+    <link rel="top" title="Specification of the Exim Mail Transfer Agent 4.70 documentation" href="index.html" />
+    <link rel="next" title="Аутентификатор plaintext" href="ch34.html" />
+    <link rel="prev" title="Конфигурация повторов" href="ch32.html" />
+   
+  
+  <link media="only screen and (max-device-width: 480px)" href="_static/small_flask.css" type= "text/css" rel="stylesheet" />
+
+  </head>
+  <body>
+    <div class="related">
+      <h3>Просмотр</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="Словарь-указатель"
+             accesskey="I">словарь</a></li>
+        <li class="right" >
+          <a href="ch34.html" title="Аутентификатор plaintext"
+             accesskey="N">следующий</a> |</li>
+        <li class="right" >
+          <a href="ch32.html" title="Конфигурация повторов"
+             accesskey="P">предыдущий</a> |</li>
+        <li><a href="index.html">Specification of the Exim Mail Transfer Agent 4.70 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="smtp">
+<span id="ch33-00"></span><h1>SMTP-аутентификация<a class="headerlink" href="#smtp" title="Ссылка на этот заголовок">¶</a></h1>
+<p>Секция “authenticators”, рабочей конфигурации Exim&#8217;a, управляет SMTP-аутентификацией. Это средство - расширение протокола SMTP, описанное в <span class="target" id="index-0"></span><a class="rfc reference external" href="http://tools.ietf.org/html/rfc2554.html"><strong>RFC 2554</strong></a>, которое разрешает клиентскому SMTP-хосту атентифицироваться на сервере. Это - обычный серверный способ распознавать клиентов, которым разрешено использовать его как релей. SMTP-аутентификация неуместна для передачи почты между серверами которые организационно никак не связаны друг с другом.</p>
+<p>Вкратце, способ работы SMTP-аутентификации таков:</p>
+<ul>
+<li><p class="first">Сервер информирует число аутентифкационных механизмов (mechanisms) в ответе на клиентскую команду EHLO.</p>
+</li>
+<li><p class="first">Клиент выдаёт команду AUTH, именуя специфический механизм. Команда может, не обязательно, содержать какие-либо аутентификационные данные.</p>
+</li>
+<li><p class="first">Сервер может выдать один или более вызовов <a class="footnote-reference" href="#id6" id="id1">[1]</a>, на которые клиент должен послать соответствующие ответы. В простых опознавательных механизмах, вызовы - просто запросы имён пользователей и паролей. Сервер не должен выдавать каких-либо вызовов - в некоторых механизмах, все уместные данные могут быть переданы с командой AUTH.</p>
+</li>
+<li><p class="first">Сервер или принимает, или отклоняет аутентификацию.</p>
+</li>
+<li><p class="first">Если аутентификация успешна, клиент, не обязательно, может использовать gfhfvtnh AUTH в команде MAIL для передачи аутентифицированного (заверенного) отправителя в последующих почтовых транзакциях. Аутентификация остаётся до конца SMTP-соединения.</p>
+</li>
+<li><p class="first">Если аутентификация неудачна, клиент может отключиться, или может попробовать другой аутентификационный механизм, или может попробовать передать почту по неаутентифицированному соединению.</p>
+</li>
+<li><p class="first">Если вы настраиваете клиента, и хотите знать, какие аутентификационные механизмы поддерживает сервер, вы можете использовать telnet для соединения с 25 портом (порт SMTP) на сервере, и выдать команду EHLO. Ответ на неё включает список поддерживаемых механизмов. Например:</p>
+<div class="highlight-python"><pre>$ telnet server.example 25
+Trying 192.168.34.25...
+Connected to server.example.
+Escape character is '^]'.
+220 server.example ESMTP Exim 4.20 ...
+    ehlo client.example
+    250-server.example Hello client.example [10.8.4.5]
+    250-SIZE 52428800
+    250-PIPELINING
+    250-AUTH PLAIN
+    250 HELP</pre>
+</div>
+</li>
+</ul>
+<p>Предпоследняя линия этого примера, показывает, что сервер поддерживает аутентификацию с использованием механизма PLAIN. В Exim`e, различные аутентификационные механизмы настраиваются путём специфических драйверов <em>authenticator</em>. Как у маршрутизаторов и транспортов, то, какие аутентификаторы включены в исполняемый файл, определяется при сборке. В настоящее время, доступны следующие установки:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">AUTH_CRAM_MD5</span><span class="o">=</span><span class="n">yes</span>
+<span class="n">AUTH_CYRUS_SASL</span><span class="o">=</span><span class="n">yes</span>
+<span class="n">AUTH_PLAINTEXT</span><span class="o">=</span><span class="n">yes</span>
+<span class="n">AUTH_SPA</span><span class="o">=</span><span class="n">yes</span>
+</pre></div>
+</div>
+<p>в <em>Local/Makefile</em>, соответственно. Первая из этих поддержек аутентификационный механизм CRAM-MD5 (<span class="target" id="index-1"></span><a class="rfc reference external" href="http://tools.ietf.org/html/rfc2195.html"><strong>RFC 2195</strong></a>), второй предоставляет интерфейс к аутентификационной библиотеке Cyrus SASL. Третий может быть сконфигурирован для поддержки аутентификационного механизма PLAIN (<span class="target" id="index-2"></span><a class="rfc reference external" href="http://tools.ietf.org/html/rfc2595.html"><strong>RFC 2595</strong></a>), или механизма LOGIN, который формально не зарегистрирован, но используется несколькими MUA. Четвёртый аутентификатор поддерживает механизм Microsoft’овский “Secure Password Authentication”.</p>
+<p>Аутентификаторы конфигурируются с использованием того же синтаксиса, что и другие драйверы (смотрите раздел <a class="reference internal" href="ch06.html#ch06-22"><em>6.22</em></a>). Если аутентификаторы не требуются, аутентификационная секция в конфигурационном файле не требуется. Каждый аутентификатор, в принципе, может иметь и клиентские и серверные функции. Когда Exim принимает почту по SMTP, он работает как сервер, когда он шлёт сообщения наружу через SMTP - он выступает в роли клиента. Конфигурационные параметры аутентификатора предоставляют возможность использования обоих этих обстоятельств.</p>
+<p>Для прояснения, какой параметр к какой ситуации применяется, в именах параметров используются префиксы <strong>server_</strong> и <strong>client_</strong>, определяющие серверные или клиентские функции, соответственно. Серверные и клиентские функции отключены, если не установлен ни один из вариантов. Если аутентификатор должен использоваться для обоих, серверных и клиентских функций, в одном определении, требуется использование обоих установок параметров. Например:</p>
+<div class="highlight-python"><pre>cram:
+  driver = cram_md5
+  public_name = CRAM-MD5
+  server_secret = ${if eq{$auth1}{ph10}{secret1}fail}
+  client_name = ph10
+  client_secret = secret2</pre>
+</div>
+<p>Параметры <strong>server_</strong> используется когда Exim выступает в роли сервера, и <strong>client_</strong> - когда он выступает в роли клиента.</p>
+<p>Описания индивидуальных аутентификаторов даны в последующих главах. Оставшаяся часть этой главы охватывает общие параметры для аутентификаторов, сопровождаемые общим обсуждением о способе работы аутентификации в Exim`e.</p>
+<div class="section" id="ch33-01">
+<span id="id2"></span><h2>Общие параметры для аутентификаторов<a class="headerlink" href="#ch33-01" title="Ссылка на этот заголовок">¶</a></h2>
+<table border="1" class="docutils" id="index-3">
+<colgroup>
+<col width="30%" />
+<col width="29%" />
+<col width="20%" />
+<col width="21%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>client_condition</strong></td>
+<td>Use: authenticators</td>
+<td>Type: string†</td>
+<td>Default: unset</td>
+</tr>
+</tbody>
+</table>
+<p>Когда Exim аутентифицируется как клиент, он пропускает любые аутентификаторы чьё раскрытие приводит к “0” или “false”. Это может быть использовано, например, для пропуска аутентификатора с открытым текстом, когда соединение незашифровано, путём такой установки:</p>
+<div class="highlight-python"><pre>client_condition = ${if !eq{$tls_cipher}{}}</pre>
+</div>
+<p>(Старая документация некорректно указывает, что $tls_cipher содержит шифрование используемое для входящих сообщений. Фактически, в процессе SMTP доставки, она содержит шифр используемый для доставки.)</p>
+<table border="1" class="docutils" id="index-4">
+<colgroup>
+<col width="18%" />
+<col width="35%" />
+<col width="22%" />
+<col width="25%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>driver</strong></td>
+<td>Use: authenticators</td>
+<td>Type: string</td>
+<td>Default: unset</td>
+</tr>
+</tbody>
+</table>
+<p>Этот параметр всегда должен быть установлен. Он определяет, какой из доступных аутентификаторов должен использоваться.</p>
+<table border="1" class="docutils" id="index-5">
+<colgroup>
+<col width="25%" />
+<col width="32%" />
+<col width="20%" />
+<col width="23%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>public_name</strong></td>
+<td>Use: authenticators</td>
+<td>Type: string</td>
+<td>Default: unset</td>
+</tr>
+</tbody>
+</table>
+<p>Этот параметр определяет имя аутентификационного механизма, который принадлежит драйверу, и путём которого он известен внешнему миру. Эти имена должны содержать лишь буквы в прописном регистре <a class="footnote-reference" href="#id7" id="id3">[2]</a>, цифры, подчёркивания, и дефисы (<span class="target" id="index-6"></span><a class="rfc reference external" href="http://tools.ietf.org/html/rfc2222.html"><strong>RFC 2222</strong></a>), но Exim фактически, соответствует им регистронезависимо. Если <strong>public_name</strong> не задана, по умолчанию используется имя драйвера.</p>
+<table border="1" class="docutils" id="index-7">
+<colgroup>
+<col width="39%" />
+<col width="25%" />
+<col width="17%" />
+<col width="18%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>server_advertise_condition</strong></td>
+<td>Use: authenticators</td>
+<td>Type: string†</td>
+<td>Default: unset</td>
+</tr>
+</tbody>
+</table>
+<p>Когда сервер собирается информировать об аутентификационном механизме, условие раскрывается. Если оно приводит к пустой строке, “0”, “no”, или “false”, то механизм не информируется. Если ошибка не принудительная, и не вызывана путём задержки поиска, инцидент записывается в лог. Смотрите ниже, раздел <a class="reference internal" href="#ch33-03"><em>33.3</em></a> для дальнейшего обсуждения.</p>
+<table border="1" class="docutils" id="index-8">
+<colgroup>
+<col width="30%" />
+<col width="29%" />
+<col width="20%" />
+<col width="21%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>server_condition</strong></td>
+<td>Use: authenticators</td>
+<td>Type: string†</td>
+<td>Default: unset</td>
+</tr>
+</tbody>
+</table>
+<p>Этот параметр должен быть задан для серверного аутентификатора <strong>plaintext</strong>, где он используется для прямого контроля аутентификации. Для дополнительных деталей, смотрите раздел <a class="reference internal" href="ch34.html#ch34-02"><em>34.2</em></a>.</p>
+<p>Для других аутентификаторов <strong>server_condition</strong> может быть использована как дополнительный механизм аутентификации или авторизации, который применяется после успеха других условий аутентификаторов. Если она задана, она раскрывается, когда аутентификатор должен вернуть код успеха. Если раскрытие принудительно неудачно, аутентификация неудачна. Любые другие ошибки раскрытия вызывают возврат кода временной ошибки. Если результат успешного раскытия пустая строка, “0”, “no”, или “false” - аутентификация неудачна. Если результат раскрытия “1”, “yes”, или “true” - аутентификация успешна. Для любых других результатов возвращается код временной ошибки, с текстом ошибки в виде результата раскрытия.</p>
+<table border="1" class="docutils" id="index-9">
+<colgroup>
+<col width="32%" />
+<col width="28%" />
+<col width="19%" />
+<col width="21%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>server_debug_print</strong></td>
+<td>Use: authenticators</td>
+<td>Type: string†</td>
+<td>Default: unset</td>
+</tr>
+</tbody>
+</table>
+<p>Если этот параметр установлен, и включена отладка аутентификации (смотрите параметр <strong>-d</strong> командной строки), строка раскрывается, и включается в отладочный вывод, когда аутентификатор работает как сервер. Это может помочь, при проверке значений переменных. Если раскрытие строки неудачно, сообщение о ошибке пишется в отладочный вывод, и Exim продолжает обработку.</p>
+<table border="1" class="docutils" id="index-10">
+<colgroup>
+<col width="27%" />
+<col width="30%" />
+<col width="21%" />
+<col width="22%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>server_set_id</strong></td>
+<td>Use: authenticators</td>
+<td>Type: string†</td>
+<td>Default: unset</td>
+</tr>
+</tbody>
+</table>
+<p>Когда сервер Exim успешно аутентифицируется как клиент, эта строка раскрывается, используя данные из аутентификации, и сохраняется для входящих сообщений в переменной $authenticated_id. Также, она включается в строку лога для входящих сообщений. Например, конфигурация аутентификатора user/password могла бы сохранять использовавшееся для аутентификации имя пользователя, и обращаться к нему впоследствии, в течение доставки сообщения. Если раскрытие неудачно, параметр игнорируется.</p>
+<table border="1" class="docutils" id="index-11">
+<colgroup>
+<col width="39%" />
+<col width="25%" />
+<col width="17%" />
+<col width="18%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>server_mail_auth_condition</strong></td>
+<td>Use: authenticators</td>
+<td>Type: string†</td>
+<td>Default: unset</td>
+</tr>
+</tbody>
+</table>
+<p>Этот параметр позволяет серверу отказываться от аутентифицированных отправителей адресов, подаваемых как часть команды MAIL в SMTP-соединении, которое аутентифицировано путём драйвера, на котором установлен параметр <strong>server_mail_auth_condition</strong>. Параметр не используется как часть аутентификационного процесса; вместо этого его (нераскрытое) значение запоминается для дальнейшего использования. То, как оно используется, описано в следующей секции.</p>
+</div>
+<div class="section" id="auth-mail">
+<span id="ch33-02"></span><h2>Параметр AUTH в команде MAIL<a class="headerlink" href="#auth-mail" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Когда клиент предоставляет <tt class="docutils literal"><span class="pre">AUTH=</span></tt> элемент в команде MAIL, Exim применяет следующие проверки, до приёма его как аутентифицированного отправителя сообщения:</p>
+<ul class="simple">
+<li>Если соединение не использует расширенный SMTP (т.е. использовался HELO вместо EHLO), использование <tt class="docutils literal"><span class="pre">AUTH=</span></tt> - синтаксическая ошибка.</li>
+<li>Если значение параметра <cite>AUTH=</cite> - “&lt;&gt;”, оно игнорируется.</li>
+<li>Если задана <strong>acl_smtp_mailauth</strong>, запускается определённая ACL. Когда она работает, значение $authenticated_sender устанавливается из параметра <tt class="docutils literal"><span class="pre">AUTH=</span></tt>. Если ACL не выносит <strong>accept</strong>, значение $authenticated_sender удаляется. ACL <strong>acl_smtp_mailauth</strong> может не вернуть <strong>drop</strong> или <strong>discard</strong>. Если она задерживается, для команды MAIL выдаётся код временной ошибки (451).</li>
+<li>Если <strong>acl_smtp_mailauth</strong> не задана, значение параметра <tt class="docutils literal"><span class="pre">AUTH=</span></tt> принимается, и помещается в $authenticated_sender лишь если клиент аутентифицировался.</li>
+<li>Если значение <tt class="docutils literal"><span class="pre">AUTH=</span></tt> было принято любым из двух предыдущих правил, и клиент аутентифицировался, и аутентификатор имеет установку для <strong>server_mail_auth_condition</strong>, условие проверяется в этой точке. Значение, которое было сохранено из аутенификатора - раскрывается. Если раскрытие неудачно, или приводит к пустой строке, “0”, “no”, или “false”, значение $authenticated_sender удаляется. Если раскрытие приводит к другому значению, значение $authenticated_sender сохраняется, и передаётся с сообщением.</li>
+</ul>
+<p>Когда $authenticated_sender установлена для сообщения, оно передаётся к другим хостам, на которых Exim аутентифицируется как клиент. Не путайте это значение с $authenticated_id, которое является строкой, полученной из аутентификационного процесса, и которое, обычно, не является полным адресом электронной почты.</p>
+<p>Каждый раз, когда значение <tt class="docutils literal"><span class="pre">AUTH=</span></tt> игнорируется, инцидент записывается в лог. ACL для MAIL, если задана, запускается после того как <tt class="docutils literal"><span class="pre">AUTH=</span></tt> принята, или проигнорирована. Поэтому, она может использовать $authenticated_sender. Обратное - неверно: значение $sender_address - ещё не установлено, когда работает <strong>acl_smtp_mailauth</strong> ACL.</p>
+</div>
+<div class="section" id="exim">
+<span id="ch33-03"></span><h2>Аутентификация на сервере Exim<a class="headerlink" href="#exim" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Когда Exim получает команду EHLO, он сообщает публичные имена тех аутентификаторов, которые сконфигурированы как сервера, подчиняясь следующим условиям:</p>
+<ul class="simple">
+<li>Клиентский хост должен совпадать с <strong>auth_advertise_hosts</strong> (по умолчанию - *)</li>
+<li>Если установлен параметр <strong>server_advertise_condition</strong>, его раскрытие не должно привести к пустой строке, “0”, “no”, или “false”.</li>
+<li>Порядок, в котором заданы аутентификаторы контролирует порядок, в котором информируется о механизмах.</li>
+</ul>
+<p>Некоторые почтовые клиенты (например, некоторые версии Netscape) требуют, чтобы пользователь предоставлял имя и пароль для аутентификации каждый раз, когда информируется о AUTH, даже при том, что аутентификация фактически, не необходима (например, Exim может быть настроен для разрешения безоговорочного релея от клиентов, путём проверки IP-адреса). Вы можете сделать таких клиентов более дружественными, не сообщая им о AUTH. Например, если клиентам сети 10.9.8.0/24 разрешено (путём ACL работающих для RCPT) доставлять почту без аутентификации, вы должны установить</p>
+<div class="highlight-python"><pre>auth_advertise_hosts = ! 10.9.8.0/24</pre>
+</div>
+<p>чтобы не информировать их о аутентификационных механизмах.</p>
+<p>Параметр <strong>server_advertise_condition</strong> контролирует информирование о отдельных аутентификационных механизмах. Например, она может быть использована для ограничения информирования о специфических механизмах в шифрованных соединениях, путём установки типа:</p>
+<div class="highlight-python"><pre>server_advertise_condition = ${if eq{$tls_cipher}{}{no}{yes}}</pre>
+</div>
+<p>Если сессия зашифрована, переменная $tls_cipher - не пуста, и таким образом, раскрытие приводит к “yes”, которое разрешает информирование.</p>
+<p>Когда Exim как сервер получает от клиента команду AUTH, он немедленно её отклоняет, если о AUTH не сообщалось в более раннем ответе на команду EHLO. Так происходит если</p>
+<ul class="simple">
+<li>Хост клиента не совпадает с <strong>auth_advertise_hosts</strong>; или</li>
+<li>Отсутствуют аутентификаторы сконфигурированные с серверного параметра; или</li>
+<li>Раскрытие <strong>server_advertise_condition</strong> заблокировало информирование о всех серверных аутентификаторах.</li>
+</ul>
+<p>Иначе, Exim запускает ACL определённую путём <strong>acl_smtp_auth</strong>, чтобы решить - принять ли команду. Если параметр <strong>acl_smtp_auth</strong> не задана, AUTH принимается от любых клиентских хостов.</p>
+<p>Если AUTH не отклонена путём ACL, Exim ищет свою конфигурацию для серверного аутентификационного механизма, о котором информировалось в ответе на EHLO, и который совпадает с именованным в команде AUTH. Если он его находит, он запускает соответствующий аутентификационный протокол, и аутентификация успешна или неуспешна. Если нет соответствия с информировавшимся механизмом, команда AUTH отклоняется с ошибкой 504.</p>
+<p>Когда сообщение получено с аутентифицированного хоста, значение $received_protocol установлено в “esmtpa” или “esmtpsa” вместо “esmtp” или “esmtps”, и $sender_host_authenticated содержит имя (не публичное имя) драйвера аутентификации, который успешно аутентифицировал клиента, от которого было получено сообщение. Эта переменная пуста, если небыло успешной аутентификации.</p>
+</div>
+<div class="section" id="ch33-04">
+<span id="id4"></span><h2>Проверка серверной аутентификации<a class="headerlink" href="#ch33-04" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Параметр <strong>-bh</strong> командной строки Exim`a, может быть полезной при тестировании серверной конфигурации аутентификации. Данные для команды AUTH нужно посылать используя кодирование base64. Быстрый способ делать такие данные для тестирования - следующий скрипт на Perl:</p>
+<div class="highlight-python"><pre>use MIME::Base64;
+printf ("%s", encode_base64(eval "\"$ARGV[0]\""));</pre>
+</div>
+<p>Он интерпретирует свои аргументы как строки Perl, и, затем, кодирует их. Интерпретация как строки Perl позволяет бинарные нули, которые должны быть включены в некоторые виды аутентификационных данных. Например, командная строка, для запуска этого скрипта с такими данными, могла бы быть такой:</p>
+<div class="highlight-python"><pre>encode '\0user\0password'</pre>
+</div>
+<p>Отметьте использование одиночных кавычек, для предотвращения интерпретации шеллом обратных слэшей, чтобы они могли быть интерпретированы Perl`ом в специфические символы, чьё кодовое значение - ноль.</p>
+<div class="admonition warning">
+<p class="first admonition-title">Предупреждение</p>
+<p class="last">Если строка пользователя или пароля начинается с восьмеричной цифры, вы должны использовать три нуля вместо одного, после начального обратного слэша. Если вы этого не сделаете, восьмеричная цифра, с которой начинается ваша строка будет некорректно интерпретирована как часть кода первого знака.</p>
+</div>
+<div class="admonition warning">
+<p class="first admonition-title">Предупреждение</p>
+<p>Если в строках есть символы которые Perl интерпретирует особым образом, вы должны использовать экранирование Perl`a для предотвращения их неверного восприятия. Например, команда типа:</p>
+<div class="highlight-python"><pre>encode '\0user@domain.com\0pas$$word'</pre>
+</div>
+<p class="last">даст некорректный ответ, поскольку неэкранированы символы “&#64;” и “$”.</p>
+</div>
+<p>Если у вас есть инсталлированная команда “mimencode”, то другой способ создать закодированную по base64 строку - запустить команду</p>
+<div class="highlight-python"><pre>echo -e -n `\0user\0password' | mimencode</pre>
+</div>
+<p>Параметр <strong>-e</strong> команды <em>echo</em> включает интерпретацию экранирования обратных слэшей в аргументе, и параметр <strong>-n</strong> определяет, что в конце вывода не нужно добавлять символ новой строки. Однако, не все версии <em>echo</em> распознают эти параметры, следовательно, вы должны проверить вашу версию до того как полагаться на этот совет. <a class="footnote-reference" href="#id8" id="id5">[3]</a></p>
+</div>
+<div class="section" id="exim-a">
+<span id="ch33-05"></span><h2>Аутентификация Exim`a как клиента<a class="headerlink" href="#exim-a" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Транспорт <strong>smtp</strong> имеет два параметра, называемые <strong>hosts_require_auth</strong> и <strong>hosts_try_auth</strong>. Когда транспорт <strong>smtp</strong> подключается к серверу которые информировал о поддержке аутентификации, и хост совпадает с отдельной записью в любой из этих параметров, Exim (как клиент) пробует аутентифицироваться следующим образом:</p>
+<ul class="simple">
+<li>Для каждого аутентификатора, который сконфигурирован как клиент, в порядке как они заданы в конфигурации, ищщутся аутентификационные механизмы объявленные сервером для того, чьё имя совпадает с публичным именем аутентификатора.</li>
+<li>Когда он находит соответствующий, он запускает клиентский код аутентификатора. Переменные $host и $host_address доступны для любых раскрытий строк которые мог бы сделать клиент. Они устанавливаются в имя и IP-адрес сервера. Если любое раскрытие принудительно неудачно, попытка аутентификации прекращается и Exim движется к следующему аутентификатору. Иные ошибки раскрытия вызывают задержку доставки</li>
+<li>Если результат попытки аутентификации - временная ошибка или таймаут, Exim прекращает попытку послать сообщение к хосту в этот момент. Он пробует позднее. Если есть доступные резервные хосты, они испытываются обычным образом.</li>
+<li>Если ответ на аутентификацию - постоянная ошибка (с кодом 5xx), Exim продолжает поиск списка аутентификаторов и пробует иные, если возможно. Если все попытки аутентификации дают постоянную ошибку, или если нет попыток по причине отсутствия совпадающих механизмов (или раскрытие параметра приводит к принудительной неудаче), происходящее зависит от того, совпадает ли хост с <strong>hosts_require_auth</strong> или <strong>hosts_try_auth</strong>. В первом случае, выводится временная ошибка, и доставка задерживается. Ошибка может быть детектирована в правилах повторов, и, таким образом, превращена в постоянную - если вам это необходимо. Во втором случае, Exim пробует доставить сообщение неаутентифицированным.</li>
+</ul>
+<p>Когда Exim подтвердил свою подлинность удалённому хосту, он добавляет параметр AUTH к посылаемой команде MAIL, если он имеет аутентифицированного отправителя. Если сообщение пришло с удалённого хоста, аутентифицированный отправитель - тот, который получен во входящей команде MAIL, при условии, что входящее соединение аутентифицировано, и условие <strong>server_mail_auth</strong> позволяет сохранять аутентифицированного отправителя. Если локальный процесс вызывает Exim для отправки сообщения, адрес отправителя построенный из имени логина пользователя и <strong>qualify_domain</strong> рассматривается как аутентифицированный. Однако, если для транспорта <strong>smtp</strong> установлен параметр <strong>authenticated_sender</strong>, она замещает аутентифицированного отправителя полученного с сообщением.</p>
+<table class="docutils footnote" frame="void" id="id6" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id1">[1]</a></td><td>challenges, может быть переведено как откликов - прим. lissyara</td></tr>
+</tbody>
+</table>
+<table class="docutils footnote" frame="void" id="id7" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id3">[2]</a></td><td>заглавные - прим. lissyara</td></tr>
+</tbody>
+</table>
+<table class="docutils footnote" frame="void" id="id8" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id5">[3]</a></td><td>Надо заметить, что из перечисленных ключей в FreeBSD существует только ключ “-n”, остальных нет - прим. lissyara.</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Содержание</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">SMTP-аутентификация</a><ul>
+<li><a class="reference internal" href="#ch33-01">Общие параметры для аутентификаторов</a></li>
+<li><a class="reference internal" href="#auth-mail">Параметр AUTH в команде MAIL</a></li>
+<li><a class="reference internal" href="#exim">Аутентификация на сервере Exim</a></li>
+<li><a class="reference internal" href="#ch33-04">Проверка серверной аутентификации</a></li>
+<li><a class="reference internal" href="#exim-a">Аутентификация Exim`a как клиента</a></li>
+</ul>
+</li>
+</ul>
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="ch32.html" title="предыдущая глава">Конфигурация повторов</a></li>
+      <li>Next: <a href="ch34.html" title="следующая глава">Аутентификатор <strong>plaintext</strong></a></li>
+  </ul></li>
+</ul>
+  <h3>На этой странице</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/ch33.txt"
+           rel="nofollow">Показать исходный текст</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Быстрый поиск</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Искать" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Введите слова для поиска или имя модуля, класса или функции.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy; Copyright 2011, Exim Maintainers.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a>.
+    </div>
+  </body>
+</html>

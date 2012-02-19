@@ -1,85 +1,171 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset='utf-8'>
 
-  <title>hizel/exim-doc @ GitHub</title>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
-  <style type="text/css">
-    body {
-      margin-top: 1.0em;
-      background-color: #bd040b;
-      font-family: Helvetica, Arial, FreeSans, san-serif;
-      color: #ffffff;
-    }
-    #container {
-      margin: 0 auto;
-      width: 700px;
-    }
-    h1 { font-size: 3.8em; color: #42fbf4; margin-bottom: 3px; }
-    h1 .small { font-size: 0.4em; }
-    h1 a { text-decoration: none }
-    h2 { font-size: 1.5em; color: #42fbf4; }
-    h3 { text-align: center; color: #42fbf4; }
-    a { color: #42fbf4; }
-    .description { font-size: 1.2em; margin-bottom: 30px; margin-top: 30px; font-style: italic;}
-    .download { float: right; }
-    pre { background: #000; color: #fff; padding: 15px;}
-    hr { border: 0; width: 80%; border-bottom: 1px solid #aaa}
-    .footer { text-align:center; padding-top:30px; font-style: italic; }
-  </style>
-</head>
 
-<body>
-  <a href="https://github.com/hizel/exim-doc"><img style="position: absolute; top: 0; right: 0; border: 0;" src="http://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub" /></a>
-
-  <div id="container">
-
-    <div class="download">
-      <a href="https://github.com/hizel/exim-doc/zipball/master">
-        <img border="0" width="90" src="https://github.com/images/modules/download/zip.png"></a>
-      <a href="https://github.com/hizel/exim-doc/tarball/master">
-        <img border="0" width="90" src="https://github.com/images/modules/download/tar.png"></a>
-    </div>
-
-    <h1><a href="https://github.com/hizel/exim-doc">exim-doc</a>
-      <span class="small">by <a href="https://github.com/hizel">hizel</a></span></h1>
-
-    <div class="description">
-      russian exim documentation 
-    </div>
-
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-
+    <title>Документация MTA EXIM &mdash; Specification of the Exim Mail Transfer Agent 4.70 documentation</title>
     
-
+    <link rel="stylesheet" href="_static/flasky.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '4.70',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/translations.js"></script>
+    <link rel="top" title="Specification of the Exim Mail Transfer Agent 4.70 documentation" href="#" />
+    <link rel="next" title="Введение" href="ch01.html" />
+   
+  
+  <link media="only screen and (max-device-width: 480px)" href="_static/small_flask.css" type= "text/css" rel="stylesheet" />
 
-    
+  </head>
+  <body>
+    <div class="related">
+      <h3>Просмотр</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="Словарь-указатель"
+             accesskey="I">словарь</a></li>
+        <li class="right" >
+          <a href="ch01.html" title="Введение"
+             accesskey="N">следующий</a> |</li>
+        <li><a href="#">Specification of the Exim Mail Transfer Agent 4.70 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
 
-    
-      <h2>Authors</h2>
-      <p>Ildar Hizbulin (hizel@vyborg.ru)<br/>      </p>
-    
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="mta-exim">
+<h1>Документация MTA EXIM<a class="headerlink" href="#mta-exim" title="Ссылка на этот заголовок">¶</a></h1>
+<p>Оглавление:</p>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="ch01.html">Введение</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch02.html">Включенный код</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch03.html">Как Exim получает и доставляет почту</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch04.html">Сборка и инсталляция Exim</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch05.html">Командная строка Exim</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch06.html">Файл конфигурации Exim во время выполнения</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch07.html">Файл конфигурации по умолчанию</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch08.html">Регулярные выражения</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch09.html">Поиски в файлах и базах данных</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch10.html">Списки доменов, узлов, адресов и локальных частей [почтового] адреса</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch11.html">Раскрываемые строки</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch12.html">Встроенный Perl</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch13.html">Запуск сервиса, и использование сетевых интерфейсов</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch14.html">Главная конфигурация</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch15.html">Общие параметры для маршрутизаторов</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch16.html">Маршрутизатор <strong>accept</strong></a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch17.html">Маршрутизатор <strong>dnslookup</strong></a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch18.html">Маршрутизатор <strong>ipliteral</strong></a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch19.html">Маршрутизатор <strong>iplookup</strong></a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch20.html">Маршрутизатор <strong>manualroute</strong></a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch21.html">Маршрутизатор <strong>queryprogram</strong></a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch22.html">Маршрутизатор <strong>redirect</strong></a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch23.html">Среда для работы локальных транспортов</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch24.html">Общие параметры для транспортов</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch25.html">Группировка адресов в локальных транспортах</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch26.html">Транспорт <strong>appendfile</strong></a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch27.html">Транспорт <strong>autoreply</strong></a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch28.html">Транспорт <strong>lmtp</strong></a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch29.html">Транспорт <strong>pipe</strong></a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch30.html">Транспорт <strong>smtp</strong></a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch31.html">Перезапись адресов</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch32.html">Конфигурация повторов</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch33.html">SMTP-аутентификация</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch34.html">Аутентификатор <strong>plaintext</strong></a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch35.html">Аутентификатор <strong>cram_md5</strong></a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch36.html">Аутентификатор <strong>cyrus_sasl</strong></a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch37.html">Аутентификатор <strong>dovecot</strong></a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch38.html">Аутентификатор <strong>spa</strong></a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch39.html">Шифрование соединений с использованием TLS/SSL</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch40.html">Списки Контроля Доступа</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch41.html">Проверка контента во время выполнения ACL</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch42.html">Добавляем функцию <em>local_scan()</em> в Exim</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch43.html">Системная фильтрация сообщений</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch44.html">Обработка сообщения</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch45.html">Обработка SMTP</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch46.html">Настройка рикошетов и предупреждающих сообщений</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch47.html">Некоторые общие параметры конфигурации</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch48.html">Использование Exim&#8217;a как клиента без очереди сообщений</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch49.html">Файлы логов</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch50.html">Утилиты Exim&#8217;a</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch51.html">Монитор Exim&#8217;a</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch52.html">Обсуждение безопасности</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch53.html">Формат файлов спула</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch54.html">Поддержка DKIM (DOMAINKEYS IDENTIFIED MAIL (почты идентифицированной доменными ключами)) - <strong>RFC 4871</strong></a></li>
+<li class="toctree-l1"><a class="reference internal" href="ch55.html">Добавление новых драйверов или типов поисков</a></li>
+</ul>
+</div>
+</div>
+<div class="section" id="id1">
+<h1>Глоссарий<a class="headerlink" href="#id1" title="Ссылка на этот заголовок">¶</a></h1>
+<ul class="simple">
+<li><a class="reference internal" href="genindex.html"><em>Алфавитный указатель</em></a></li>
+<li><a class="reference internal" href="search.html"><em>Поиск</em></a></li>
+</ul>
+</div>
 
-    
 
-    <h2>Download</h2>
-    <p>
-      You can download this project in either
-      <a href="https://github.com/hizel/exim-doc/zipball/master">zip</a> or
-      <a href="https://github.com/hizel/exim-doc/tarball/master">tar formats.
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="#">Содержание</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Документация MTA EXIM</a><ul>
+</ul>
+</li>
+<li><a class="reference internal" href="#id1">Глоссарий</a></li>
+</ul>
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="#">Documentation overview</a><ul>
+      <li>Next: <a href="ch01.html" title="следующая глава">Введение</a></li>
+  </ul></li>
+</ul>
+  <h3>На этой странице</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/index.txt"
+           rel="nofollow">Показать исходный текст</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Быстрый поиск</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Искать" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Введите слова для поиска или имя модуля, класса или функции.
     </p>
-    <p>You can also clone the project with <a href="http://git-scm.com">Git</a>
-      by running:
-      <pre>$ git clone git://github.com/hizel/exim-doc</pre>
-    </p>
-
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
     <div class="footer">
-      get the source code on GitHub : <a href="https://github.com/hizel/exim-doc">hizel/exim-doc</a>
+      &copy; Copyright 2011, Exim Maintainers.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a>.
     </div>
-
-  </div>
-
-</body>
+  </body>
 </html>

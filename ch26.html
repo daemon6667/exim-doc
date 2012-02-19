@@ -1,0 +1,1224 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Транспорт appendfile &mdash; Specification of the Exim Mail Transfer Agent 4.70 documentation</title>
+    
+    <link rel="stylesheet" href="_static/flasky.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '4.70',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/translations.js"></script>
+    <link rel="top" title="Specification of the Exim Mail Transfer Agent 4.70 documentation" href="index.html" />
+    <link rel="next" title="Транспорт autoreply" href="ch27.html" />
+    <link rel="prev" title="Группировка адресов в локальных транспортах" href="ch25.html" />
+   
+  
+  <link media="only screen and (max-device-width: 480px)" href="_static/small_flask.css" type= "text/css" rel="stylesheet" />
+
+  </head>
+  <body>
+    <div class="related">
+      <h3>Просмотр</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="Словарь-указатель"
+             accesskey="I">словарь</a></li>
+        <li class="right" >
+          <a href="ch27.html" title="Транспорт autoreply"
+             accesskey="N">следующий</a> |</li>
+        <li class="right" >
+          <a href="ch25.html" title="Группировка адресов в локальных транспортах"
+             accesskey="P">предыдущий</a> |</li>
+        <li><a href="index.html">Specification of the Exim Mail Transfer Agent 4.70 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="appendfile">
+<span id="ch26-00"></span><h1>Транспорт <strong>appendfile</strong><a class="headerlink" href="#appendfile" title="Ссылка на этот заголовок">¶</a></h1>
+<p>Транспорт <strong>appendfile</strong> доставляет сообщения путём добавления его к существующему файлу, или путём создания нового файла в заданной директории. Отдельные файлы, к которым добавляются сообщения, могут быть в традиционном формате UNIX mailbox, или, необязательно, в формате MBX, поддерживаемом Pine MUA и даемоном University of Washington IMAP (его поддерживают и другие). Когда каждое сообщение доставляется в отдельный файл, может использоваться, необязательно, формат <strong>maildir</strong>, для дополнительной защиты от ошибок при доставке. Также поддерживается третья форма доставки в отдельные файлы, известная как <strong>mailstore</strong>. Для всех этих форматов, Exim, в случае необходимости, пытается создать необходимое число уровней директорий, при условии что установлен параметр <strong>create_directory</strong>.</p>
+<p>Код для необязательных форматов, по умолчанию не включен в бинарный файл Exim`a. Для включения соответствующего кода, необходимо в <em>Local/Makefile</em> установить SUPPORT_MBX, SUPPORT_MAILDIR и/или SUPPORT_MAILSTORE.</p>
+<p>Exim распознаёт ошибки системной квоты, и создаст соответствующее сообщение. Также он поддерживает собственное управление квотами в транспорте, для использования когда системные средства недоступны, или по каким-то причинам не могут использоваться.</p>
+<p>Если ошибка происходит при добавлении к файлу (например, квота превышена или заполнился раздел), Exim пытается восстановить старый размер файла и время его модификации. Если ошибка происходит при создании нового файла - файл удаляется.</p>
+<p>Выполняется множество проверок безопасности до начала добавления новой информации к файлу, а сам файл блокируется. Детальное описание дано ниже, после списка частных параметров.</p>
+<p>Обычно, транспорт <strong>appendfile</strong> используется для локальной доставки в пользовательские ящики. Однако, он также может использоваться как псевдо-удалённый транспорт, для раскладывания сообщений в файлы, для удалённой доставки другими средствами, кроме Exim`a. В этом случае, часто используется формат “пакетного SMTP” (смотрите параметр <strong>use_bsmtp</strong>).</p>
+<div class="section" id="file-directory">
+<span id="ch26-01"></span><h2>Параметры <strong>file</strong> и <strong>directory</strong><a class="headerlink" href="#file-directory" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Параметр <strong>file</strong> определяет единичный файл, к которому добавляются сообщения; параметр <strong>directory</strong> определяет директорию, в которой создаётся новый файл, содержащий сообщение. Может быть задана лишь одна из этих двух параметров, и для нормальной доставки в почтовые ящики, один из них должен быть установлен.</p>
+<p>Однако, <strong>appendfile</strong> также используется для доставки сообщений в файлы или директории, имена которых (или части имён) получаются из синонимов, правил перенапрвления, или операций фильтрации (например, команды <strong>save</strong> в пользовательском фильтре Exim`a). Когда выполняется такой транспорт, $local_part содержит локальную часть, которая была синонимом или результатом перенаправления, и $address_file содержит имя (или часть имени) файла или директории, созданное операцией перенаправления. Есть два случая:</p>
+<ul class="simple">
+<li>Если не установлены ни <strong>file</strong> ни <strong>directory</strong>, операция перенаправления должна определить абсолютный путь (тот, который начинается с “/”). Это - большинство общих случаев, когда пользователи с локальными учетными записями используют фильтрацию для сортировки почты по различным директориям. Смотрите, для примера, транспорт <strong>address_file</strong>, в конфигурации по умолчанию. Если путь завершается слэшем, предполагается, что это - имя директории. Доставка в директорию может быть вызвана  путём установки <strong>maildir_format</strong> или <strong>mailstore_format</strong>.</li>
+<li>Если <strong>file</strong> или <strong>directory</strong> установлены для доставки от переназначения <a class="footnote-reference" href="#id8" id="id1">[1]</a>, она используется для определения имени файла или директории для доставки. Обычно, содержимое $address_file используется каким-то образом в раскрытии строки.</li>
+</ul>
+<p>Как пример второго случая, рассмотрите окружение где пользователи не имеют домашних директорий. Им можно разрешить использование команды фильтра Exim`a в форме:</p>
+<div class="highlight-python"><pre>save folder23</pre>
+</div>
+<p>или команды фильтра Sieve в форме:</p>
+<div class="highlight-python"><pre>require "fileinto";
+fileinto "folder23";</pre>
+</div>
+<p>В этой ситуации, раскрытие <strong>file</strong> или <strong>directory</strong> в транспорте должно преобразовать относительный путь в соответствующее абсолютное имя файла. В случае фильтров Sieve, должно быть обработано имя <em>inbox</em>. Это имя, используемое в качестве результата действия “keep” (“сохранить”), в фильтре. Этот пример показывает один способ обработать это требование:</p>
+<div class="highlight-python"><pre>file = ${if eq{$address_file}{inbox} \
+            {/var/mail/$local_part} \
+            {${if eq{${substr_0_1:$address_file}}{/} \
+                  {$address_file} \
+                  {$home/mail/$address_file} \
+            }} \
+        }</pre>
+</div>
+<p>С этой установкой параметра <strong>file</strong>, <em>inbox</em> ссылается на стандартное расположение почтового ящика, абсолютные пути используются без изменения, и другие папки находятся в директории <em>mail</em>, внутри домашней директории.</p>
+<div class="admonition note">
+<p class="first admonition-title">Примечание</p>
+<p class="last">При обработке в фильтре Exim`a, относительный путь, типа <em>folder23</em> превращается в абсолютный, если маршрутизатору известна домашняя директория. В частности, так обстоят дела, если установлен параметр <strong>check_local_user</strong>. Если вы хотите предотвратить это во время маршрутизации, вы должны установить <strong>router_home_directory</strong> в пустое значение. Это вынуждает маршрутизатор передавать транспорту относительный путь.</p>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Примечание</p>
+<p class="last">Абсолютный путь в $address_file не обрабатывается как-то особенно; продолжает использоваться параметр <strong>file</strong> или <strong>directory</strong>, если он установлен.</p>
+</div>
+</div>
+<div class="section" id="ch26-02">
+<span id="id2"></span><h2>Частные параметры для <strong>appendfile</strong><a class="headerlink" href="#ch26-02" title="Ссылка на этот заголовок">¶</a></h2>
+<table border="1" class="docutils" id="index-0">
+<colgroup>
+<col width="25%" />
+<col width="27%" />
+<col width="23%" />
+<col width="25%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>allow_fifo</strong></td>
+<td>Use: appendfile</td>
+<td>Type: boolean</td>
+<td>Default: false</td>
+</tr>
+</tbody>
+</table>
+<p>Установка этого параметра позволяет доставлять в именованные каналы (трубы, или FIFO) точно также как и в обычные файлы. Если, во время доставки, отсутствует процесс читающий трубу, доставка задерживается.</p>
+<table border="1" class="docutils" id="index-1">
+<colgroup>
+<col width="29%" />
+<col width="25%" />
+<col width="22%" />
+<col width="24%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>allow_symlink</strong></td>
+<td>Use: appendfile</td>
+<td>Type: boolean</td>
+<td>Default: false</td>
+</tr>
+</tbody>
+</table>
+<p>По умолчанию, <strong>appendfile</strong> не доставляет, если имя пути к файлу будет символической ссылкой. Установка этого параметра смягчает это ограничение, но существуют проблемы безопасности связанные с использованием символических ссылок. Убедитесь, что вы знаете, что делаете, при установке этого параметра. Точные детали того, что затрагивает этот параметр, находятся после этого списка параметров.</p>
+<table border="1" class="docutils" id="index-2">
+<colgroup>
+<col width="22%" />
+<col width="28%" />
+<col width="24%" />
+<col width="26%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>batch_id</strong></td>
+<td>Use: appendfile</td>
+<td>Type: string†</td>
+<td>Default: unset</td>
+</tr>
+</tbody>
+</table>
+<p>Смотрите описание пакетной локальной доставки в главе <a class="reference internal" href="ch25.html#ch25-00"><em>25</em></a>. Однако, пакетная доставка автоматически отключается для доставок <strong>appendfile</strong>, происходящих как результат перенаправления, подстановки синонима, или других переназначений прямо в файл.</p>
+<table border="1" class="docutils" id="index-3">
+<colgroup>
+<col width="25%" />
+<col width="29%" />
+<col width="25%" />
+<col width="20%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>batch_max</strong></td>
+<td>Use: appendfile</td>
+<td>Type: integer</td>
+<td>Default: 1</td>
+</tr>
+</tbody>
+</table>
+<p>Смотрите описание пакетной локальной доставки в главе <a class="reference internal" href="ch25.html#ch25-00"><em>25</em></a>.</p>
+<table border="1" class="docutils" id="index-4">
+<colgroup>
+<col width="26%" />
+<col width="26%" />
+<col width="23%" />
+<col width="25%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>check_group</strong></td>
+<td>Use: appendfile</td>
+<td>Type: boolean</td>
+<td>Default: false</td>
+</tr>
+</tbody>
+</table>
+<p>Когда этот параметр установлен, проверяется группа владельца файла, заданного параметром <strong>file</strong>, для проверки, что это та же самая группа, под которой выполняется процесс доставки. Настройка по умолчанию - ложь, поскольку режим по умолчанию - 0600, что означает, что группа не имеет значения.</p>
+<table border="1" class="docutils" id="index-5">
+<colgroup>
+<col width="27%" />
+<col width="27%" />
+<col width="23%" />
+<col width="23%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>check_owner</strong></td>
+<td>Use: appendfile</td>
+<td>Type: boolean</td>
+<td>Default: true</td>
+</tr>
+</tbody>
+</table>
+<p>Когда этот параметр установлен, проверяется владелец файла, заданного параметром <strong>file</strong>, для удостоверения, что он тот же самый, под которым выполняется процесс доставки.</p>
+<table border="1" class="docutils" id="index-6">
+<colgroup>
+<col width="26%" />
+<col width="25%" />
+<col width="20%" />
+<col width="30%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>check_string</strong></td>
+<td>Use: appendfile</td>
+<td>Type: string</td>
+<td>Default: see below</td>
+</tr>
+</tbody>
+</table>
+<p>Поскольку <strong>appendfile</strong> записывает сообщение, начало каждой строки проверяется на совпадение с <strong>check_string</strong>, и если оно происходит, совпавшие начальные символы заменяются на содержимое <strong>escape_string</strong>. Значение <strong>check_string</strong> - символьная строка, а не регулярное выражение, и регистр содержащихся букв имеет значение.</p>
+<p>Если установлена <strong>use_bsmtp</strong>, значение <strong>check_string</strong> и <strong>escape_string</strong> принудительно устанавливаются в “.” и “..”, соответственно, и любые конфигурационные настройки игнорируются. Иначе, - у них значения по умолчанию “From ” и “&gt;From ” когда задан параметр  <strong>file</strong>, и не заданы, когда установлен любой из параметров <strong>directory</strong>, <strong>maildir</strong> или <strong>mailstore</strong>.</p>
+<p>Настройки по умолчанию, наряду с <strong>message_prefix</strong> и <strong>message_suffix</strong>, являются подходящими для традиционных “BSD” почтовых ящиков, где строка, начинающаяся с “From ” указывает на начало нового сообщения. Все четыре параметра нуждаются в изменении, если используется иной формат. Например, для доставки в почтовые ящики в формате MMDF:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">check_string</span> <span class="o">=</span> <span class="s">&quot;</span><span class="se">\1\1\1\1\n</span><span class="s">&quot;</span>
+<span class="n">escape_string</span> <span class="o">=</span> <span class="s">&quot;</span><span class="se">\1\1\1\1</span><span class="s"> </span><span class="se">\n</span><span class="s">&quot;</span>
+<span class="n">message_prefix</span> <span class="o">=</span> <span class="s">&quot;</span><span class="se">\1\1\1\1\n</span><span class="s">&quot;</span>
+<span class="n">message_suffix</span> <span class="o">=</span> <span class="s">&quot;</span><span class="se">\1\1\1\1\n</span><span class="s">&quot;</span>
+</pre></div>
+</div>
+<table border="1" class="docutils" id="index-7">
+<colgroup>
+<col width="33%" />
+<col width="25%" />
+<col width="21%" />
+<col width="21%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>create_directory</strong></td>
+<td>Use: appendfile</td>
+<td>Type: boolean</td>
+<td>Default: true</td>
+</tr>
+</tbody>
+</table>
+<p>Когда этот параметр истинна, Exim пытается создать любые недостающие вышестоящие директории, для файла в который собирается производить запись. Режим созданного каталога, задаётся параметром <strong>directory_mode</strong>.</p>
+<p>Владелец группы созданной директории сильно зависит от используемой операционной системы (и, возможно, файловой системы). Например, в Solaris, если родительский каталог имеет установленный бит “setgid”, его группа передаётся дочернему каталогу; если нет, используется текущая установленная группа. Однако, в FreeBSD, всегда используется родительская группа.</p>
+<table border="1" class="docutils" id="index-8">
+<colgroup>
+<col width="25%" />
+<col width="25%" />
+<col width="20%" />
+<col width="29%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>create_file</strong></td>
+<td>Use: appendfile</td>
+<td>Type: string</td>
+<td>Default: anywhere</td>
+</tr>
+</tbody>
+</table>
+<p>Этот параметр ограничивает местоположение файлов и директорий создаваемых этим транспортом. Это применяется к файлам, заданным параметром <strong>file</strong>, и директориям, заданным параметром <strong>directory</strong>. В случае доставки maildir, это применяется к директориям верхнего уровня, а не к нижележащим директориям maildir.</p>
+<p>Параметр должен быть установлен в одно из слов “anywhere”, “inhome”, или “belowhome”. Во втором и третьем случае, для транспорта должна быть установлена домашняя директория. Этот параметр бесполезен, когда задаётся явное имя файла для обычной доставки в почтовые ящики. Она предназначена для случая, когда имя файла создается из пользовательских файлов <em>.forward</em>. Обычно, они обрабатываются транспортом <strong>appendfile</strong>, вызванным <strong>address_file</strong>. Также, смотрите параметр <strong>file_must_exist</strong>.</p>
+<table border="1" class="docutils" id="index-9">
+<colgroup>
+<col width="24%" />
+<col width="27%" />
+<col width="24%" />
+<col width="25%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>directory</strong></td>
+<td>Use: appendfile</td>
+<td>Type: string†</td>
+<td>Default: unset</td>
+</tr>
+</tbody>
+</table>
+<p>Этот параметр взаимоисключающий с параметром <strong>file</strong>, но один из параметра <strong>file</strong> или <strong>directory</strong> должен быть задан, исключая случай доставки как результата перенаправления (смотрите раздел <a class="reference internal" href="#ch26-01"><em>26.1</em></a>).</p>
+<p>Когда задан параметр <strong>directory</strong>, строка раскрывается, и сообщение доставляется в новый файл или файлы, или в подкаталог данного каталога, вместо добавления к единственному файлу почтового ящика. Поддерживается несколько различных форматов (смотрите <strong>maildir_format</strong> и <strong>mailstore_format</strong>), и смотрите раздел <a class="reference internal" href="#ch26-04"><em>26.4</em></a>, для дальнейших деталей о этой форме доставки.</p>
+<table border="1" class="docutils" id="index-10">
+<colgroup>
+<col width="28%" />
+<col width="23%" />
+<col width="20%" />
+<col width="28%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>directory_file</strong></td>
+<td>Use: appendfile</td>
+<td>Type: string†</td>
+<td>Default: see below</td>
+</tr>
+</tbody>
+</table>
+<p>Когда установлен параметр <strong>directory</strong>, но не установлены ни <strong>maildir_format</strong> ни <strong>mailstore_format</strong>, <strong>appendfile</strong> доставляет каждое сообщение в файл, имя которого получается в результате раскрытия строки этого параметра. Значение по умолчанию:</p>
+<div class="highlight-python"><pre>q${base62:$tod_epoch}-$inode</pre>
+</div>
+<p>Значение по умолчанию создаст уникальное имя из текущего времени, в форме base62, и inode файла. Переменная $inode доступна лишь при раскрытии этого параметра.</p>
+<table border="1" class="docutils" id="index-11">
+<colgroup>
+<col width="28%" />
+<col width="23%" />
+<col width="29%" />
+<col width="20%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>directory_mode</strong></td>
+<td>Use: appendfile</td>
+<td>Type: octal integer</td>
+<td>Default: 0700</td>
+</tr>
+</tbody>
+</table>
+<p>Если <strong>appendfile</strong> создаёт какие-либо директории как результат параметра <strong>create_directory</strong>, их режим задаётся этим параметром.</p>
+<table border="1" class="docutils" id="index-12">
+<colgroup>
+<col width="25%" />
+<col width="22%" />
+<col width="18%" />
+<col width="35%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>escape_string</strong></td>
+<td>Use: appendfile</td>
+<td>Type: string</td>
+<td>Default: see description</td>
+</tr>
+</tbody>
+</table>
+<p>Смотрите выше, параметр <strong>check_string</strong>.</p>
+<table border="1" class="docutils" id="index-13">
+<colgroup>
+<col width="16%" />
+<col width="30%" />
+<col width="26%" />
+<col width="28%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>file</strong></td>
+<td>Use: appendfile</td>
+<td>Type: string†</td>
+<td>Default: unset</td>
+</tr>
+</tbody>
+</table>
+<p>Эта параметр взаимоисключающий с параметром <strong>directory</strong>, но один из параметров <strong>file</strong> или <strong>directory</strong> должен быть задан, исключая случай доставки как результата перенаправления (смотрите раздел <a class="reference internal" href="#ch26-01"><em>26.1</em></a>). Параметр <strong>file</strong> определяет единичный файл, к которому добавляется сообщение. Один и более из параметров <strong>use_fcntl_lock</strong>, <strong>use_flock_lock</strong> или <strong>use_lockfile</strong> должны быть заданы с параметром <strong>file</strong>.</p>
+<p>Если вы используете более одного хоста для доставки через NFS в одни и те же почтовые ящики, вы всегда должны использовать файлы блокировки</p>
+<p>Значение строки раскрывается для каждой доставки, и должно привести к абсолютному пути. Самые общие установки этого параметра - вариации одного из этих примеров:</p>
+<div class="highlight-python"><pre>file = /var/spool/mail/$local_part
+file = /home/$local_part/inbox
+file = $home/inbox</pre>
+</div>
+<p>В первом примере, все доставки осуществляются в один и тот же каталог. Если Exim сконфигурирован использовать файлы блокировки (смотрите ниже, параметр <strong>use_lockfile</strong>), он должен быть в состоянии создать файл в директории, таким образом, “липкий” (“sticky”) бит должен быть включен для возможности доставки, или, альтернативно, может использоваться параметр <strong>group</strong> для выполнения доставки под групповым идентификатором, имеющим доступ к директории.</p>
+<table border="1" class="docutils" id="index-14">
+<colgroup>
+<col width="27%" />
+<col width="27%" />
+<col width="21%" />
+<col width="25%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>file_format</strong></td>
+<td>Use: appendfile</td>
+<td>Type: string</td>
+<td>Default: unset</td>
+</tr>
+</tbody>
+</table>
+<p>Этот параметр просит транспорт проверить формат существующего файла, до добавления к нему. Проверка состоит из соответствия специфической строке в начале файла. Значение параметр состоит из чётного числа строк, разделённых двоеточиями. Первая из каждой пары - проверочная строка, и вторая - имя транспорта. Если транспорт, ассоциированный с совпавшей строкой, не является текущим транспортом, управление передаётся другому транспорту. Например, предположим что к стандартному транспорту <strong>local_delivery</strong> добавлено это:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">file_format</span> <span class="o">=</span> <span class="s">&quot;From       : local_delivery :</span><span class="se">\</span>
+<span class="s">               </span><span class="se">\1\1\1\1\n</span><span class="s"> : local_mmdf_delivery&quot;</span>
+</pre></div>
+</div>
+<p>Почтовые ящики, начинающиеся с “From”, продолжают обрабатываться этим транспортом, но для почтовых ящиков, начинающиеся с четырёх двоичных единиц, с символом новой строки, управление передаётся транспорту назваемому <strong>local_mmdf_delivery</strong>, который, видимо, сконфигурирован для осуществления доставки в формате MMDF. Если почтовый ящик не существует, или пуст, предполагается совпадение с текущим транспортом. Если начало почтового ящика не совпадает ни с одной строкой, или не задан транспорт чьё имя совпало, доставка задерживается.</p>
+<table border="1" class="docutils" id="index-15">
+<colgroup>
+<col width="31%" />
+<col width="25%" />
+<col width="21%" />
+<col width="23%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>file_must_exist</strong></td>
+<td>Use: appendfile</td>
+<td>Type: boolean</td>
+<td>Default: false</td>
+</tr>
+</tbody>
+</table>
+<p>Если этот параметр истинна, файл заданный параметром <strong>file</strong> должен существовать. Если это не так, происходит временная ошибка. Если этот параметр не задан, в случае отсутствия файла он создаётся.</p>
+<table border="1" class="docutils" id="index-16">
+<colgroup>
+<col width="38%" />
+<col width="26%" />
+<col width="17%" />
+<col width="19%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>lock_fcntl_timeout</strong></td>
+<td>Use: appendfile</td>
+<td>Type: time</td>
+<td>Default: 0s</td>
+</tr>
+</tbody>
+</table>
+<p>По умолчанию, транспорт <strong>appendfile</strong> использует неблокирующие вызовы <em>fcntl()</em>, при блокировке открытого файла почтового ящика. Если вызов неудачен, процесс доставки засыпает на <strong>lock_interval</strong>, и пробует снова, до времени <strong>lock_retries</strong>. Неблокирующие вызовы используются так, чтобы файл не оставлялся открытым в ожидании блокировки; причина этого заключается в желании сделать это безопасным насколько возможно, для доставок через NFS, в случае, когда процессы могли бы обращаться к почтовому ящику NFS без использования файла блокировки. Этого не должно быть, но недоразумения, и, следовательно, просчёты конфигурации возможны.</p>
+<p>На загруженных системах, однако, производительность неблокирующей блокировки не столь хороша, как использование блокирующей блокировки с таймаутом. В этом случае, ожидание делается в системном вызове, и процесс доставки Exim`a овладевает блокировкой и может обработать, как только предыдущий держатель блокировки снимет её.</p>
+<p>Если <strong>lock_fcntl_timeout</strong> установлена в ненулевое время, блокирование блокируется, с использованием этого таймаута. Всё ещё может быть некоторое повторение: максимальное число повторений</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">(</span><span class="n">lock_retries</span> <span class="o">*</span> <span class="n">lock_interval</span><span class="p">)</span> <span class="o">/</span> <span class="n">lock_fcntl_timeout</span>
+</pre></div>
+</div>
+<p>округляется к следующему целому числу. Другими словами, полное время в течение которого <strong>appendfile</strong> пробует получить блокировку - примерно тоже самое, если <strong>lock_fcntl_timeout</strong> не установлена слишком большой.</p>
+<p>Вы должны рассмотреть установку этого параметра, если вы получаете много отсроченных локальных доставок из-за ошибок вида</p>
+<div class="highlight-python"><pre>failed to lock mailbox /some/file (fcntl)</pre>
+</div>
+<table border="1" class="docutils" id="index-17">
+<colgroup>
+<col width="38%" />
+<col width="26%" />
+<col width="17%" />
+<col width="19%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>lock_flock_timeout</strong></td>
+<td>Use: appendfile</td>
+<td>Type: time</td>
+<td>Default: 0s</td>
+</tr>
+</tbody>
+</table>
+<p>Этот таймаут применяется к блокировке файла, когда используется <em>flock()</em> (смотрите <strong>use_flock</strong>); таймаут работает в манере, похожей на <strong>lock_fcntl_timeout</strong>.</p>
+<table border="1" class="docutils" id="index-18">
+<colgroup>
+<col width="32%" />
+<col width="28%" />
+<col width="19%" />
+<col width="21%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>lock_interval</strong></td>
+<td>Use: appendfile</td>
+<td>Type: time</td>
+<td>Default: 3s</td>
+</tr>
+</tbody>
+</table>
+<p>Этот параметр определяет время ожидания между попытками блокировки файла. Смотрите ниже, для дополнительных деталей о блокировке.</p>
+<table border="1" class="docutils" id="index-19">
+<colgroup>
+<col width="29%" />
+<col width="27%" />
+<col width="24%" />
+<col width="20%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>lock_retries</strong></td>
+<td>Use: appendfile</td>
+<td>Type: integer</td>
+<td>Default: 10</td>
+</tr>
+</tbody>
+</table>
+<p>Этот параметр определяет максимальное число попыток блокировки файла. Значение нуля обрабатывается как единица. Смотрите ниже, для дополнительных деталей о блокировке.</p>
+<table border="1" class="docutils" id="index-20">
+<colgroup>
+<col width="27%" />
+<col width="23%" />
+<col width="30%" />
+<col width="20%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>lockfile_mode</strong></td>
+<td>Use: appendfile</td>
+<td>Type: octal integer</td>
+<td>Default: 0600</td>
+</tr>
+</tbody>
+</table>
+<p>Этот параметр определяет режим создаваемого файла блокировки, когда используется файл блокировки (смотрите параметры <strong>use_lockfile</strong> и <strong>use_mbx_lock</strong>)</p>
+<table border="1" class="docutils" id="index-21">
+<colgroup>
+<col width="35%" />
+<col width="26%" />
+<col width="18%" />
+<col width="21%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>lockfile_timeout</strong></td>
+<td>Use: appendfile</td>
+<td>Type: time</td>
+<td>Default: 30m</td>
+</tr>
+</tbody>
+</table>
+<p>Когда используется файл блокировки (смотрите параметр <strong>use_lockfile</strong>), если файл блокировки уже существует, и он старше этого значения, предполагается, что он был случайно оставлен, и Exim пытается его удалить.</p>
+<table border="1" class="docutils" id="index-22">
+<colgroup>
+<col width="33%" />
+<col width="24%" />
+<col width="21%" />
+<col width="22%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>mailbox_filecount</strong></td>
+<td>Use: appendfile</td>
+<td>Type: string†</td>
+<td>Default: unset</td>
+</tr>
+</tbody>
+</table>
+<p>Если этот параметр установлен, он раскрывается, и результат берётся как текущее число файлов в почтовом ящике. Это должно быть десятичное число, необязательно сопровождаемое K или M. Этим предоставляется способ получить информацию из внешнего источника, обслуживающего данные.</p>
+<table border="1" class="docutils" id="index-23">
+<colgroup>
+<col width="28%" />
+<col width="26%" />
+<col width="22%" />
+<col width="24%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>mailbox_size</strong></td>
+<td>Use: appendfile</td>
+<td>Type: string†</td>
+<td>Default: unset</td>
+</tr>
+</tbody>
+</table>
+<p>Если этот параметр задан, он раскрывается, и результат берётся как текущий размер почтового ящика. Это должно быть десятичное число, необязательно сопровождаемое K или M. Этим предоставляется способ получить информацию из внешнего источника, обслуживающего данные. Это, вероятно, будет полезным для доставок <strong>maildir</strong>, где, в вычислительном отношении, дорого вычислить размер почтового ящика.</p>
+<table border="1" class="docutils" id="index-24">
+<colgroup>
+<col width="30%" />
+<col width="25%" />
+<col width="22%" />
+<col width="23%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>maildir_format</strong></td>
+<td>Use: appendfile</td>
+<td>Type: boolean</td>
+<td>Default: false</td>
+</tr>
+</tbody>
+</table>
+<p>Если этот параметр задан вместе с параметром <strong>directory</strong>, доставка в новый файл, в формате “maildir” используемом другими почтовыми программами. Когда транспорт активизирован непосредственно от маршрутизатора <strong>redirect</strong> (например, транспорт <strong>address_file</strong> в конфигурации по умолчанию), установка <strong>maildir_format</strong> вызывает обработку пути переданного из маршрутизатора как каталога, вне зависимости, завершается, или нет, он на “/”. Этот параметр доступен лишь если в <em>Local/Makefile</em> присутствует SUPPORT_MAILDIR. Для получения дополнительных деталей, смотрите раздел <a class="reference internal" href="#ch26-05"><em>26.5</em></a>.</p>
+<table border="1" class="docutils" id="index-25">
+<colgroup>
+<col width="42%" />
+<col width="19%" />
+<col width="15%" />
+<col width="23%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>maildir_quota_directory_regex</strong></td>
+<td>Use: appendfile</td>
+<td>Type: string</td>
+<td>Default: See below</td>
+</tr>
+</tbody>
+</table>
+<p>Этот параметр уместен лишь есл установлен <strong>maildir_use_size_file</strong>. Он определяет регулярное выражение, для определения директорий, относительно директории квоты (смотрите <strong>quota_directory</strong>), которая должна быть включена в подсчёт квоты. Значение по умолчанию:</p>
+<div class="highlight-python"><pre>maildir_quota_directory_regex = ^(?:cur|new|\..*)$</pre>
+</div>
+<p>Этим включаются директории <em>cur</em> и <em>new</em>, и любые директории “maildir++” (директории, чьи имена начинаются с точки). Если вы хотите исключить из подсчёта директорию <em>Trash</em> (как делают некоторые сайты), вы должны изменить эту установку на</p>
+<div class="highlight-python"><pre>maildir_quota_directory_regex = ^(?:cur|new|\.(?!Trash).*)$</pre>
+</div>
+<p>Это использует отрицательное предвидение в регулярном выражении, для исключения директории с именем <em>.Trash</em>.  Когда директория исключена из подсчёта квоты, обработка квоты пропускается для любых сообщений доставляемых в этот каталог.</p>
+<table border="1" class="docutils" id="index-26">
+<colgroup>
+<col width="33%" />
+<col width="26%" />
+<col width="22%" />
+<col width="19%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>maildir_retries</strong></td>
+<td>Use: appendfile</td>
+<td>Type: integer</td>
+<td>Default: 10</td>
+</tr>
+</tbody>
+</table>
+<p>Этот параметр определяет число повторов при записи файла в формате “maildir”. Смотрите ниже, раздел <a class="reference internal" href="#ch26-05"><em>26.5</em></a>.</p>
+<table border="1" class="docutils" id="index-27">
+<colgroup>
+<col width="26%" />
+<col width="26%" />
+<col width="23%" />
+<col width="25%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>maildir_tag</strong></td>
+<td>Use: appendfile</td>
+<td>Type: string†</td>
+<td>Default: unset</td>
+</tr>
+</tbody>
+</table>
+<p>Этот параметр применяется лишь к доставкам в формате “maildir”, и он описана ниже, в разделе <a class="reference internal" href="#ch26-05"><em>26.5</em></a>.</p>
+<table border="1" class="docutils" id="index-28">
+<colgroup>
+<col width="37%" />
+<col width="22%" />
+<col width="19%" />
+<col width="21%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>maildir_use_size_file</strong></td>
+<td>Use: appendfile</td>
+<td>Type: boolean</td>
+<td>Default: false</td>
+</tr>
+</tbody>
+</table>
+<p>Установка этого параметра в истину включает поддержку файлов <em>maildirsize</em>. Exim создаёт файлы <em>maildirsize</em> в “maildir”, если они не существуют, беря квоту из параметра <strong>quota</strong> транспорта. Если квота не задана - значение равно нулю. Смотрите <strong>maildir_quota_directory_regex</strong>, выше и раздел <a class="reference internal" href="#ch26-05"><em>26.5</em></a> для получения дополнительных деталей.</p>
+<table border="1" class="docutils" id="index-29">
+<colgroup>
+<col width="42%" />
+<col width="21%" />
+<col width="17%" />
+<col width="20%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>maildirfolder_create_regex</strong></td>
+<td>Use: appendfile</td>
+<td>Type: string</td>
+<td>Default: unset</td>
+</tr>
+</tbody>
+</table>
+<p>Значение этого параметра - регулярное выражение. Если оно не задано, параметр не имеет никакого эффекта. Иначе, до доставки “maildir”, выражение сравнивается с именем директории “maildir”, т.е. директории содержащей поддиректории <em>new</em> и <em>tmp</em>, которые будут использоваться для доставки. Если есть соответствие, Exim проверяет существование файла с именем <em>maildirfolder</em> в директории, и создаёт его, если он не существует. Для получения дополнительных деталей, смотрите раздел <a class="reference internal" href="#ch26-05"><em>26.5</em></a>.</p>
+<table border="1" class="docutils" id="index-30">
+<colgroup>
+<col width="32%" />
+<col width="24%" />
+<col width="21%" />
+<col width="23%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>mailstore_format</strong></td>
+<td>Use: appendfile</td>
+<td>Type: boolean</td>
+<td>Default: false</td>
+</tr>
+</tbody>
+</table>
+<p>Если этот параметр установлен вместе с параметром <strong>directory</strong>, доставка осуществляется в два новых файла, в формате “mailstore”. Этот параметр доступен лишь в случае, если при сборке Exim`a в <em>Local/Makefile</em> был параметр SUPPORT_MAILSTORE. Для получения дополнительных деталей, смотрите раздел <a class="reference internal" href="#ch26-04"><em>26.4</em></a>.</p>
+<table border="1" class="docutils" id="index-31">
+<colgroup>
+<col width="32%" />
+<col width="24%" />
+<col width="21%" />
+<col width="23%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>mailstore_prefix</strong></td>
+<td>Use: appendfile</td>
+<td>Type: string†</td>
+<td>Default: unset</td>
+</tr>
+</tbody>
+</table>
+<p>Этот параметр применяется только к доставкам в формате “mailstore”, и он описана ниже, в разделе <a class="reference internal" href="#ch26-04"><em>26.4</em></a>.</p>
+<table border="1" class="docutils" id="index-32">
+<colgroup>
+<col width="32%" />
+<col width="24%" />
+<col width="21%" />
+<col width="23%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>mailstore_suffix</strong></td>
+<td>Use: appendfile</td>
+<td>Type: string†</td>
+<td>Default: unset</td>
+</tr>
+</tbody>
+</table>
+<p>Этот параметр применяется только к доставкам в формате “mailstore”, и он описана ниже, в разделе <a class="reference internal" href="#ch26-04"><em>26.4</em></a>.</p>
+<table border="1" class="docutils" id="index-33">
+<colgroup>
+<col width="25%" />
+<col width="27%" />
+<col width="23%" />
+<col width="25%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>mbx_format</strong></td>
+<td>Use: appendfile</td>
+<td>Type: boolean</td>
+<td>Default: false</td>
+</tr>
+</tbody>
+</table>
+<p>Этот параметр доступен лишь в случае, если при сборке Exim`a в <em>Local/Makefile</em> был параметр SUPPORT_MBX. Если параметр <strong>mbx_format</strong> установлен вместе с параметром <strong>file</strong>, сообщение добавляется к почтовому ящику в формате MBX, вместо формата традиционного UNIX. Этот формат поддерживается Pine4, и связан с его POP3 и IMAP даемонами путём используемой всеми ими “c-client” библиотеки.</p>
+<div class="admonition note">
+<p class="first admonition-title">Примечание</p>
+<p>Параметры <strong>message_prefix</strong> и <strong>message_suffix</strong> не меняются автоматически, при использовании <strong>mbx_format</strong>. Обычно, при использовании формата MBX, они должны устанавливаться пустыми, таким образом, этот параметр почти всегда появляется в такой комбинации:</p>
+<div class="last highlight-python"><pre>mbx_format = true
+message_prefix =
+message_suffix =</pre>
+</div>
+</div>
+<p>Если в конфигурации не упомянута ни один из параметров блокировки, предполагается <strong>use_mbx_lock</strong>, и другие параметры блокировки, по умолчанию, ложны. С <strong>mbx_format</strong> возможно определить другие виды блокировок, но <strong>use_fcntl_lock</strong> и <strong>use_mbx_lock</strong> являются взаимоисключающими. Блокировка MBX взаимодействует с “c-client”, предоставляя общий <a class="footnote-reference" href="#id9" id="id3">[2]</a> доступ к почтовому ящику. Она не должна использоваться, если любая иная программа, не использующая эту форму блокировки, собирается обращаться к этому почтовому ящику, или если почтовый ящик находится на файловой системе смонтированной по NFS, поскольку она работает лишь когда к почтовому ящику обращаются с одного хоста.</p>
+<p>Если вы устанавливаете <strong>use_fcntl_lock</strong> с почтовыми ящиками в формате MBX, вы не можете использовать стандартную версию “c-client”, поскольку пока есть открытый ящик (это бывает при сессии Pine или IMAP), Exim не в состоянии добавить к нему сообщение.</p>
+<table border="1" class="docutils" id="index-34">
+<colgroup>
+<col width="28%" />
+<col width="23%" />
+<col width="20%" />
+<col width="28%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>message_prefix</strong></td>
+<td>Use: appendfile</td>
+<td>Type: string†</td>
+<td>Default: see below</td>
+</tr>
+</tbody>
+</table>
+<p>Строка заданная в этом пункте раскрывается и выводится в начале каждого сообщения. По умолчанию, она не задана, если не определен параметр <strong>file</strong>, и не установлена <strong>use_bsmtp</strong>, когда она:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">message_prefix</span> <span class="o">=</span> <span class="s">&quot;From ${if def:return_path{$return_path}</span><span class="se">\</span>
+<span class="s">                        {MAILER-DAEMON}} $tod_bsdinbox</span><span class="se">\n</span><span class="s">&quot;</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Примечание</p>
+<p class="last">Если вы устанавливаете параметр <strong>use_crlf</strong> в истину, вы должны изменить любые упоминания “n” на “rn” в <strong>message_prefix</strong>.</p>
+</div>
+<table border="1" class="docutils" id="index-35">
+<colgroup>
+<col width="28%" />
+<col width="23%" />
+<col width="20%" />
+<col width="28%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>message_suffix</strong></td>
+<td>Use: appendfile</td>
+<td>Type: string†</td>
+<td>Default: see below</td>
+</tr>
+</tbody>
+</table>
+<p>Строка заданная в этом пункте раскрывается и выводится в конце каждого сообщения. По умолчанию, она не задана, если не определен параметр <strong>file</strong>, и не установлен <strong>use_bsmtp</strong>, в этих случаях она состоит из единственного символа - символа новой строки. Суффикс может быть подавлен путём установки:</p>
+<div class="highlight-python"><pre>message_suffix =</pre>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Примечание</p>
+<p class="last">Если вы устанавливаете параметр <strong>use_crlf</strong> в истину, вы должны изменить любые упоминания “n” на “rn” в <strong>message_suffix</strong>.</p>
+</div>
+<table border="1" class="docutils" id="index-36">
+<colgroup>
+<col width="15%" />
+<col width="27%" />
+<col width="35%" />
+<col width="24%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>mode</strong></td>
+<td>Use: appendfile</td>
+<td>Type: octal integer</td>
+<td>Default: 0600</td>
+</tr>
+</tbody>
+</table>
+<p>Если создаётся файл вывода - на него устанавливается такой режим. Если он существует и на него установлены более широкие разрешения, они уменьшаются до указанного в этом параметре. Если на него установлены более жёсткие ограничения, то происходит ошибка, если параметр <strong>mode_fail_narrower</strong> истинна. Однако, если доставка - результат команды <strong>save</strong> в файле фильтра, задающей особый режим, режим выходного файла всегда принудительно приводится к этому значению, и этот параметр игнорируется.</p>
+<table border="1" class="docutils" id="index-37">
+<colgroup>
+<col width="35%" />
+<col width="24%" />
+<col width="21%" />
+<col width="21%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>mode_fail_narrower</strong></td>
+<td>Use: appendfile</td>
+<td>Type: boolean</td>
+<td>Default: true</td>
+</tr>
+</tbody>
+</table>
+<p>Этот параметр применяется в случае, когда существующий файл почтового ящика имеет более строгие ограничения чем заданные параметром <strong>mode</strong>. Если параметр <strong>mode_fail_narrower</strong> истинна - доставка задерживается (“mailbox has the wrong mode”); иначе - Exim продолжает попытки доставки, используя существующий режим файла.</p>
+<table border="1" class="docutils" id="index-38">
+<colgroup>
+<col width="29%" />
+<col width="25%" />
+<col width="22%" />
+<col width="24%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>notify_comsat</strong></td>
+<td>Use: appendfile</td>
+<td>Type: boolean</td>
+<td>Default: false</td>
+</tr>
+</tbody>
+</table>
+<p>Если этот параметр истинна, даемон <em>comsat</em> уведомляется после каждой успешной доставки в пользовательский почтовый ящик. Это даемон, который уведомляет залогиненых пользователей о пришедшей почте.</p>
+<table border="1" class="docutils" id="index-39">
+<colgroup>
+<col width="18%" />
+<col width="29%" />
+<col width="25%" />
+<col width="27%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>quota</strong></td>
+<td>Use: appendfile</td>
+<td>Type: string†</td>
+<td>Default: unset</td>
+</tr>
+</tbody>
+</table>
+<p>Этот параметр налагает ограничения на размер файла, к которому Exim добавляет сообщение, или на полный размер используемый деревом директорий, когда установлен параметр <strong>directory</strong>. В последнем случае, вычисление используемого места дорого стоит, поскольку должны быть индивидуально осмотрены и просуммированы все файлы в директории (и любых поддиректориях). (Смотрите <strong>quota_size_regex</strong> и <strong>maildir_use_size_file</strong> для способов избежать этого в окружении где пользователи не имеют shell-доступа к своим почтовым ящикам.)</p>
+<p>Нет блокировки от двух одновременных доставок в многофайловый почтовый ящик, и в этом случае возможно превышение квоты. Для однофайловых почтовых ящиков, разумеется, блокировка - необходимость.</p>
+<p>Размер файла берётся как его используемое значение. Из-за эффектов блокировки, оно может быть намного меньше дискового пространства, фактически используемого файлом. Если складываются размеры большого числа файлов, эффект округления может стать весьма заметным, особенно на системах использующих большой размер блока. Однако, кажется лучше придерживаться используемого числа, поскольку оно - очевидное значение, наиболее легко понимаемое пользователями.</p>
+<p>Значение параметра раскрывается, и должно быть числовым значением (разрешена десятичная точка), необязательно сопровождаемая одной из букв K, M, или G - для килобайт, мегабайт, или гигабайт. Если Exim работает на системе с поддержкой больших файлов (FreeBSD и Linux имеют такую поддержку), могут быть обработаны ящики более 2G размером.</p>
+<div class="admonition note">
+<p class="first admonition-title">Примечание</p>
+<p class="last">Значение нуля интерпретируется как “нет квоты”.</p>
+</div>
+<p>Раскрытие происходит когда Exim работает как root, до того, как он для доставки меняет uid. Это означает, что для содержания квоты, которая ищется в раскрытии можно использовать файлы, которые недоступны конечному пользователю. При неудаче доставки по причине превышения квоты, ошибка обрабатывается как ошибка системной квоты.</p>
+<p>По умолчанию, проверка квоты Exim`ом подражает системным квотам, и ограничивает почтовый ящик заданным максимальным размером, хотя значение не является точным до последнего байта, из-за строк разделителей, и дополнительных заголовков, которые могут добавляться при доставке сообщения. Когда почтовый ящик почти полный, большие сообщения могут быть отклонены, а маленькие приняты, поскольку размер текущего сообщения добавляется к квоте, при проверке. Это поведение может быть изменено путём установки <strong>quota_is_inclusive</strong> в ложь. Когда это сделано, проверка на превышение квоты не включает текущее сообщение. Таким образом, доставки продолжаются до превышения квоты; после этого никакие последующие сообщения не доставляются. Также смотрите параметр <strong>quota_warn_threshold</strong>.</p>
+<table border="1" class="docutils" id="index-40">
+<colgroup>
+<col width="31%" />
+<col width="25%" />
+<col width="21%" />
+<col width="23%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>quota_directory</strong></td>
+<td>Use: appendfile</td>
+<td>Type: string†</td>
+<td>Default: unset</td>
+</tr>
+</tbody>
+</table>
+<p>Этот параметр задаёт директорию для проверки квоты при доставке в отдельные файлы. ПО умолчанию - это директория для доставки, или, если в “maildir” директории существует файл с именем <em>maildirfolder</em>, родительский каталог, по отношению к директории для доставки.</p>
+<table border="1" class="docutils" id="index-41">
+<colgroup>
+<col width="33%" />
+<col width="26%" />
+<col width="23%" />
+<col width="18%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>quota_filecount</strong></td>
+<td>Use: appendfile</td>
+<td>Type: string†</td>
+<td>Default: 0</td>
+</tr>
+</tbody>
+</table>
+<p>Этот параметр применяется когда установлен параметр <strong>directory</strong>. Он ограничивает общее число файлов в директории (сравните с лимитом на иноды в системных квотах). Он может использоваться, лишь когда установлен параметр <strong>quota</strong>. Значение раскрывается; ошибка доставки вызывает задержку доставки. Значение нуля интерпретируется как “нет квоты”.</p>
+<table border="1" class="docutils" id="index-42">
+<colgroup>
+<col width="35%" />
+<col width="24%" />
+<col width="21%" />
+<col width="21%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>quota_is_inclusive</strong></td>
+<td>Use: appendfile</td>
+<td>Type: boolean</td>
+<td>Default: true</td>
+</tr>
+</tbody>
+</table>
+<p>Смотрите выше, параметр <strong>quota</strong>.</p>
+<table border="1" class="docutils" id="index-43">
+<colgroup>
+<col width="33%" />
+<col width="25%" />
+<col width="20%" />
+<col width="23%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>quota_size_regex</strong></td>
+<td>Use: appendfile</td>
+<td>Type: string</td>
+<td>Default: unset</td>
+</tr>
+</tbody>
+</table>
+<p>Этот параметр применяется когда используется один из режимов доставки, записывающий отдельный файл для каждого сообщения. Когда Exim хочет найти размер одного из этих файлов, для проверки квоты, он вначале проверяет <strong>quota_size_regex</strong>. Если она установлена в регулярное выражение, которое совпадает с именем файла, и является одной строкой, строка интерпретируется как представление размера файла. Значение <strong>quota_size_regex</strong> не раскрывается.</p>
+<p>Эта особенность полезна лишь когда пользователи не имеют shell-доступа к своим почтовым ящикам - иначе они могли бы обойти квоту простым переименованием файлов. Это средство может использоваться для “maildir” доставок, путём установки “maildir_tag” для добавления длинны файла к имени файла. Например:</p>
+<div class="highlight-python"><pre>maildir_tag = ,S=$message_size
+quota_size_regex = ,S=(\d+)</pre>
+</div>
+<p>Альтернативой $message_size является $message_linecount, которая содержит число линий в сообщений.</p>
+<p>Регулярное выражение не должно предполагать что размер сообщения - в конце имени файла (даже при том, что её там помещает “maildir_tag”), поскольку MUA обрабатывающие “maildir” иногда добавляют иную информацию в конец имени сообщения.</p>
+<table border="1" class="docutils" id="index-44">
+<colgroup>
+<col width="32%" />
+<col width="22%" />
+<col width="19%" />
+<col width="26%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>quota_warn_message</strong></td>
+<td>Use: appendfile</td>
+<td>Type: string†</td>
+<td>Default: see below</td>
+</tr>
+</tbody>
+</table>
+<p>Смотрите ниже, при использование этого параметра. Если этот параметр не задан, когда установлен <strong>quota_warn_threshold</strong>, значение по умолчанию будет:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">quota_warn_message</span> <span class="o">=</span> <span class="s">&quot;</span><span class="se">\</span>
+<span class="s">  To: $local_part@$domain</span><span class="se">\n\</span>
+<span class="s">  Subject: Your mailbox</span><span class="se">\n\n\</span>
+<span class="s">  This message is automatically created </span><span class="se">\</span>
+<span class="s">  by mail delivery software.</span><span class="se">\n\n\</span>
+<span class="s">  The size of your mailbox has exceeded </span><span class="se">\</span>
+<span class="s">  a warning threshold that is</span><span class="se">\n\</span>
+<span class="s">  set by the system administrator.</span><span class="se">\n</span><span class="s">&quot;</span>
+</pre></div>
+</div>
+<table border="1" class="docutils" id="index-45">
+<colgroup>
+<col width="39%" />
+<col width="24%" />
+<col width="21%" />
+<col width="16%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>quota_warn_threshold</strong></td>
+<td>Use: appendfile</td>
+<td>Type: string†</td>
+<td>Default: 0</td>
+</tr>
+</tbody>
+</table>
+<p>Этот параметр раскрывается точно таким же образом, как и <strong>quota</strong> (смотрите выше). Если результирующее значение больше нуля, и доставка сообщения приводит к размеру файла или общему размеру дерева директорий более данного порога, посылается предупреждающее сообщение. Если, также, установлена <strong>quota</strong>, порог может быть определён как процент от её значения, путём сопровождения значения символом процента. Например:</p>
+<div class="highlight-python"><pre>quota = 10M
+quota_warn_threshold = 75%</pre>
+</div>
+<p>Если <strong>quota</strong> не задана, установка <strong>quota_warn_threshold</strong> заканчивающаяся символом процента - игнорируется.</p>
+<p>Само предупреждающее сообщение определяется путём параметра <strong>quota_warn_message</strong>, и оно должно начинаться со строки заголовка “To:”, содержащей получателя (получателей) предупреждающего сообщения. Они не обязательно должны включать отправителей оригинального сообщения. Также, обычно, должна предоставляться строка “Subject:”. Вы можете включить любые другие строки заголовков, которые вам необходимы. Если вы не включите строку “From:”, то значение по умолчанию будет:</p>
+<div class="highlight-python"><pre>From: Mail Delivery System &lt;mailer-daemon@$qualify_domain_sender&gt;</pre>
+</div>
+<p>Если вы предоставляете строку “Reply-To:”, он замещает глобальный параметр <strong>errors_reply_to</strong>.</p>
+<p>Параметр <strong>quota</strong> не нуждается в приведении в порядок, для использования этого параметра; они независимы друг от друга, кроме случаев, когда порог определён как процент.</p>
+<table border="1" class="docutils" id="index-46">
+<colgroup>
+<col width="24%" />
+<col width="27%" />
+<col width="24%" />
+<col width="25%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>use_bsmtp</strong></td>
+<td>Use: appendfile</td>
+<td>Type: boolean</td>
+<td>Default: false</td>
+</tr>
+</tbody>
+</table>
+<p>Если этот параметр установлен в истину, <strong>appendfile</strong> пишет сообщения в формате “пакетного SMTP”, с отправителем конверта и получателем(получателями) включёнными в SMTP-команды. Если вы хотите включить начальную команду HELO в эти сообщения, вы можете это сделать путём установки параметра <strong>message_prefix</strong>. Для получения дополнительных деталей о пакетном SMTP, смотрите раздел <a class="reference internal" href="ch45.html#ch45-10"><em>45.10</em></a>.</p>
+<table border="1" class="docutils" id="index-47">
+<colgroup>
+<col width="22%" />
+<col width="28%" />
+<col width="24%" />
+<col width="26%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>use_crlf</strong></td>
+<td>Use: appendfile</td>
+<td>Type: boolean</td>
+<td>Default: false</td>
+</tr>
+</tbody>
+</table>
+<p>Этот параметр заставляет строки заканчиваться двухсимвольной CR LF последовательностью (возврат каретки, перевод строки), вместо одного символа перевода строки. В случае пакетного SMTP, записанная в файл последовательность байт, - точное изображение того, что произвело бы отключение реального SMTP-соединения.</p>
+<div class="admonition warning">
+<p class="first admonition-title">Предупреждение</p>
+<p class="last">Содержимое параметров <strong>message_prefix</strong> и <strong>message_suffix</strong> (которые используется для подстановки в традиционном “From ” и разделителей пустых строк в почтовых ящиках типа Berkeley) пишется дословно, таким образом, они должны содержать свои символы возврата каретки, если они необходимы. В случаях, когда эти параметры имеют непустые значения по умолчанию, значение завершается единственным переводом строки, таким образом, они должны быть изменены, чтобы заканчиваться на “rn”, если установлен параметр <strong>use_crlf</strong>.</p>
+</div>
+<table border="1" class="docutils" id="index-48">
+<colgroup>
+<col width="28%" />
+<col width="23%" />
+<col width="20%" />
+<col width="28%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>use_fcntl_lock</strong></td>
+<td>Use: appendfile</td>
+<td>Type: boolean</td>
+<td>Default: see below</td>
+</tr>
+</tbody>
+</table>
+<p>Этот параметр контролирует использование функции <em>fcntl()</em>, для блокировки файла в целях исключительного использования, при добавлении сообщения. По умолчанию, она установлена, когда не установлена <strong>use_flock_lock</strong>. Иначе, она должна быть выключена, лишь если вы знаете что все ваши MUA используют блокировку путём файла блокировки. Когда не установлены оба параметра, <strong>use_fcntl_lock</strong> и <strong>use_flock_lock</strong>, параметр <strong>use_lockfile</strong> должен быть задан.</p>
+<table border="1" class="docutils" id="index-49">
+<colgroup>
+<col width="30%" />
+<col width="25%" />
+<col width="22%" />
+<col width="23%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>use_flock_lock</strong></td>
+<td>Use: appendfile</td>
+<td>Type: boolean</td>
+<td>Default: false</td>
+</tr>
+</tbody>
+</table>
+<p>Этот параметр предоставлен для поддержки блокировки файлов с использованием <em>flock()</em>, в тех немногих ситуациях, когда это необходимо. Самые современные операционные системы поддерживают блокировки <em>fcntl()</em> и <em>lockf()</em>, и эти две функции взаимодействуют друг с другом. По умолчанию, Exim использует блокировку <em>fcntl()</em>.</p>
+<p>Этот параметр требуется лишь если вы используете операционную систему где <em>lockf()</em> используется программами обращающимися к почтовым ящикам (обычно - MUA), и где <em>flock()</em> некорректно взаимодействует с <em>fcntl()</em>. Если вы хотите, то можете одновременно использовать обе блокировки <em>fcntl()</em> и <em>flock()</em>.</p>
+<p>Не все операционные системы предоставляют <em>flock()</em>. Некоторые версии Solaris не имеют её (и некоторые, я думаю, предоставляют не совсем правильные версии, собранные на верху <em>lockf()</em>). Если операционная система не имеет <em>flock()</em>, Exim будет собран без способности её использовать, и любые попытки сделать это приведут к конфигурационной ошибке.</p>
+<div class="admonition warning">
+<p class="first admonition-title">Предупреждение</p>
+<p class="last">Блокировка <em>flock()</em> не работает на NFS файлах (только если <em>flock()</em> не отображается (mapped) на <em>fcntl()</em> с помощью операционной системы).</p>
+</div>
+<table border="1" class="docutils" id="index-50">
+<colgroup>
+<col width="26%" />
+<col width="24%" />
+<col width="21%" />
+<col width="29%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>use_lockfile</strong></td>
+<td>Use: appendfile</td>
+<td>Type: boolean</td>
+<td>Default: see below</td>
+</tr>
+</tbody>
+</table>
+<p>Если этот параметр выключен, Exim не пытается создать файл блокировки при добавлении к файлу почтового ящика. В этой ситуации, единственная блокировка - <em>fcntl()</em>. Вы должны отключать <strong>use_lockfile</strong> лишь в случае, если вы абсолютно уверены, что любые MUA, которые когда-либо будут просматривать почтовые ящики пользователей, используют <em>fcntl()</em> вместо блокировочного файла и тогда, когда вы не передаёт через NFS более чем от одного хоста.</p>
+<p>Для безопасного добавления к файлам NFS более чем от одного хоста, необходимо снять блокировку до открытия файла, и блокировочный файл достигает этого. Иначе, даже с блокировкой <em>fcntl()</em>, есть риск повреждения файла.</p>
+<p>Параметр <strong>use_lockfile</strong> установлен по умолчанию, если не задан <strong>use_mbx_lock</strong>. Не возможно выключить оба параметра - <strong>use_lockfile</strong> и <strong>use_fcntl_lock</strong>, кроме случаев, когда установлен <strong>mbx_format</strong>.</p>
+<table border="1" class="docutils" id="index-51">
+<colgroup>
+<col width="26%" />
+<col width="24%" />
+<col width="21%" />
+<col width="29%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>use_mbx_lock</strong></td>
+<td>Use: appendfile</td>
+<td>Type: boolean</td>
+<td>Default: see below</td>
+</tr>
+</tbody>
+</table>
+<p>Этот параметр доступен лишь когда Exim скомпилирован с установленной SUPPORT_MBX в <em>Local/Makefile</em>. Установка параметра определяет, что используются специальные правила блокировки MBX. По умолчанию, он установлен, если установлен <strong>mbx_format</strong>, и ни одного параметра блокировки нет в конфигурации. Правила блокировки - такие же, как используются библиотекой “c-client”, лежащей в основе даемонов Pine, IMAP4 и POP, которые идут вместе с ней (ниже, смотрите обсуждение). Правила разрешают общий доступ к почтовому ящику. Однако, этот вид блокировки не работает, когда почтовый ящик примонтирован по NFS.</p>
+<p>Вы можете установить <strong>use_mbx_lock</strong> с одним или обеими параметрами <strong>use_fcntl_lock</strong> <strong>use_flock_lock</strong> для контроля, какая блокировка используется в осуществлении правил блокировки MBX. Значение по умолчанию использует <em>fcntl()</em> если <strong>use_mbx_lock</strong> установлен без <strong>use_fcntl_lock</strong> или <strong>use_flock_lock</strong>.</p>
+</div>
+<div class="section" id="ch26-03">
+<span id="id4"></span><h2>Операционные детали при добавления<a class="headerlink" href="#ch26-03" title="Ссылка на этот заголовок">¶</a></h2>
+<p>До добавления к файлу, производятся следующие подготовительные операции:</p>
+<ul>
+<li><p class="first">Если имя файла - <em>/dev/null</em>, не предпринимается никакого действия, и выдаётся успешное завершение.</p>
+</li>
+<li><p class="first">Если какие-либо директории на пути файла отсутствуют, Exim создаёт их, если установлен параметр <strong>create_directory</strong>.  Режим созданных директорий задаётся параметром <strong>directory_mode</strong>.</p>
+</li>
+<li><p class="first">Если установлена <strong>file_format</strong>, проверяется формат существующего файла. Если она указывает, что должен использоваться иной транспорт, управление передаётся этому транспорту.</p>
+</li>
+<li><p class="first">Если установлена <strong>use_lockfile</strong>, создаётся файл блокировки для способа, который будет надёжно работать по NFS, следующим образом:</p>
+<ol class="arabic simple">
+<li>Создание “сцепленного файла” чьё имя - имя файла блокировки с текущим именем, первичным именем хоста, и добавленным идентификатором процесса, путём открытия для записи нового файла. Если происходит неудача с ошибкой доступа, доставка задерживается.</li>
+<li>Закрытие “сцепленного файла”, жёсткая ликовка его на имя файла блокировки.</li>
+<li>Если вызов <em>link()</em> успешен, создание файла блокировки успешно. Удаление имени сцепленного файла.</li>
+<li>Иначе, используется <em>stat()</em> для получения информации о сцепленном файле, и, затем, удаляется ссылка на имя сцепленного файла. Если число ссылок - ровно две, создание файла блокировки спешно, но иногда (например, падение и рестарт NFS-сервера) вызывает несообщение этого факта вызову <em>link()</em>.</li>
+<li>Если создание блокировочного файла неудачно, ждётся <strong>lock_interval</strong> и снова пробуется, вплоть до времени <strong>lock_retries</strong>. Однако, т.к. любая программа пишущая в почтовый ящик должна завершить свою задачу очень быстро,это разумный таймаут старых блокировочных файлов, которые, обычно, результат сбоев пользовательского агента и системы. Если существующий файл блокировки старее чем <strong>lockfile_timeout</strong>, Exim пытается удалить его до новой попытки.</li>
+</ol>
+</li>
+<li><p class="first">К <em>lstat()</em> производится запрос, для обнаружения, существует ли главный файл, и если это так, каковы его характеристики. Если <em>lstat()</em> - неудачна для по какой-либо причине, кроме несуществования, доставка задерживается.</p>
+</li>
+<li><p class="first">Если файл действительно существует, и является символьной ссылкой, доставка задерживается, если не задан параметр <strong>allow_symlink</strong>, в случае чего проверяется владелец ссылки, и, затем, вызывается <em>stat()</em>, для нахождения реального файла, подвергаемого последующим проверкам. Проверка владельца вышестоящей ссылки предотвращает создание пользователем ссылки на чужой почтовый ящик в “липкой” директории, разрешение симлинков, в этом случае, - не самая хорошая идея. Если существует цепочка символьных ссылок, промежуточные не проверяются.</p>
+</li>
+<li><p class="first">Если файл реально существует, но он не регулярный файл, или владелец и группа файла (если группа проверяется - смотрите выше, параметр <strong>check_group</strong>) отличаются от пользователя и группы под которыми производится доставка, доставка задерживается.</p>
+</li>
+<li><p class="first">Если разрешения файла более широкие, чем указанные, - они уменьшаются. Если они недостаточны - доставка задерживается, если параметр <strong>mode_fail_narrower</strong> не установлена в ложь, в случае чего пробуется доставка с существующими разрешениями.</p>
+</li>
+<li><p class="first">Сохраняется номер иноды файла, и файл открывается для добавления. Если это неудачно, по причине что файл исчез, <strong>appendfile</strong> ведёт себя так, как будто его не существовало (смотрите ниже). Для любых других ошибок - доставка задерживается.</p>
+</li>
+<li><p class="first">Если файл открыт успешно, проверяется, что не изменился его номер иноды, что это - всё ещё регулярный файл, и что не изменились его владелец и права. Если что-то не так - доставка задерживается, и сообщение замораживается.</p>
+</li>
+<li><p class="first">Если файл изначально не существовал, доставка задерживается, если установлен параметр <strong>file_must_exist</strong>. Иначе, если установлен параметр <strong>create_file</strong>, проверяется что файл создан в разрешённом каталоге, и, затем, открывается для записи новый файл, с параметрами O_EXCL и O_CREAT, кроме случаев, когда это производится с символической ссылкой (должен быть установлен параметр <strong>allow_symlink</strong>). В этом случае, который может произойти если ссылка указывает на несуществующий файл, файл открывается для записи используя O_CREAT, но не O_EXCL, поскольку это мешает связи с ссылкой.</p>
+</li>
+<li><p class="first">Если открытие неудачно, поскольку файл существует, производятся проверки данных выше, для существующих файлов. Однако, для избежания петель в ситуациях, когда файл непрерывно создаётся и удаляется, петля существует/не существует разрывается после 10 повторов, и сообщение замораживается.</p>
+</li>
+<li><p class="first">Если открытие неудачно по любой другой причине - доставка задерживается.</p>
+</li>
+<li><p class="first">Как только файл открыт, если истинны параметры <strong>use_fcntl_lock</strong> и <strong>use_flock_lock</strong>, он блокируется, используя <em>fcntl()</em> или <em>flock()</em> или обе. Если <strong>use_mbx_lock</strong> - ложна, в каждом случае запрашивается эксклюзивная блокировка. Однако, если <strong>use_mbx_lock</strong> - истинна, Exim забирает общую блокировку открытого файла, и эксклюзивно блокирует файл с именем</p>
+<div class="highlight-python"><pre>/tmp/.&lt;device-number&gt;.&lt;inode-number&gt;</pre>
+</div>
+<p>используя устройство и номер иноды открытого файла почтового ящика, в соответствии с правилами блокировки MBX. Этот файл создаётся с режимом, определённым путём параметра <strong>lockfile_mode</strong>.</p>
+</li>
+<li><p class="first">Если Exim не в состоянии заблокировать файл, есть два возможных действия, в зависимости от значения таймаута блокировки. Оно получается из <strong>lock_fcntl_timeout</strong> и <strong>lock_flock_timeout</strong>, соответственно.</p>
+</li>
+<li><p class="first">Если значение таймаута - ноль, файл закрывается, Exim ждёт <strong>lock_interval</strong>, и, затем, возвращается и повторно открывает файл, как описано выше, и снова пробует ео заблокировать. Это случается до времени <strong>lock_retries</strong>, после которого доставка задерживается.</p>
+</li>
+<li><p class="first">Если значение таймаута более нуля, блокировка вызывает <em>fcntl()</em> или <em>flock()</em>, которая используются (с данным таймаутом), таким образом, уже будет некоторое значение таймаута, путём ошибок блокировки. Однако, Exim не прекращает немедленно. Он повторяет до времени (округлённого)</p>
+<div class="highlight-python"><pre>(lock_retries * lock_interval) / &lt;timeout&gt;</pre>
+</div>
+</li>
+</ul>
+<p>В конце доставки, Exim закрывает файл (освобождая блокировки <em>fcntl()</em> и/или <em>flock()</em>), и после этого удаляет, если он существует, файл блокировки.</p>
+</div>
+<div class="section" id="ch26-04">
+<span id="id5"></span><h2>Операционные детали для доставки в новый файл<a class="headerlink" href="#ch26-04" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Когда параметр <strong>directory</strong> установлена вместо <strong>file</strong>, каждое сообщение доставляется в недавно созданный файл, или установленные файлы. Когда <strong>appendfile</strong> активирован непосредственно из маршрутизатора <strong>redirect</strong>, то обычно ни <strong>file</strong>, ни <strong>directory</strong> не устанавливаются, поскольку путь для доставки предоставляется маршрутизатором. (Смотрите, например, транспорт <strong>address_file</strong>, в конфигурации по умолчанию.) В этом случае, доставка осуществляется в новый файл, если имя пути завершается на “/”, или установлен параметр <strong>maildir_format</strong> или <strong>mailstore_format</strong>.</p>
+<p>При записи сообщения в новый файл блокировка не требуется, следовательно, различные параметры блокировки транспорта - игнорируются. Строка “From”, которая по умолчанию, разделяет сообщения в одном файле, обычно не требуется, ни экранирование строк сообщения начинающихся с “From”, и нет необходимости обеспечивать новую строку в конце каждого сообщения. Следовательно, значения по умолчанию <strong>check_string</strong>, <strong>message_prefix</strong> и <strong>message_suffix</strong> - все незаданы, когда установлена любой из параметров <strong>directory</strong>, <strong>maildir_format</strong> или <strong>mailstore_format</strong>.</p>
+<p>Если Exim должен проверять установку <strong>quota</strong>, он складывает размеры всех файлов в директории по умолчанию для доставки. Однако, вы можете задать иную директорию, путём установки <strong>quota_directory</strong>. Также, для доставок <strong>maildir</strong> (смотрите ниже), соблюдается соглашение <em>maildirfolder</em>.</p>
+<p>Есть три различных пути, которыми может быть сделана доставка в индивидуальные файлы, контролируемые параметрами настройки параметров <strong>maildir_format</strong> и <strong>mailstore_format</strong>. Отметьте, что код для поддержки форматов <strong>maildir</strong> или <strong>mailstore</strong> не включен в исполняемый файл, если SUPPORT_MAILDIR, или, соответственно, SUPPORT_MAILSTORE не установлены в <em>Local/Makefile</em>.</p>
+<p>Во всех трёх случаях, делается попытка создать директорию и все необходимые субдиректории, если они не существуют, при условии что установлен параметр <strong>create_directory</strong> (по умолчанию - установлен). Расположение созданного каталога может быть ограничено установкой <strong>create_file</strong>. Режим созданной директории даётся параметром <strong>directory_mode</strong>. Если создание неудачно, или если параметр <strong>create_directory</strong> не установлен, когда требуется создание, доставка задерживается.</p>
+</div>
+<div class="section" id="maildir">
+<span id="ch26-05"></span><h2>Доставка <strong>maildir</strong><a class="headerlink" href="#maildir" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Если истинен параметр <strong>maildir_format</strong>, Exim доставляет каждое сообщение путём записи его в файл, чьё имя - <em>tmp/&lt;stime&gt;.H&lt;mtime&gt;P&lt;pid&gt;.&lt;host&gt;</em>, в директории, определённой параметром <strong>directory</strong> (“директория доставки”). Если доставка успешна, файл переименовывается внутрь поддиректории <em>new</em>.</p>
+<p>В имени файла, <em>&lt;stime&gt;</em> - текущее время дня, в секундах, и <em>&lt;mtime&gt;</em> - часть микросекунд времени. После <strong>maildir</strong> доставки, Exim проверяет, что часы дневного времени ушли дальше по крайней мере на микросекунду, перед завершением процесса доставки. Это гарантирует уникальность имени файла. Однако, предусмотрительно, Exim вызывает <em>stat()</em> для файла, до его открытия. Если даётся какой угодно ответ кроме ENOENT (не существует), Exim ждёт две секунды, и пробует снова, вплоть до времени <strong>maildir_retries</strong>.</p>
+<p>До того, как Exim выполнит <strong>maildir</strong>-доставку, он обеспечивает что директории с именами <em>new</em>, <em>cur</em> и <em>tmp</em> существуют в директории доставки. Если они не существуют, Exim пробует создать их, и другие предстоящие директории в пути, подчиняясь параметрам <strong>create_directory</strong> и <strong>create_file</strong>. Если задан параметр <strong>maildirfolder_create_regex</strong>, и её регулярное выражение содержит  совпадение с директорией доставки, Exim, также, гарантирует, что в директории доставки существует файл <em>maildirfolder</em>. Если отсутствующая директория, или файл <em>maildirfolder</em> не могут быть созданы, доставка задерживается.</p>
+<p>Эти особенности позволяют использовать Exim для создания всех необходимых файлов и каталогов в почтовом ящике, включая субдиректории для папок “maildir++”. Рассмотрите этот пример:</p>
+<div class="highlight-python"><pre>maildir_format = true
+directory = /var/mail/$local_part\
+  ${if eq{$local_part_suffix}{}{}\
+  {/.${substr_1:$local_part_suffix}}}
+maildirfolder_create_regex = /\.[^/]+$</pre>
+</div>
+<p>Если пуста $local_part_suffix (нет суффикса для локальной части), доставка происходит в вышележащую “maildir”, с именем типа <em>/var/mail/pimbo</em> (для пользователя с именем “pimbo”). Регулярное выражение в <strong>maildirfolder_create_regex</strong> не совпадает с этим именем, таким образом, Exim не будет искать или создавать <em>/var/mail/pimbo/maildirfolder</em>, хотя он, в случае необходимости, создаст <em>/var/mail/pimbo/{cur,new,tmp}</em>.</p>
+<p>Однако, если $local_part_suffix содержит, например, <tt class="docutils literal"><span class="pre">-eximusers</span></tt>, доставка происходит в папку “maildir++” <em>/var/mail/pimbo/.eximusers</em>, которая не совпадает с <strong>maildirfolder_create_regex</strong>. В этом случае, Exim создаст <em>/var/mail/pimbo/.eximusers/maildirfolder</em>, также как и три директории “maildir” - <em>/var/mail/pimbo/.eximusers/{cur,new,tmp}</em>.</p>
+<div class="admonition warning">
+<p class="first admonition-title">Предупреждение</p>
+<p class="last">При установке <strong>maildirfolder_create_regex</strong> позаботьтесь о том, чтобы она, по неосторожности, не совпадала с вышестоящей директорией “maildir”, поскольку файл <em>maildirfolder</em> на вышестоящем уровне полностью нарушил бы подсчёт квоты.</p>
+</div>
+<p>Если Exim обязан проверять установку <strong>quota</strong> до “maildir” доставки, и <strong>quota_directory</strong> не установлена, он ищет файл с именем <em>maildirfolder</em> в “maildir”-директории (рядом <em>new</em>, <em>cur</em>, <em>tmp</em>). Если он существует, Exim предполагает, что директория - директория папок “maildir++”, которая одним уровнем ниже верхнего уровня пользовательской директории почтового ящика. Это заставляет его начать подсчёт используемого места с родительского каталога, вместо текущей директории.</p>
+<p>Проблема, при доставке в многофайловый почтовый ящик, состоит в том, что в вычислительном отношении дорого подсчитать размер почтового ящика, для проверки квоты. Были предприняты различные подходы для уменьшения необходимой работы. Следующие два раздела описывают два из них. Третья альтернатива заключается в использовании какого-то внешнего процесса для обслуживания данных о размере, и использовании раскрытия параметра <strong>mailbox_size</strong> как способа импортировать эти данные в Exim.</p>
+</div>
+<div class="section" id="ch26-06">
+<span id="id6"></span><h2>Использование тэгов для записи размера сообщений<a class="headerlink" href="#ch26-06" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Если установлена <strong>maildir_tag</strong>, строка раскрывается для каждой доставки. Когда “maildir”-файл переименовывается в субдиректорию <em>new</em>, к его имени добавляется тэг. Однако, если добавляемый тэг берёт длину имени с которой проверочный вызов <em>stat()</em> неудачен по причине ENAMETOOLONG, тег удаляется, и “maildir”-файл создаётся без тега.</p>
+<p>Теги могут использоваться для кодирования размеров файлов в их именах; для примера, смотрите выше, параметр <strong>quota_size_regex</strong>. Раскрытие <strong>maildir_tag</strong> происходит после записи сообщения. Значение переменной $message_size устанавливается в число фактически записанных байт. Если раскрытие принудительно неудачно, тэг игнорируется, но непринудительная неудача раскрытия приводит к задержке доставки. Раскрытый тэг может содержать любые печатные символы, кроме “/”. Непечатные символы в строке - игнорируются; если результирующая строка пустая - она игнорируется. Если она начинается с алфавитно-цифрового символа - вставляется начальное двоеточие.</p>
+</div>
+<div class="section" id="maildirsize">
+<span id="ch26-07"></span><h2>Использование файла <strong>maildirsize</strong><a class="headerlink" href="#maildirsize" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Если истинен параметр <strong>maildir_use_size_file</strong>, Exim осуществляет правила “maildir++”, для хранения квоты и информации о размере файла в файле с именем <em>maildirsize</em>, в директории <em>maildir</em> верхнего уровня. Если этот файл не существует, Exim создаст его, устанавливая квоту из транспортного параметра <strong>quota</strong>. Если не существует сам каталог “maildir”, он его создаст до любых попыток записать файл <em>maildirsize</em>.</p>
+<p>Файл <em>maildirsize</em> используется для хранения информации о размерах сообщений в “maildir”, ускоряя подсчёт квоты. Значение квоты в файле - всего лишь кэш; если квота изменяется в транспорте, новое значение перезаписывает кэшированное при доставке следующего сообщения. Кэш поддерживается для других программ, которые обращаются к “maildir” и должны знать квоту.</p>
+<p>Если параметр <strong>quota</strong> в транспорте не задана, или равна нулю, файл “maildirsize” поддерживается (с нулевой установкой квоты), но никакой квоты не накладывается.</p>
+<p>Для контроля, какие каталоги используются в вычислении квоты при использовании файла <em>maildirsize</em>, доступно регулярное выражение. Для дополнительных деталей, смотрите <strong>maildir_quota_directory_regex</strong>, выше.</p>
+</div>
+<div class="section" id="mailstore">
+<span id="ch26-08"></span><h2>Доставка <strong>mailstore</strong><a class="headerlink" href="#mailstore" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Если истинен параметр <strong>mailstore_format</strong>, каждое сообщение записывается как два файла в данной директории. Уникальное базовое имя создаётся из идентификатора сообщения, и текущего процесса доставки, и файлы записываются с использованием этого базового имени, плюс суффиксов <em>.env</em> и <em>.msg</em>. Файл <em>.env</em> содержит конверт сообщения, и файл <em>.msg</em> - непосредственно сообщение. Базовое имя помещается в переменную $mailstore_basename.</p>
+<p>В процессе доставки, конверт, вначале, записывается в файл суффикс <em>.tmp</em>. Затем пишется файл <em>.msg</em>, и по завершении записи, файл <em>.tmp</em> переименовывается в файл <em>.env</em>. Программы, обращающиеся к сообщениям, должны ожидать появления обоих файлов - <em>.env</em> и <em>.msg</em>, до доступа к любому из них. Альтернативный подход заключается в ожидании исчезновения файла <em>.tmp</em>.</p>
+<p>Файл конверта начинается с любого текста, заданного параметром <strong>mailstore_prefix</strong>, раскрытой и завершённой символом новой строки, если таковой отсутствует. Затем следует адрес отправителя в одной строке, затем все адреса получателей - по одному на строке.Может быть более одного получателя лишь в случае, если значение параметра <strong>batch_max</strong> более одного. В конце, раскрывается <strong>mailstore_suffix</strong> и результат добавляется в файл, сопровождаемый символом новой строки, если он им не заканчивается.</p>
+<p>Если раскрытие <strong>mailstore_prefix</strong> или <strong>mailstore_suffix</strong> завершается принудительной неудачей - они игнорируются. Другие ошибки раскрытия рассматриваются как конфигурационные ошибки, и доставка задерживается. Переменная $mailstore_basename доступна для использования в процессе этих раскрытий.</p>
+</div>
+<div class="section" id="ch26-09">
+<span id="id7"></span><h2>Неспециальная доставка в новый файл<a class="headerlink" href="#ch26-09" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Если не установлены ни <strong>maildir_format</strong> ни <strong>mailstore_format</strong>, непосредственно в названном каталоге создаётся единичный новый файл. Например, при доставке сообщений в файлы в пакетном формате SMTP, для позднейшей доставки на другой хост (смотрите раздел <a class="reference internal" href="ch45.html#ch45-10"><em>45.10</em></a>), могут использоваться установки типа таких:</p>
+<div class="highlight-python"><pre>directory = /var/bsmtp/$host</pre>
+</div>
+<p>Сообщение записывается в файл с временным именем, которое переименовывается, когда доставка завершена. Финальное имя файла получается путём раскрытия параметра <strong>directory_file</strong>.</p>
+<table class="docutils footnote" frame="void" id="id8" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id1">[1]</a></td><td>редиректа [redirection] - прим. lissyara</td></tr>
+</tbody>
+</table>
+<table class="docutils footnote" frame="void" id="id9" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id3">[2]</a></td><td>может быть - распределённый - прим. lissyara</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Содержание</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Транспорт <strong>appendfile</strong></a><ul>
+<li><a class="reference internal" href="#file-directory">Параметры <strong>file</strong> и <strong>directory</strong></a></li>
+<li><a class="reference internal" href="#ch26-02">Частные параметры для <strong>appendfile</strong></a></li>
+<li><a class="reference internal" href="#ch26-03">Операционные детали при добавления</a></li>
+<li><a class="reference internal" href="#ch26-04">Операционные детали для доставки в новый файл</a></li>
+<li><a class="reference internal" href="#maildir">Доставка <strong>maildir</strong></a></li>
+<li><a class="reference internal" href="#ch26-06">Использование тэгов для записи размера сообщений</a></li>
+<li><a class="reference internal" href="#maildirsize">Использование файла <strong>maildirsize</strong></a></li>
+<li><a class="reference internal" href="#mailstore">Доставка <strong>mailstore</strong></a></li>
+<li><a class="reference internal" href="#ch26-09">Неспециальная доставка в новый файл</a></li>
+</ul>
+</li>
+</ul>
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="ch25.html" title="предыдущая глава">Группировка адресов в локальных транспортах</a></li>
+      <li>Next: <a href="ch27.html" title="следующая глава">Транспорт <strong>autoreply</strong></a></li>
+  </ul></li>
+</ul>
+  <h3>На этой странице</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/ch26.txt"
+           rel="nofollow">Показать исходный текст</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Быстрый поиск</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Искать" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Введите слова для поиска или имя модуля, класса или функции.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy; Copyright 2011, Exim Maintainers.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a>.
+    </div>
+  </body>
+</html>

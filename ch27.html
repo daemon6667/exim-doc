@@ -1,0 +1,425 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Транспорт autoreply &mdash; Specification of the Exim Mail Transfer Agent 4.70 documentation</title>
+    
+    <link rel="stylesheet" href="_static/flasky.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '4.70',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/translations.js"></script>
+    <link rel="top" title="Specification of the Exim Mail Transfer Agent 4.70 documentation" href="index.html" />
+    <link rel="next" title="Транспорт lmtp" href="ch28.html" />
+    <link rel="prev" title="Транспорт appendfile" href="ch26.html" />
+   
+  
+  <link media="only screen and (max-device-width: 480px)" href="_static/small_flask.css" type= "text/css" rel="stylesheet" />
+
+  </head>
+  <body>
+    <div class="related">
+      <h3>Просмотр</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="Словарь-указатель"
+             accesskey="I">словарь</a></li>
+        <li class="right" >
+          <a href="ch28.html" title="Транспорт lmtp"
+             accesskey="N">следующий</a> |</li>
+        <li class="right" >
+          <a href="ch26.html" title="Транспорт appendfile"
+             accesskey="P">предыдущий</a> |</li>
+        <li><a href="index.html">Specification of the Exim Mail Transfer Agent 4.70 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="autoreply">
+<span id="ch27-00"></span><h1>Транспорт <strong>autoreply</strong><a class="headerlink" href="#autoreply" title="Ссылка на этот заголовок">¶</a></h1>
+<p>Транспорт <strong>autoreply</strong> - не истинный транспорт, в нём не происходит передачи сообщения. Вместо этого, создается новое почтовое сообщение, как автоматический ответ на входящее сообщение. Включаются строки заголовков “References:” и “Auto-Submitted:”. Они создаются согласно правилам в <span class="target" id="index-0"></span><a class="rfc reference external" href="http://tools.ietf.org/html/rfc2822.html"><strong>RFC 2822</strong></a> и <span class="target" id="index-1"></span><a class="rfc reference external" href="http://tools.ietf.org/html/rfc3834.html"><strong>RFC 3834</strong></a>, соответственно.</p>
+<p>Если в маршрутизаторе передающем сообщение этому транспорту не установлен параметр <strong>unseen</strong>, оригинальное сообщение (для текущего получателя), не доставляется куда-либо. Однако, когда в маршрутизаторе передающем сообщение этому транспорту установлен параметр <strong>unseen</strong>, маршрутизация адреса продолжается таким образом, чтобы другой маршрутизатор мог выполнить нормальную доставку.</p>
+<p>Транспорт <strong>autoreply</strong>, обычно, запускается как результат почтовой фильтрации, “отпускные” сообщения <a class="footnote-reference" href="#id3" id="id1">[1]</a>, - являются стандартным примером. Однако, также он может быть выполнен напрямую из маршрутизатора, как и любой другой транспорт. Для уменьшения возможных каскадов сообщений, сообщения созданные транспортом “autoreply” всегда имеют пустого отправителя, как и рикошеты.</p>
+<p>Параметры посылаемого сообщения могут быть заданы в конфигурации путём описанных ниже параметров. Однако, они используются лишь когда адрес, передаваемый транспорту, не содержит собственной информации ответа. Когда транспорт выполняется как следствие команды <strong>mail</strong> или <strong>vacation</strong> в файле фильтра, параметры сообщения, переданные фильтром, передаются вместе с адресом. Транспортные параметры, определяющие сообщение, в таком случае игнорируются (таким образом, обычно, в этом случае они не устанавливаются). Сообщение полностью определено фильтром, или транспортом; они никогда не состоят из смеси этих параметров. Однако, параметры <strong>file_optional</strong>, <strong>mode</strong> и <strong>return_message</strong> применяются во всех случаях.</p>
+<p>Транспорт <strong>autoreply</strong> осуществляется как локальный транспорт. При использовании его как результат команды в пользовательском файле фильтра, <strong>autoreply</strong>, обычно работает под uid и gid пользователя, и с соответствующими текущей и домашней директориями (смотрите главу <a class="reference internal" href="ch23.html#ch23-00"><em>23</em></a>).</p>
+<p>Есть трудноуловимое различие между маршрутизацией сообщения в транспорт <strong>pipe</strong>, который создаст некий текст для возвращения отправителю, и маршрутизацией его в транспорт <strong>autoreply</strong>. Это различие заметно лишь если обрабатывается более одного адреса в одном сообщении. В случае <strong>pipe</strong>, раздельные выводы от различных адресов собираются и возвращаются отправителю в одном сообщении, тогда как при использовании <strong>autoreply</strong> для каждого адреса создаются различные сообщения для передачи.</p>
+<p>Непечатные символы не разрешены в строках заголовков созданных для сообщения созданного <strong>autoreply</strong>, за исключением символа новой строки, немедленно сопровождаемого пробелом. Если найдены любые непечатные символы, транспорт задерживается. Глобальный параметр <strong>print_topbitchars</strong> управляет считать ли символы с установленным высшим битом как печатные, или нет. Они не применяются непосредственно к созданному сообщению.</p>
+<p>Если любые из общих параметров для манипуляции заголовками (например, <strong>headers_add</strong>) установлена в транспорте <strong>autoreply</strong>, они применяются к копии оригинального сообщения, включённой в созданное сообщение, когда установлена <strong>return_message</strong>. Они не применяются непосредственно к созданному сообщению.</p>
+<p>Если транспорт <strong>autoreply</strong> получает от Exim код возврата 2 при предоставлении сообщения, указывая, что не было получателей, это не обрабатывается как ошибка. Это означает, что авто-ответы посылались на $sender_address когда она была пуста (поскольку входящее сообщение - рикошет), не вызывая проблем. Они лишь отбрасываются.</p>
+<div class="section" id="ch27-01">
+<span id="id2"></span><h2>Частные параметры для <strong>autoreply</strong><a class="headerlink" href="#ch27-01" title="Ссылка на этот заголовок">¶</a></h2>
+<table border="1" class="docutils" id="index-2">
+<colgroup>
+<col width="15%" />
+<col width="29%" />
+<col width="27%" />
+<col width="29%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>bcc</strong></td>
+<td>Use: autoreply</td>
+<td>Type: string†</td>
+<td>Default: unset</td>
+</tr>
+</tbody>
+</table>
+<p>Этим определяются адреса которые должны получать “слепые копии” (“blind carbon copies”) сообщений, когда сообщение определено транспортом.</p>
+<table border="1" class="docutils" id="index-3">
+<colgroup>
+<col width="13%" />
+<col width="30%" />
+<col width="28%" />
+<col width="30%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>cc</strong></td>
+<td>Use: autoreply</td>
+<td>Type: string†</td>
+<td>Default: unset</td>
+</tr>
+</tbody>
+</table>
+<p>Этим определяются получатели сообщения и содержимое заголовка “Cc:”, когда сообщение определено транспортом.</p>
+<table border="1" class="docutils" id="index-4">
+<colgroup>
+<col width="16%" />
+<col width="29%" />
+<col width="27%" />
+<col width="29%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>file</strong></td>
+<td>Use: autoreply</td>
+<td>Type: string†</td>
+<td>Default: unset</td>
+</tr>
+</tbody>
+</table>
+<p>Содержимое файла посылается как тело сообщения, когда сообщение определено транспортом. Если установлены оба параметра - <strong>file</strong> и <strong>text</strong>, более важна текстовая строка.</p>
+<table border="1" class="docutils" id="index-5">
+<colgroup>
+<col width="27%" />
+<col width="25%" />
+<col width="23%" />
+<col width="25%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>file_expand</strong></td>
+<td>Use: autoreply</td>
+<td>Type: boolean</td>
+<td>Default: false</td>
+</tr>
+</tbody>
+</table>
+<p>Если это установлено, содержимое указанного параметром <strong>file</strong> файла подвергается раскрытию строк, и они добавляются в сообщение.</p>
+<table border="1" class="docutils" id="index-6">
+<colgroup>
+<col width="29%" />
+<col width="24%" />
+<col width="22%" />
+<col width="24%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>file_optional</strong></td>
+<td>Use: autoreply</td>
+<td>Type: boolean</td>
+<td>Default: false</td>
+</tr>
+</tbody>
+</table>
+<p>Если этот параметр истинна, не создается ошибка, если файл названный в параметре <strong>file</strong>, или пришедший с адресом не существует, или не читаем.</p>
+<table border="1" class="docutils" id="index-7">
+<colgroup>
+<col width="16%" />
+<col width="29%" />
+<col width="27%" />
+<col width="29%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>from</strong></td>
+<td>Use: autoreply</td>
+<td>Type: string†</td>
+<td>Default: unset</td>
+</tr>
+</tbody>
+</table>
+<p>Этим определяется содержимое заголовка “From:”, когда сообщение определено транспортом.</p>
+<table border="1" class="docutils" id="index-8">
+<colgroup>
+<col width="21%" />
+<col width="27%" />
+<col width="25%" />
+<col width="27%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>headers</strong></td>
+<td>Use: autoreply</td>
+<td>Type: string†</td>
+<td>Default: unset</td>
+</tr>
+</tbody>
+</table>
+<p>Этим определяются дополнительные заголовки, согласно :rfc:822, которые должны быть добавлены к сообщению, когда сообщение определено транспортом. Можно задать несколько, путём использования “\n” для их разделения. Проверка их формата отсутствует.</p>
+<table border="1" class="docutils" id="index-9">
+<colgroup>
+<col width="15%" />
+<col width="29%" />
+<col width="27%" />
+<col width="29%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>log</strong></td>
+<td>Use: autoreply</td>
+<td>Type: string†</td>
+<td>Default: unset</td>
+</tr>
+</tbody>
+</table>
+<p>Значение этого параметра - файл, в который записывается каждое посланное сообщение, когда сообщение определено транспортом.</p>
+<table border="1" class="docutils" id="index-10">
+<colgroup>
+<col width="15%" />
+<col width="26%" />
+<col width="35%" />
+<col width="24%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>mode</strong></td>
+<td>Use: autoreply</td>
+<td>Type: octal integer</td>
+<td>Default: 0600</td>
+</tr>
+</tbody>
+</table>
+<p>Этот режим используется если создаётся файл логов, или файл <em>once</em>.</p>
+<table border="1" class="docutils" id="index-11">
+<colgroup>
+<col width="23%" />
+<col width="23%" />
+<col width="31%" />
+<col width="23%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>never_mail</strong></td>
+<td>Use: autoreply</td>
+<td>Type: address list†</td>
+<td>Default: unset</td>
+</tr>
+</tbody>
+</table>
+<p>Если любой запуск транспорта создаёт сообщение с получателем, который совпадает с любым элементом в этом списке, от этого получателя тихо отказываются. Если отвергнуты все получатели, не создаётся никакого сообщения. Это применяется и когда получатели созданы фильтром, и когда они заданы в транспорте.</p>
+<table border="1" class="docutils" id="index-12">
+<colgroup>
+<col width="16%" />
+<col width="29%" />
+<col width="27%" />
+<col width="29%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>once</strong></td>
+<td>Use: autoreply</td>
+<td>Type: string†</td>
+<td>Default: unset</td>
+</tr>
+</tbody>
+</table>
+<p>Этот параметр - имя файла или БД DBM в которой сохраняются записи каждого “To:” получателя, когда сообщение определено транспортом.</p>
+<div class="admonition note">
+<p class="first admonition-title">Примечание</p>
+<p class="last">Это не применяется к получателям “Cc:” и “Bcc:”.</p>
+</div>
+<p>Если <strong>once</strong> не задана, или установлена в пустую строку, сообщение всегда шлётся. По умолчанию, если <strong>once</strong> установлена в непустое имя файла, сообщение не шлётся, если потенциальный получатель уже перечислен в БД. Однако, если параметр <strong>once_repeat</strong> определяет время более нуля, сообщение посылается, если прошло столько времени с тех пор как было послано последнее сообщение этому получателю. Установка нулевого времени в <strong>once_repeat</strong> (по умолчанию) препятствует повторной отсылке сообщения - в этом случае, ноль - указание бесконечности.</p>
+<p>Если <strong>once_file_size</strong> - ноль, база данных DBM используется для запоминания получателей, и этим ей позволяется быть любого необходимого размера. Если <strong>once_file_size</strong> установлена более нуля, это изменяет способ, которым Exim осуществляет параметр <strong>once</strong>. Вместо использования DBM базы для записи каждого получателя, он использует регулярный файл, который никогда не будет больше установленного размера.</p>
+<p>В файле, Exim хранит линейный список адресов получателей и времён, когда им было послано сообщение. Если файл заполнен, при необходимости добавить новую запись, удаляется самый старый адрес. Если <strong>once_repeat</strong> не установлена, это означает, что данный получатель может получать много сообщений, но в непредсказуемых интервалах, зависящих от частоты оборота адресов в файле. Если установлена <strong>once_repeat</strong>, она определяет максимально время между повторениями.</p>
+<table border="1" class="docutils" id="index-13">
+<colgroup>
+<col width="33%" />
+<col width="25%" />
+<col width="24%" />
+<col width="18%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>once_file_size</strong></td>
+<td>Use: autoreply</td>
+<td>Type: integer</td>
+<td>Default: 0</td>
+</tr>
+</tbody>
+</table>
+<p>Смотрите выше, параметр <strong>once</strong>.</p>
+<table border="1" class="docutils" id="index-14">
+<colgroup>
+<col width="29%" />
+<col width="27%" />
+<col width="22%" />
+<col width="22%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>once_repeat</strong></td>
+<td>Use: autoreply</td>
+<td>Type: time†</td>
+<td>Default: 0s</td>
+</tr>
+</tbody>
+</table>
+<p>Смотрите выше, параметр <strong>once</strong>. После раскрытия, значение этого параметра должно быть допустимым значением времени.</p>
+<table border="1" class="docutils" id="index-15">
+<colgroup>
+<col width="23%" />
+<col width="26%" />
+<col width="25%" />
+<col width="26%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>reply_to</strong></td>
+<td>Use: autoreply</td>
+<td>Type: string†</td>
+<td>Default: unset</td>
+</tr>
+</tbody>
+</table>
+<p>Этим параметром определяется содержимое заголовка “Reply-To:”, когда сообщение определено транспортом.</p>
+<table border="1" class="docutils" id="index-16">
+<colgroup>
+<col width="31%" />
+<col width="24%" />
+<col width="22%" />
+<col width="24%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>return_message</strong></td>
+<td>Use: autoreply</td>
+<td>Type: boolean</td>
+<td>Default: false</td>
+</tr>
+</tbody>
+</table>
+<p>Если этот параметр установлен, копия оригинального сообщения возвращается с новым сообщением, максимальный размер подчиняется установке глобальной конфигурационной установке <strong>return_size_limit</strong>.</p>
+<table border="1" class="docutils" id="index-17">
+<colgroup>
+<col width="21%" />
+<col width="27%" />
+<col width="25%" />
+<col width="27%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>subject</strong></td>
+<td>Use: autoreply</td>
+<td>Type: string†</td>
+<td>Default: unset</td>
+</tr>
+</tbody>
+</table>
+<p>Этот параметр определяет содержимое заголовка “Subject:”, когда сообщение определено транспортом. Это позволяет указывать оригинальную тему сообщения в автоматических ответах. Например:</p>
+<div class="highlight-python"><pre>subject = Re: $h_subject:</pre>
+</div>
+<p>Однако, при выполнении этого существует опасность. Это может позволить третьему лицу подписать ваших пользователей на списки рассылки, при условии, что список принимает рикошеты как подтверждение подписки. Хорошие списки требуют, чтобы подписка подтверждалась не сообщением рикошета, таким образом, опасность относительно невелика.</p>
+<table border="1" class="docutils" id="index-18">
+<colgroup>
+<col width="16%" />
+<col width="29%" />
+<col width="27%" />
+<col width="29%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>text</strong></td>
+<td>Use: autoreply</td>
+<td>Type: string†</td>
+<td>Default: unset</td>
+</tr>
+</tbody>
+</table>
+<p>Этим параметром определяется одна строка, которая будет использоваться как тело сообщения, когда сообщение определено транспортом. Если заданы и <strong>text</strong> и <strong>file</strong>, вначале используется <strong>text</strong>.</p>
+<table border="1" class="docutils" id="index-19">
+<colgroup>
+<col width="13%" />
+<col width="30%" />
+<col width="28%" />
+<col width="30%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>to</strong></td>
+<td>Use: autoreply</td>
+<td>Type: string†</td>
+<td>Default: unset</td>
+</tr>
+</tbody>
+</table>
+<p>Этим параметром определяются получатели сообщения, и содержимое заголовка “To:”, когда сообщение определено транспортом.</p>
+<table class="docutils footnote" frame="void" id="id3" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id1">[1]</a></td><td>видимо, автоответ пока человек в отпуске - прим lissyara</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Содержание</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Транспорт <strong>autoreply</strong></a><ul>
+<li><a class="reference internal" href="#ch27-01">Частные параметры для <strong>autoreply</strong></a></li>
+</ul>
+</li>
+</ul>
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="ch26.html" title="предыдущая глава">Транспорт <strong>appendfile</strong></a></li>
+      <li>Next: <a href="ch28.html" title="следующая глава">Транспорт <strong>lmtp</strong></a></li>
+  </ul></li>
+</ul>
+  <h3>На этой странице</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/ch27.txt"
+           rel="nofollow">Показать исходный текст</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Быстрый поиск</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Искать" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Введите слова для поиска или имя модуля, класса или функции.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy; Copyright 2011, Exim Maintainers.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a>.
+    </div>
+  </body>
+</html>

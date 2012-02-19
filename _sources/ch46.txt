@@ -1,0 +1,103 @@
+
+.. _ch46_00:
+
+Настройка рикошетов и предупреждающих сообщений
+===============================================
+
+Когда сообщение невозможно доставить, или оно остаётся в очереди более чем настроенное время, Exim посылает сообщение оригинальному отправителю, или на альтернативный настроенный адрес. Текст этих сообщений зашит в код Exim`a, но его можно изменить, путём добавления одной строки или путём замены каждого параграфа текстом, находящимся в файле.
+
+Строки заголовков “From:” и “To:” - создаются автоматически; вы можете вызвать добавление строки “Reply-To:”, путём установки параметра **errors_reply_to**. Также, Exim добавляет строку::
+
+    Auto-Submitted: auto-generated
+
+ко всем предупреждающим сообщениям и рикошетам.
+
+.. _ch46_01:
+
+Настройка рикошетов
+-------------------
+
+Если установлена **bounce_message_text**, её содержимое включается в сообщение по умолчанию, немедленно после “This message was created automatically by mail delivery software.”. Строка не раскрывается. Она не используется, если **bounce_message_file** установлена.
+
+Когда установлена **bounce_message_file**, она должна указывать на файл шаблона для конструирования сообщения о ошибке. Файл состоит из ряда текстовых элементов, разделённых строками состоящими ровно из четырёх звёздочек. Если файл не может быть открыт, используется текст по умолчанию и в главный лог и лог паники пишется сообщение. Если любой текстовый элемент в файле - пустой, для этого элемента используется текст по умолчанию.
+      
+Каждый элемент текста, читаемый из файла, раскрывается, и существуют две переменные раскрытия, которые могут тут использоваться: $bounce_recipient - устанавливается в получателя сообщения о ошибке, когда оно создаётся, и $bounce_return_size_limit содержит значение параметра **return_size_limit**, округлённое до целого числа.
+
+Элементы должны появляться в файле в следующем порядке:
+
+* Первый элемент включается в заголовки, и должен включать, по крайней мере, заголовок “Subject:”. Exim не проверяет синтаксис этих заголовков.
+
+* Второй элемент формирует начало сообщения о ошибке. После него, Exim перечисляет неудачные адреса с их сообщениями о ошибке.
+
+* Третий элемент используется для ввода любого текста из транспортов трубы (pipe), который должен быть возвращён отправителю. Он опускается, если текста нет.
+         
+* Четвёртый элемент используется для ввода копии сообщения, которое возвращается как часть отчёта о ошибке.
+  
+* Пятый элемент добавляется после четвёртого, если возвращённое сообщение усечено, поскольку оно больше **return_size_limit**.
+  
+* Шестой элемент добавляется после копии оригинального сообщения.
+
+Состояние по умолчанию (параметр **bounce_message_file** не задан) - эквивалентно следующему файлу, с пустым шестым элементом. Строка “Subject:” и некоторые другие строки были разделены, чтобы подогнать их под страницу::
+
+    Subject: Mail delivery failed
+    ${if eq{$sender_address}{$bounce_recipient}
+    {: returning message to sender}}
+    ****
+    This message was created automatically by mail delivery software.
+    A message ${if eq{$sender_address}{$bounce_recipient}
+    {that you sent }{sent by
+
+    <$sender_address>
+
+    }}could not be delivered to all of its recipients.
+    This is a permanent error. The following address(es) failed:
+    ****
+    The following text was generated during the delivery attempt(s):
+    ****
+    ------ This is a copy of the message, including all the headers.
+    ------
+    ****
+    ------ The body of the message is $message_size characters long;
+    only the first
+    ------ $bounce_return_size_limit or so are included here.
+    ****
+
+.. _ch46_02:
+
+Настройка предупреждающих сообщений
+-----------------------------------
+
+Параметром **warn_message_file** может быть указан файл шаблона, для использования при создании предупреждений о задержках сообщений. В этом случае, есть лишь три секции текста:
+
+* Первый элемент включается в заголовки, и должен включать, по крайней мере, заголовок “Subject:”. Exim не проверяет синтаксис этих заголовков.
+* Второй элемент формирует начало предупреждающего сообщения. После него Exim перечисляет задержанные адреса.
+* Затем, третий элемент завершает сообщение.
+
+Состояние по умолчанию, эквивалентно следующему текстовому файлу, исключая, что некоторые строки были разделены для того, чтобы подогнать их под страницу::
+
+    Subject: Warning: message $message_exim_id delayed
+    $warn_message_delay
+    ****
+    This message was created automatically by mail delivery software.
+
+    A message ${if eq{$sender_address}{$warn_message_recipients}
+    {that you sent }{sent by
+
+    <$sender_address>
+
+    }}has not been delivered to all of its recipients after
+    more than $warn_message_delay on the queue on $primary_hostname.
+
+    The message identifier is:     $message_exim_id
+    The subject of the message is: $h_subject
+    The date of the message is:    $h_date
+
+    The following address(es) have not yet been delivered:
+    ****
+    No action is required on your part. Delivery attempts will
+    continue for some time, and this warning may be repeated at
+    intervals if the message remains undelivered. Eventually the
+    mail delivery software will give up, and when that happens,
+    the message will be returned to you.
+         
+Однако, в состоянии по умолчанию, сроки темы и даты - пропущены, если не существуют соответствующие заголовки. В течение раскрытия этого файла, в $warn_message_delay устанавливается время задержки, в одной из форм - “<n> minutes” или “<n> hours”, и $warn_message_recipients содержит список получателей предупреждающего сообщения. Их может быть более чем один, если есть несколько адресов с различными установками **errors_to** в обрабатывавших их маршрутизаторах.

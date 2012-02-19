@@ -1,0 +1,828 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Сборка и инсталляция Exim &mdash; Specification of the Exim Mail Transfer Agent 4.70 documentation</title>
+    
+    <link rel="stylesheet" href="_static/flasky.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '4.70',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/translations.js"></script>
+    <link rel="top" title="Specification of the Exim Mail Transfer Agent 4.70 documentation" href="index.html" />
+    <link rel="next" title="Командная строка Exim" href="ch05.html" />
+    <link rel="prev" title="Как Exim получает и доставляет почту" href="ch03.html" />
+   
+  
+  <link media="only screen and (max-device-width: 480px)" href="_static/small_flask.css" type= "text/css" rel="stylesheet" />
+
+  </head>
+  <body>
+    <div class="related">
+      <h3>Просмотр</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="Словарь-указатель"
+             accesskey="I">словарь</a></li>
+        <li class="right" >
+          <a href="ch05.html" title="Командная строка Exim"
+             accesskey="N">следующий</a> |</li>
+        <li class="right" >
+          <a href="ch03.html" title="Как Exim получает и доставляет почту"
+             accesskey="P">предыдущий</a> |</li>
+        <li><a href="index.html">Specification of the Exim Mail Transfer Agent 4.70 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="exim">
+<span id="ch04-00"></span><h1>Сборка и инсталляция Exim<a class="headerlink" href="#exim" title="Ссылка на этот заголовок">¶</a></h1>
+<div class="section" id="ch04-01">
+<span id="id1"></span><h2>Распаковка<a class="headerlink" href="#ch04-01" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Exim распространяется как сжатый bzip2(1) или gzip(1) tar(1) файл, который при
+распаковке создает директорию с именем настоящего релиза (например
+“exim-4.70”), куда помещаются следующие файлы:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="21%" />
+<col width="79%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td>ACKNOWLEDGMENTS</td>
+<td>содержит слова благодарности</td>
+</tr>
+<tr class="row-even"><td>CHANGES</td>
+<td>содержит указания на изменения в документе</td>
+</tr>
+<tr class="row-odd"><td>LICENCE</td>
+<td>GNU лицензия</td>
+</tr>
+<tr class="row-even"><td>Makefile</td>
+<td>главный make файл</td>
+</tr>
+<tr class="row-odd"><td>NOTICE</td>
+<td>условия использования Exim</td>
+</tr>
+<tr class="row-even"><td>README</td>
+<td>список файлов; директорий и небольшие инструкции по сборке</td>
+</tr>
+</tbody>
+</table>
+<p>Другие файлы, чьи имена начинаются словом “README” могут так же присутствовать.</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="22%" />
+<col width="78%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td>Local</td>
+<td>пустая директория для локальных файлов</td>
+</tr>
+<tr class="row-even"><td>OS</td>
+<td>специфические файлы для операционных систем</td>
+</tr>
+<tr class="row-odd"><td>doc</td>
+<td>документация</td>
+</tr>
+<tr class="row-even"><td>exim_monitor</td>
+<td>исходные файлы Exim monitor&#8217;а</td>
+</tr>
+<tr class="row-odd"><td>scripts</td>
+<td>скрипты использующиеся для сборки</td>
+</tr>
+<tr class="row-even"><td>src</td>
+<td>исходный код</td>
+</tr>
+<tr class="row-odd"><td>util</td>
+<td>независимые утилиты</td>
+</tr>
+</tbody>
+</table>
+<p>Главные утилиты содержаться в <em>src</em> директории, и собираются вместе с бинарным
+файлом Exim. Директория <em>util</em> содержит несколько дополнительных скриптов,
+которые могут быть полезны на некоторых этапах.</p>
+</div>
+<div class="section" id="ch04-02">
+<span id="id2"></span><h2>Разнообразие архитектур и операционных систем<a class="headerlink" href="#ch04-02" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Процесс сборки Exim&#8217;а устроен таким образом, что бы облегчить получение
+бинарных файлов для разных архитектур и операционных систем из одного и того же
+набора исходных кодов. Компиляция происходит не в директории <em>src</em>. Вместо
+этого создается <em>build directory</em>, для различных операционных систем. В <em>build
+directory</em> создаются символические ссылки на исходные коды. В большинстве
+случаев Exim способен распознать архитектуру компьютера и операционную систему,
+но в случае необходимости, это может быть изменено.</p>
+</div>
+<div class="section" id="pcre">
+<span id="ch04-03"></span><h2>PCRE библиотеки<a class="headerlink" href="#pcre" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Exim больше не имеет встроенной библиотеки PCRE, поскольку подавляющее
+большинство современных систем включают в себя PCRE, как системную библиотеку,
+но, возможно, вам потребуется инсталлировать пакет PCRE или PCRE-devel для
+вашей операционной системы. Если ваша система содержит обычную инсталляцию
+PCRE, то для сборок Exim&#8217;a не потребуется дополнительной настройки. Если
+библиотека или файлы заголовков расположены нестандартно, вам потребуется
+установить директивы PCRE_LIBS и INCLUDE, соответственно. Если ваша
+операционная система не имеет поддержки PCRE, вам необходимо скачать и собрать
+текущий релиз PCRE с сайта
+<a class="reference external" href="ftp://ftp.csx.cam.ac.uk/pub/software/programming/pcre/">ftp://ftp.csx.cam.ac.uk/pub/software/programming/pcre/</a>.</p>
+</div>
+<div class="section" id="dbm">
+<span id="ch04-04"></span><h2>DBM библиотеки<a class="headerlink" href="#dbm" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Даже, если вы не используете каких-либо DBM файлов в вашей конфигурации, Exim
+нуждается в этой библиотеке, для работы с индексированными файлами баз данных.
+К сожалению, присутствует множество DBM библиотек и зачастую, различные
+операционные системы требуют, различные установленные библиотеки.</p>
+<p>Если вы используете Solaris, IRIX, какую-либо современную BSD систему, или
+дистрибутив Linux, конфигурация DBM должна пройти автоматически, и вы можете не
+читать этот раздел. В противном случае, Вам придется узнать больше о DBM
+библиотеках, чем Вы хотели.</p>
+<p>Лицензионные версии Unix обычно содержат библиотеку функций DBM, работающую
+через интерфейс <em>ndbm</em>, на это Exim рассчитывает по умолчанию. В свободных
+версиях Unix понятие стандарт варьируется. В частности в ранних версиях Linux
+по умолчанию не было никакой библиотеки DBM, и различные распространители
+использовали различные версии DBM в свои дистрибутивы. Как бы то ни было,
+свежие версии стандартизировались на библиотеке DB от Berkley.</p>
+<p>Различные DBM библиотеки имеют разные соглашения об именовании файлов, которые
+они используют. Когда программа открывает файл с именем <em>dbmfile</em>, существует
+несколько вероятностей:</p>
+<ol class="arabic simple">
+<li>Традиционная <em>ndbm</em> реализация, например, в ОС Solaris, оперирует с двумя
+файлами <em>dbmfile.dir</em> и <em>dbmfile.pag</em>.</li>
+<li>GNU библиотека, <em>gdbm</em>, оперирует одним файлом. Если используется <em>ndbm</em>
+совместимый интерфейс, то создаются две жесткие ссылки на файлы
+<em>dbmfile.dir</em> и <em>dbmfile.pag</em>, при использовании родного интерфейса исходное
+имя не изменяется.</li>
+<li>Пакет DB от Беркли, при работе через <em>ndbm</em> совместимый интерфейс, оперирует
+единственным файлом <em>dbmfile.db</em>, но выглядит для программиста также как и
+традиционная <em>ndbm</em> реализация.</li>
+<li>Если пакет от Беркли используется в родном режиме, он оперирует одним файлом
+<em>dbmfile</em>; интерфейс программирования несколько отличен от <em>ndbm</em>.</li>
+<li>Углубляясь далее – есть несколько DB пакетов от Беркли. Версия 1.85
+считалась долгое время стабильной, версии 2.x и 3.x были текущими, последняя
+версия нумерована как 4.x. Поддержка некоторых, более ранних версий
+прекращена. Все версии Berkeley DB могут быть получены на
+<a class="reference external" href="http://www.sleepycat.com/">http://www.sleepycat.com/</a>.</li>
+<li>Еще одна библиотека, с названием <em>tdb</em>, доступна по адресу:
+<a class="reference external" href="http://download.sourceforge.net/tdb">http://download.sourceforge.net/tdb</a>. Она использует собственный интерфейс,
+и, также, оперирует одним файлом.</li>
+</ol>
+<p>Exim и его утилиты могут быть скомпилированы для использования любого из
+вышеперечисленных интерфейсов. Что бы использовать пакеты от Беркли, в родном
+режиме вы должны добавить строку USE_DB в файле конфигурации (обычно
+<em>Local/Makefile</em>). Например:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">USE_DB</span><span class="o">=</span><span class="n">yes</span>
+</pre></div>
+</div>
+<p>Точно так же, для использования gdbm, Вы добавляете строку USE_GDBM, а для tdb.
+USE_TDB. При использовании нескольких интерфейсов вы получите ошибку.</p>
+<p>На низком уровне, при построении конфигурации не устанавливается ни одна из
+этих параметров, таким образом присваивается интерфейс типа (1). Однако,
+конфигурационные файлы для некоторых операционных систем (например BSD и Linux)
+могут автоматически настраиваться для (4) типа, включая в себя USE_DB по
+умолчанию; в файлы конфигурации для Cygwin включается параметр USE_GDBM. Все,
+что вы определите в <em>Local/Makefile</em>, отменяет значения принимаемые по
+умолчанию.</p>
+<p>Так же как и определение USE_DB, USE_GDBM, или USE_TDB, может возникнуть
+необходимость добавить DBMLIB, что бы вызвать включение этой библиотеки для
+следующих установок:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">DBMLIB</span> <span class="o">=</span> <span class="o">-</span><span class="n">ldb</span>
+<span class="n">DBMLIB</span> <span class="o">=</span> <span class="o">-</span><span class="n">ltdb</span>
+</pre></div>
+</div>
+<p>Такие настройки будут работать, если библиотека DBM установлена в стандартной
+директории. В тех случаях, когда это не так, файлы c заголовками для библиотеки
+могут также находиться не в директории принятой по умолчанию, тогда Вам
+придется определить директиву INCLUDE и указать местоположение файла с
+заголовками для библиотеки, а так же определить полный путь к библиотеке, как в
+этом примере:</p>
+<div class="highlight-python"><pre>INCLUDE=-I/usr/local/include/db-4.1
+DBMLIB=/usr/local/lib/db-4.1/libdb.a</pre>
+</div>
+<p>Более детальное рассмотрение разных DBM библиотек находиться в файле
+<em>doc/dbm.discuss.txt</em> дистрибутива Exim.</p>
+</div>
+<div class="section" id="ch04-05">
+<span id="id3"></span><h2>Настройка перед сборкой<a class="headerlink" href="#ch04-05" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Перед началом сборки Exim&#8217;a должен быть создан локальный файл конфигурации -
+<em>Local/Makefile</em>, в котором должны быть определены независящие от ОС параметры.
+Шаблон для этого файла, поставляется как файл <em>src/EDITME</em>, и содержит в себе
+полные описания всех параметров настройки. Эти описания здесь не
+рассматриваются. Если вы собираете Exim впервые, то самый лучший способ
+скопировать <em>rc/EDITME</em> в <em>Local/Makefile</em>, затем его прочитать отредактировать
+соответствующим образом.</p>
+<p>Есть три параметра в настройках, которые Вы должны оставить, потому, что Exim
+не соберется без них. Это - местоположение конфигурационного файла
+(CONFIGURE_FILE), директории, куда будут инсталлированы бинарные файлы Exim
+(BIN_DIRECTORY), и пользователь Exim (EXIM_USER и возможно также, EXIM_GROUP).
+Значения CONFIGURE_FILE в списке файлов могут разделятся двоеточием, Exim
+использует первое существующее из них.</p>
+<p>Также есть несколько других параметров, которые могут быть определены во время
+сборки или выполнения, для того чтобы разрешить использование одного и того же
+бинарного файла нескольким машинам. Однако, если местоположение директории
+spool или log (если она не внутри директории spool) фиксировано, то
+рекомендуется указать его в файле <em>Local/Makefile</em>, вместо рабочей
+конфигурации, что бы ошибки, которые возникают на стадии запуска (например
+«кривой» файл конфигурации) Exim могли быть отражены в log файле.</p>
+<p>Интерфейсы Exim&#8217;а для вызова антивирусов и спамфильтров из access control
+lists, не собираются по умолчанию. Если вы хотите включить эти программы, вам
+нужно вписать следующую строку:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">WITH_CONTENT_SCAN</span><span class="o">=</span><span class="n">yes</span>
+</pre></div>
+</div>
+<p>в файле <em>Local/Makefile</em>. Более детально об этих возможностях в главе <a class="reference internal" href="ch41.html#ch41-00"><em>41</em></a>.</p>
+<p>Если вы собираетесь собирать Exim монитор, необходим схожий процесс
+конфирурирования. Файл <em>exim_monitor/EDITME</em> должен быть отредактирован в
+соответствии с вашими параметрами установки и сохранен под именем
+<em>Local/eximon.conf</em>. Если вы довольствуетесь настройками по умолчанию,
+описанными в файле <em>exim_monitor/EDITME</em>, то <em>Local/eximon.conf</em> может быть
+пустым, но он должен существовать.</p>
+<p>Это вся конфигурация, которая может быть необходима для большинства известных
+операционных систем. Однако, процесс сборки настроен таким образом, что очень
+легко изменить настройки принимаемые по умолчанию операционной системой.
+Например, изменить компилятор C, которым по умолчанию является gcc(1). Смотрите
+раздел <a class="reference internal" href="#ch04-12"><em>4.12</em></a> о том, как это сделать.</p>
+</div>
+<div class="section" id="iconv">
+<span id="ch04-06"></span><h2>Поддержка iconv()<a class="headerlink" href="#iconv" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Содержание заголовка сообщения может быть закодировано согласно <span class="target" id="index-0"></span><a class="rfc reference external" href="http://tools.ietf.org/html/rfc2047.html"><strong>RFC 2047</strong></a>.
+Это позволяет передавать символы отсутствующие в таблице ASCII символов и
+отмечать их, как являющихся частями этой таблицы. Когда Exim проверяет строки
+заголовка с помощью <strong>$h_</strong> механизма, он расшифровывает их и переводит в
+специфический набор символов (по умолчанию ISO-8859-1). Перевод возможен, если
+операционная система поддерживает функцию <em>iconv()</em>.</p>
+<p>Однако, некоторые операционные системы, которые поставляются с функцией
+<em>iconv()</em>, не поддерживают очень много преобразований. Библиотека GNU
+<strong>libiconv</strong> (доступна по адресу <a class="reference external" href="http://www.gnu.org/software/libiconv/">http://www.gnu.org/software/libiconv/</a>) может
+быть установлена на таких системах, что бы исправить этот недостаток, так же
+как и на системах, которые не поддерживают <em>iconv()</em> вообще. После инсталляции
+<strong>libiconv</strong> вы должны добавить</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">HAVE_ICONV</span><span class="o">=</span><span class="n">yes</span>
+</pre></div>
+</div>
+<p>в файл <em>Local/Makefile*</em>, и пересобрать Exim.</p>
+</div>
+<div class="section" id="tls-ssl">
+<span id="ch04-07"></span><h2>Включение TLS/SSL шифрования<a class="headerlink" href="#tls-ssl" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Exim может быть собран с поддержкой шифрованных SMTP соединений, использующих
+команду STARTSSL согласно <span class="target" id="index-1"></span><a class="rfc reference external" href="http://tools.ietf.org/html/rfc2487.html"><strong>RFC 2487</strong></a>. Он так же поддерживает клиентское ПО,
+которое ожидает немедленного соединения на нестандартном порту (смотрите
+<strong>tls_on_connect_ports</strong> во время выполнения и параметр <strong>-tls-on-connect</strong>
+командной строки).</p>
+<p>Если вы хотите собрать Exim c поддержкой TLS, то вы должны сперва
+инсталлировать библиотеку OpenSSL или GnuTLS. В Exim отсутствует
+непосредственная поддержка SSL соединения.</p>
+<p>Если OpenSSL инсталлирована, то вы должны добавить:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">SUPPORT_TLS</span><span class="o">=</span><span class="n">yes</span>
+<span class="n">TLS_LIBS</span><span class="o">=-</span><span class="n">lssl</span> <span class="o">-</span><span class="n">lcrypto</span>
+</pre></div>
+</div>
+<p>в файл <em>Local/Makefile</em>. Вам может также потребуется определить путь к
+библиотекам и заголовочным файлам OpenSSL. Например:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">SUPPORT_TLS</span><span class="o">=</span><span class="n">yes</span>
+<span class="n">TLS_LIBS</span><span class="o">=-</span><span class="n">L</span><span class="o">/</span><span class="n">usr</span><span class="o">/</span><span class="n">local</span><span class="o">/</span><span class="n">openssl</span><span class="o">/</span><span class="n">lib</span> <span class="o">-</span><span class="n">lssl</span> <span class="o">-</span><span class="n">lcrypto</span>
+<span class="n">TLS_INCLUDE</span><span class="o">=-</span><span class="n">I</span><span class="o">/</span><span class="n">usr</span><span class="o">/</span><span class="n">local</span><span class="o">/</span><span class="n">openssl</span><span class="o">/</span><span class="n">include</span>
+</pre></div>
+</div>
+<p>Если используется GnuTLS:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">SUPPORT_TLS</span><span class="o">=</span><span class="n">yes</span>
+<span class="n">USE_GNUTLS</span><span class="o">=</span><span class="n">yes</span>
+<span class="n">TLS_LIBS</span><span class="o">=-</span><span class="n">lgnutls</span> <span class="o">-</span><span class="n">ltasn1</span> <span class="o">-</span><span class="n">lgcrypt</span>
+</pre></div>
+</div>
+<p>в файле <em>Local/Makefile</em> и, опять таки, вам может потребоваться указать полный
+путь к включаемым файлам и библиотекам. Например:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">SUPPORT_TLS</span><span class="o">=</span><span class="n">yes</span>
+<span class="n">USE_GNUTLS</span><span class="o">=</span><span class="n">yes</span>
+<span class="n">TLS_LIBS</span><span class="o">=-</span><span class="n">L</span><span class="o">/</span><span class="n">usr</span><span class="o">/</span><span class="n">gnu</span><span class="o">/</span><span class="n">lib</span> <span class="o">-</span><span class="n">lgnutls</span> <span class="o">-</span><span class="n">ltasn1</span> <span class="o">-</span><span class="n">lgcrypt</span>
+<span class="n">TLS_INCLUDE</span><span class="o">=-</span><span class="n">I</span><span class="o">/</span><span class="n">usr</span><span class="o">/</span><span class="n">gnu</span><span class="o">/</span><span class="n">include</span>
+</pre></div>
+</div>
+<p>Вам не нужно устанавливать TLS_INCLUDE&#8217;ы, если такая директория уже определена
+в INCLUDE. Более подробное описание того, как настроить Exim с поддержкой TLS
+дано в главе <a class="reference internal" href="ch39.html#ch39-00"><em>39</em></a>.</p>
+</div>
+<div class="section" id="tcpwrappers">
+<span id="ch04-08"></span><h2>Использование tcpwrappers<a class="headerlink" href="#tcpwrappers" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Exim может быть собран с библиотекой <em>tcpwrappers</em> для проверки входящих
+запросов SMTP с использованием файлов <em>tcpwrappers</em>. Данная возможность может
+использоваться в качестве альтернативы собственным средствам Exim&#8217;а для
+проверки обеспечения, которое использует <em>tcpwrappers</em> в других целях. Для
+того, что бы сделать это, вам нужно внести строку USE_TCP_WRAPPERS в файл
+<em>Local/Makefile</em>. Убедитесь что файл <em>tcpd.h</em> доступен во время компиляции, а
+библиотека <em>libwrap.a</em> доступна во время сборки, включая <strong>-lwrap</strong> в
+EXTRALIBS_EXIM. Для примера, если <em>tcpwrappers</em> инсталлирован в <em>/usr/local</em>,
+вы должны внести соответствующие строки:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">USE_TCP_WRAPPERS</span><span class="o">=</span><span class="n">yes</span>
+<span class="n">CFLAGS</span><span class="o">=-</span><span class="n">O</span> <span class="o">-</span><span class="n">I</span><span class="o">/</span><span class="n">usr</span><span class="o">/</span><span class="n">local</span><span class="o">/</span><span class="n">include</span>
+<span class="n">EXTRALIBS_EXIM</span><span class="o">=-</span><span class="n">L</span><span class="o">/</span><span class="n">usr</span><span class="o">/</span><span class="n">local</span><span class="o">/</span><span class="n">lib</span> <span class="o">-</span><span class="n">lwrap</span>
+</pre></div>
+</div>
+<p>в файл <em>Local/Makefile</em>. Имя, используемое в файле <em>tcpwrappers</em> - “exim”.
+Например, строка:</p>
+<div class="highlight-python"><pre>exim : LOCAL  192.168.1.  .friendly.domain.example</pre>
+</div>
+<p>в файле <em>/etc/hosts.allow</em> разрешает соединения от локального хоста, от подсети
+192.168.1.0/24 и от всех хостов в <em>friendly.domain.example</em>. Остальные
+соединения запрещаются. Для более детальной информации загляните в документацию
+<em>tcpwrappers</em>.</p>
+</div>
+<div class="section" id="ipv6">
+<span id="ch04-09"></span><h2>Включение поддержки IPv6<a class="headerlink" href="#ipv6" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Exim содержит код для использования в системах с поддержкой Ipv6. Установите
+значение HAVE_IPV6=YES в файле <em>Local/Makefile</em>, чтобы код поддерживающий Ipv6
+был включен; также может потребоваться установка IPV6_INCLUDE и IPV6_LIB в
+системах, где поддержка Ipv6 не полностью включена в библиотеки и файлы
+include.</p>
+<p>Два различных типа записи DNS были определены для поддержки адресов Ipv6. AAAA
+записи (аналоги A записей Ipv4) используются в настоящий момент и, похоже, их
+использование стало массовым. Другой тип записи называемый A6 расценивается как
+более лучший, нежели AAAA, потому как он более гибок. Однако он считается более
+сложным, и его статус был уменьшен до «экспериментального». Доподлинно не
+известно, использует ли кто-либо записи A6. Exim поддерживает A6 записи, если
+вы установили SUPPORT_A6=YES в файл <em>Local/Makefile</em>. Поддержка не проверялась.</p>
+</div>
+<div class="section" id="ch04-10">
+<span id="id4"></span><h2>Процесс сборки<a class="headerlink" href="#ch04-10" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Как только <em>Local/Makefile</em> (и <em>Local/eximon.conf</em>, если необходимо) будет
+создан, запустите make в директории с Exim. Определяется архитектура компьютера
+и операционная система, и создается директория, в которой происходит сборка.
+Например, компьютер Sun с операционной системой Solaris 8 создаваемая
+директория будет именоваться <em>build-SunOS5-5.8-sparc</em>. Символические ссылки на
+исходные файлы будут созданы в директории, где происходит сборка.</p>
+<div class="admonition warning">
+<p class="first admonition-title">Предупреждение</p>
+<p class="last">флаг <strong>-j</strong> не должен использоваться с make; процесс сборки завершиться с
+ошибкой, если он установлен.</p>
+</div>
+<p>Если <em>make</em> запущен впервые, то вызывается скрипт, который создает <em>make</em>-файл
+внутри директории, где происходит сборка, используя конфигурационный файл в
+директории <em>Local</em>. Новый make файл передается новому экземпляру <em>make</em>. Он
+выполняет работу по созданию сервисных скриптов, затем компилирует и линкует
+бинарный файл монитора Exim (если настроено), некоторое количество утилит и,
+наконец, сам Exim. Команда <em>make makefile</em> используется для принудительного
+создания нового <em>make</em>-файла в директории со сборкой, если это необходимо.</p>
+<p>Если у вас есть затруднения со сборкой Exim, то загляните в файл README для
+вашей операционной системы и поглядите в FAQ, где поясняются часто
+встречающиеся проблемы.</p>
+</div>
+<div class="section" id="make">
+<span id="ch04-11"></span><h2>Вывод команды make<a class="headerlink" href="#make" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Выводом команды <em>make</em> являются очень длинные и нечитабельные строки. Поэтому
+данные вывода <em>make</em> не используются, а заменяются данными, схожими с теми,
+которые вы видите при компиляции Linux ядра версии 2.6, только короткие строки
+для каждого скомпилированного или собранного модуля. Однако, возможно получить
+полный вывод, вызывая <em>make</em> следующим образом:</p>
+<div class="highlight-python"><pre>FULLECHO='' make -e</pre>
+</div>
+<p>Значение FULLECHO по умолчанию - “&#64;”. Оно подавляет оригинальный вывод <em>make</em>.
+Когда вы запрашиваете полный вывод выходных данных, она расширяет стандартный
+выходные данные <em>make</em>.</p>
+</div>
+<div class="section" id="ch04-12">
+<span id="id5"></span><h2>Переопределение параметры при сборке Exim<a class="headerlink" href="#ch04-12" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Главный make файл, который создается в начале процесса сборки, включает
+содержимое некоторого количества файлов с определенными конфигурационными
+значениями, сопровождаемыми фиксированным набором <em>make</em> инструкций. Если
+значение установлено неоднократно, последнее значение отвергает все предыдущие.
+Это является удобным способом изменения настроек по умолчанию. Файлы идут в
+следующем порядке:</p>
+<div class="highlight-python"><pre>OS/Makefile-Default
+OS/Makefile-&lt;ostype&gt;
+Local/Makefile
+Local/Makefile-&lt;ostype&gt;
+Local/Makefile-&lt;archtype&gt;
+Local/Makefile-&lt;ostype&gt;-&lt;archtype&gt;
+OS/Makefile-Base</pre>
+</div>
+<p>где <em>&lt;ostype&gt;</em> - тип операционной системы, и <em>&lt;archtype&gt;</em> - тип архитектуры
+компьютера. <em>Local/Makefile</em> должен существовать, иначе процесс сборки будет
+завершен с ошибкой, остальные три <em>Local</em> файла необязательны и зачастую могут
+отсутствовать.</p>
+<p>Значения, используемые, для <em>&lt;ostype&gt;</em> и <em>&lt;archtype&gt;</em> получены от скриптов
+<em>scripts/os-type</em> и <em>scripts/arch-type</em>, соответственно. С помощью переменных
+EXIM_OSTYPE и EXIM_ARCHTYPE Вы можете задать значения <em>&lt;ostype&gt;</em> и <em>&lt;archtype&gt;</em>
+принудительно. Иначе скрипты пытаются получить значения из команды uname. Если
+это сделать не удается, используются значения переменных интерпретатора
+командной строки OSTYPE и ARCHTYPE. Тогда применяются некоторые быстрые
+преобразования для получения стандартных имен, которые распознаются Exim&#8217;ом. Вы
+можете запускать эти скрипты напрямую из интерпретатора командной строки, для
+того, чтобы выяснить, какие значения используются в вашей системе.</p>
+<p><em>OS/Makefile-Default</em> содержит комментарии к переменным, которые там находятся.
+Некоторые (но не все) рассматриваются ниже. Если что-то нужно изменить,
+посмотрите содержимое этого файла и содержимое файла make для вашей
+операционной системы (<em>OS/Makefile-&lt;ostype&gt;</em>), чтобы узнать, какие настройки
+используются по умолчанию.</p>
+<p>Если вам нужно изменить любое значение в <em>OS/Makefile-Default</em> или в
+<em>OS/Makefile-&lt;ostype&gt;</em> или добавить новое, вам не нужно менять оригинальные
+файлы. Вместо этого вам нужно записать необходимые изменения в соответствующем
+файле <em>Local</em>. Для примера, когда сборка происходит в операционной системе
+Tru64-Unix (бывший Digital UNIX, бывший DEC-OSF1), необходимо изменить
+компилятор языка C с <em>gcc</em> на <em>сс</em>. Также компилятор должен вызываться с
+параметром <strong>-stdl</strong> для того, чтобы поддерживались некоторые особенности
+Стандартного C, которые Exim использует (большинство других компиляторов
+распознают Стандартный C по умолчанию). Для этого нужно создать файл
+<em>Local/Makefile-OSF1</em>, содержащий следующие строки:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">CC</span><span class="o">=</span><span class="n">cc</span>
+<span class="n">CFLAGS</span><span class="o">=-</span><span class="n">std1</span>
+</pre></div>
+</div>
+<p>Если компиляция производится для одной операционной системы, то будет гораздо
+проще записать необходимые строки в <em>Local/Makefile</em>.</p>
+<p>Хранение локальных файлов конфигурации отдельно от файлов, идущих с
+дистрибутивом, позволяет проще передавать настройки новым версиям Exim, путем
+копирования их в директорию <em>Local</em>.</p>
+<p>Exim содержит поддержку LDAP, NIS, NIS+, и других видов поиска, но не во все
+системы инсталлированы эти компоненты, поэтому по умолчанию данный код не
+включается в бинарный файл. Все различные типы поиска в файлах и базах данных,
+которые поддерживает Exim, собираются как отдельные модули, и собираются,
+только если установлены соответствующие параметры компиляции. Для LDAP, NIS,
+NIS+ параметры файла <em>Local/Makefile</em> следующие:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">LOOKUP_LDAP</span><span class="o">=</span><span class="n">yes</span>
+<span class="n">LOOKUP_NIS</span><span class="o">=</span><span class="n">yes</span>
+<span class="n">LOOKUP_NISPLUS</span><span class="o">=</span><span class="n">yes</span>
+</pre></div>
+</div>
+<p>похожие установки применимы для других типов поиска. Они перечислены в файле
+<em>src/EDITME</em>. Во всех случаях соответствующие включаемые файлы и библиотеки
+интерфейсов должны быть установлены до начала компиляции Exim&#8217;a. Однако, есть
+некоторые необязательные типы поисков (такие как cdb), код для которых
+содержится в Exim, и не требуется никаких внешних библиотек и включаемых
+файлов. Когда определённый тип поиска не включен в бинарный файл, попытка
+настроить Exim для использования такого типа вызовет ошибку.</p>
+<p>В состав Exim&#8217;a может быть включён встроенный интерпретатор Perl, который
+позволит вызывать процедуры Perl при обработке строк. Включение этой
+возможности:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">EXIM_PERL</span><span class="o">=</span><span class="n">perl</span><span class="o">.</span><span class="n">o</span>
+</pre></div>
+</div>
+<p>должно быть установлено в файле <em>Local/Makefile</em>. Более подробно это
+рассматривается в главе <a class="reference internal" href="ch12.html#ch12-00"><em>12</em></a>.</p>
+<p>Расположение библиотек X11 отличается для различных операционных систем. Сам по
+себе Exim не использует X11, но если вы компилируете монитор Exim, то
+библиотеки X11 должны быть доступны. Расположение библиотек X11 можно настроить
+в <em>OS/Makefile-Default</em>:</p>
+<div class="highlight-python"><pre>X11=/usr/X11R6
+XINCLUDE=-I$(X11)/include
+XLFLAGS=-L$(X11)/lib</pre>
+</div>
+<p>Эти значения сбрасываются в файлах конфигурации некоторых операционных систем.
+Например, в файле <em>OS/Makefile-SunOS5</em>:</p>
+<div class="highlight-python"><pre>X11=/usr/openwin
+XINCLUDE=-I$(X11)/include
+XLFLAGS=-L$(X11)/lib -R$(X11)/lib</pre>
+</div>
+<p>Если вам нужно отменить значения по умолчанию, запишите эти значения переменных
+в файл <em>Local/Makefile-&lt;ostype&gt;</em>.</p>
+<p>Если вам необходимо добавить какую-либо дополнительную библиотеку, задайте
+значение для параметра EXTRALIBS, которая используется при линковке, но по
+умолчанию не включена. Напротив, EXTRALIBS_EXIM используется только для
+сборки бинарного файла Exim, а не для дополнительных утилит.</p>
+<p>Так же есть DBMLIB, который появляется в командах линковки бинарного файла,
+использующего функции DBM (смотрите раздел <a class="reference internal" href="#ch04-04"><em>4.4</em></a>). И, наконец,
+есть EXTRALIBS_EXIMON которая появляется только на этапе линковки бинарного
+файла монитора Exim, и может использоваться, например, для добавления
+дополнительных библиотек X11.</p>
+<p>Команда <em>make</em> справляется с пересборкой Exim&#8217;a корректно, если отредактированы
+конфигурационные файлы. Однако, если дополнительный конфигурационный файл был
+удален, то необходимо создать соответствующий обязательный файл (то есть,
+<em>Local/Makefile</em> или <em>Local/eximon.conf</em>) перед пересборкой.</p>
+</div>
+<div class="section" id="os">
+<span id="ch04-13"></span><h2>Специфичные для OS заголовки<a class="headerlink" href="#os" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Директория <em>OS</em> содержит файлы, которые именуются, как <em>os.h-&lt;ostype&gt;</em>. Это
+системо-зависимые файлы заголовков C, которые не должны меняться. Есть список
+макропараметров которые находятся в файле <em>OS/os.configuring</em>, в которые нужно
+посмотреть, если вы адаптируете Exim на новую операционную систему.</p>
+</div>
+<div class="section" id="ch04-14">
+<span id="id6"></span><h2>Переопределение параметры при сборке монитора<a class="headerlink" href="#ch04-14" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Похожие процедуры используются для сборки монитора Exim. Необходимые файлы:</p>
+<div class="highlight-python"><pre>OS/eximon.conf-Default
+OS/eximon.conf-&lt;ostype&gt;
+Local/eximon.conf
+Local/eximon.conf-&lt;ostype&gt;
+Local/eximon.conf-&lt;archtype&gt;
+Local/eximon.conf-&lt;ostype&gt;-&lt;archtype&gt;</pre>
+</div>
+<p>Так же как и сам Exim, последние три файла необязательно должны присутствовать,
+файл <em>OS/eximon.conf-&lt;ostype&gt;</em> так же необязателен. Значения по умолчанию в
+файле <em>OS/eximon.conf-Default</em> могут быть отменены динамически, установкой
+переменных с теми же именами, которые используются !EXIMON_. Например,
+установка EXIMON_LOG_DEPTH, отменяет значение LOG_DEPTH при загрузке.</p>
+</div>
+<div class="section" id="ch04-15">
+<span id="id7"></span><h2>Установка бинарных файлов и скриптов Exim&#8217;а<a class="headerlink" href="#ch04-15" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Команда <tt class="docutils literal"><span class="pre">make</span> <span class="pre">install</span></tt> запускает скрипт <strong>exim_install</strong> без аргументов.
+Скрипт копирует бинарные файлы и другие скрипты в директорию чье имя определено
+в переменной BIN_DIRECTORY в файле <em>Local/Makefile</em>. Инсталляционный скрипт
+замещает файлы только в том случае, если копируемые файлы более новые, нежели,
+установленные. Владельцем бинарного файла Exim c установленным битом <em>setuid</em>”,
+должен являться root, для обычной конфигурации. Поэтому вы должны запустить
+<tt class="docutils literal"><span class="pre">make</span> <span class="pre">install</span></tt> от имени пользователя root, что бы правильно настроить права
+бинарного файла Exim. Однако, в некоторых особенных ситуациях, (например, когда
+хост не осуществляет локальных доставок) можно запускать Exim без бита
+<em>setuid</em>. (для более детальной информации смотрите главу <a class="reference internal" href="ch52.html#ch52-00"><em>52</em></a>).</p>
+<p>Загрузочный файл конфигурации Exim&#8217;а определяется переменной CONFIGURE_FILE в
+файле <em>Local/Makefile</em>. Если указывается один файл и он не существует, то по
+умолчанию файл <em>src/configure.default</em> копируется инсталляционным скриптом.
+Если CONFIGURE_FILE содержит список разделенный двоеточием, то по умолчанию
+ничего установлено не будет.</p>
+<p>Одно изменение делается в конфигурационном файле устанавливаемым по умолчанию:
+конфигурация по умолчанию содержит маршрутизатор, который использует системный
+файл псевдонимов. Путь к этому файлу устанавливается в переменной
+SYSTEM_ALIASES_FILE в файле <em>Local/Makefile</em> (<em>/etc/aliases</em> по умолчанию).
+Если файл системных псевдонимов отсутствует то инсталляционный скрипт создает
+его и выводит предупреждение пользователю.</p>
+<p>Созданный файл не содержит псевдонимов, но он содержит комментарии о
+псевдонимах, которые должны существовать. Почтовые псевдонимы по умолчанию
+хранятся в <em>/etc/aliases</em>. Однако, некоторые операционные системы используют
+<em>/etc/mail/aliases</em>. Вы должны убедиться справедливо ли это, по отношению к
+вашей операционной системе и, при необходимости, изменить конфигурацию Exim&#8217;а.</p>
+<p>Конфигурация по умолчанию использует домен localhost&#8217;а, как единственный
+локальный домен и настраивает локальную доставку в общую директорию <em>/var/mail</em>
+исполняясь как локальный пользователь. Системные псевдонимы и <em>.forward</em> файлы
+в домашних директориях пользователей поддерживаются, но поддержка NIS или NIS+
+не используется. Домены отличные от домена локального хоста маршрутизируются с
+помощью DNS, с доставкой через SMTP.</p>
+<p>Возможно инсталлировать Exim для особых целей (например распространения
+бинарного файла), в нестандартное место. Это сделать это командой:</p>
+<div class="highlight-python"><pre>make DESTDIR=/some/directory/ install</pre>
+</div>
+<p>Этот путь будет применяться ко всем файлам, кроме файла с системными именами
+который присутствует в конфигурации по умолчанию (если файл псевдонимов по
+умолчанию создан, он модифицируется). Для обратной совместимости используется
+ROOT, если DESTDIR не установлена, однако это не одобряется.</p>
+<p>Запуск <tt class="docutils literal"><span class="pre">make</span> <span class="pre">install</span></tt> не скопирует Exim скрипт <em>convert4r4</em>. Вы должны
+запустить его лишь один раз, (если вы апгрейдите Exim 3), а второй не является
+частью Exim. Ни один из файлов документации в директории doc не будет
+скопирован, кроме информационных файлов которые вы установили в переменной
+INFO_DIRECTORY как описано в разделе <a class="reference internal" href="#ch04-16"><em>4.16</em></a>, ниже.</p>
+<p>Для утилит, старые версии переименовываются с добавлением суффикса <em>.O</em> к
+именам файлов. Бинарный файл Exim обрабатывается по-другому. Он инсталлируется
+с именем которое включает в себя номер версии и номер компиляции, например
+<em>exim-4.70-1</em>. Скрипт создает символическую ссылку <em>exim</em> на бинарный файл
+Exim. Если вы обновляете предыдущую версию, то скрипт заботится о том, что бы
+имя <em>exim</em> никогда не отсутствовало в директории (как видимое другими
+процессами).</p>
+<p>Если вы хотите увидеть, что происходит во время команды <tt class="docutils literal"><span class="pre">make</span> <span class="pre">install</span></tt>, без
+непосредственной инсталляции, вы можете добавить ключ <strong>-n</strong> в инсталляционный
+скрипт следующей командой:</p>
+<div class="highlight-python"><pre>make INSTALL_ARG=-n install</pre>
+</div>
+<p>Содержимое переменной INSTALL_ARG передается инсталляционному скрипту. Вам не
+потребуются права root, что бы запустить этот тест. Вы также можете запустить
+инсталляционный скрипт непосредственно из директории сборки”. Например в
+верхней директории Exim используйте следующую команду:</p>
+<div class="highlight-python"><pre>cd build-SunOS5-5.5.1-sparc; ../scripts/exim_install -n)</pre>
+</div>
+<p>Существуют два параметра которые распознаются инсталляционным скриптом:</p>
+<ul class="simple">
+<li><strong>-no_chown</strong> - пропускает вызов смены владельца инсталлированого бинарного
+файла на root и установку бита setuid.</li>
+<li><strong>-no_symlink</strong> - пропускает процедуру создания символической ссылки на
+бинарный файл <em>exim</em>.</li>
+</ul>
+<p>INSTALL_ARG может быть использована, для передачи этих параметров скрипту.
+Например:</p>
+<div class="highlight-python"><pre>make INSTALL_ARG=-no_symlink install</pre>
+</div>
+<p>Инсталляционному скрипту можно так же передать аргументы, определяющие какие
+файлы должны быть скопированы. Например, что бы инсталлировать только бинарный
+файл Exim, без символических ссылок, нужно использовать следующую команду:</p>
+<div class="highlight-python"><pre>make INSTALL_ARG='-no_symlink exim' install</pre>
+</div>
+</div>
+<div class="section" id="ch04-16">
+<span id="id8"></span><h2>Инсталляция документации<a class="headerlink" href="#ch04-16" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Не все системы используют GNU <em>info</em> для документации и по этой причине,
+исходники Texinfo документации не включены в главный дистрибутив. Они доступны
+отдельно на ftp сайте (смотрите раздел <a class="reference internal" href="ch01.html#ch01-06"><em>1.6</em></a>).</p>
+<p>Если вы определили INFO_DIRECTORY в файле <em>Local/Makefile</em> и исходники Texinfo
+документации найдены в дереве исходников, <tt class="docutils literal"><span class="pre">make</span> <span class="pre">install</span></tt> автоматически
+создаст info файлы и инсталлирует их.</p>
+</div>
+<div class="section" id="spool-directory">
+<span id="ch04-17"></span><h2>Определение буферного каталога (spool directory)<a class="headerlink" href="#spool-directory" title="Ссылка на этот заголовок">¶</a></h2>
+<p>При загрузке Exim пытается создать буферный каталог, если он отсутствует. gid и
+uid Exim&#8217;a применяются к буферному каталогу. Подкаталоги в буферном каталоге
+создаются автоматически, по мере необходимости.</p>
+</div>
+<div class="section" id="ch04-18">
+<span id="id9"></span><h2>Тестирование<a class="headerlink" href="#ch04-18" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Установив Exim вы можете проверить что конфигурационный файл синтаксически
+верен, запустив следующую команду, которая предполагает что путь к бинарному
+файлу Exim находится в PATH:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">exim</span> <span class="o">-</span><span class="n">bV</span>
+</pre></div>
+</div>
+<p>Если в файле конфигурации содержатся ошибки, Exim выведет ошибку. В противном
+случае, он выведет номер версии и дату сборки, какая DBM библиотека
+используется, информацию о драйверах и других программных модулях включённых в
+бинарный файл. Используются простые тесты с адресом в качестве параметра.
+Например:</p>
+<div class="highlight-python"><pre>exim -bt &lt;local username&gt;</pre>
+</div>
+<p>должен подтвердить что распознается локальный почтовый ящик, и:</p>
+<div class="highlight-python"><pre>exim -bt &lt;remote address&gt;</pre>
+</div>
+<p>при использовании удаленного. Теперь проверим доставку почты удаленно и
+локально. Это может быть сделано с помощью пропуска сообщения непосредственно
+через Exim, без прохождения через пользовательскую почтовую программу.
+Например:</p>
+<div class="highlight-python"><pre>exim -v postmaster@your.domain.example
+From: user@your.domain.example
+To: postmaster@your.domain.example
+Subject: Testing Exim
+
+This is a test message.
+^D</pre>
+</div>
+<p>Параметр <strong>-v</strong> заставляет Exim выводить дополнительную информацию о его
+работе. В этом случае, вы должны увидеть три строки отчета, одно о прибытии
+сообщения, одно о его доставке, и одно содержащее “Completed”.</p>
+<p>Если вы сталкиваетесь с проблемами, загляните в журналы сообщений (<em>mainlog</em> и
+<em>paniclog</em>) что бы проверить наличие какой-либо полезной информации в них.
+Другой источник информации, запуск Exim в отладочном режиме, с параметром
+<strong>-d</strong>. Если сообщение застряло в буфере Exim&#8217;а, вы можете осуществить
+принудительную доставку в отладочном режиме с помощью команды:</p>
+<div class="highlight-python"><pre>exim -d -M &lt;exim-message-id&gt;</pre>
+</div>
+<p>Для того что бы это сделать, вы должны быть root&#8217;ом или пользователем с
+администраторскими полномочиями. Параметр <strong>-d</strong> выводит очень много
+информации, но вы можете вырезать специальные области. Например, если вы
+используете <strong>-d-all+route</strong> то будет выдана только отладочная информация о
+маршрутизации письма. (Для дополнительных деталей о параметре <strong>-d</strong>, смотрите
+главу <a class="reference internal" href="ch05.html#ch05-00"><em>5</em></a>.)</p>
+<p>Одна проблема, которая обнаружилась на некоторых этапах, - невозможность
+локальной доставки в директорию с общим ящиком, потому как она не имеет
+установленный “sticky bit”. По умолчанию Exim пытается создать файл блокировки,
+до записи в файл-почтовый ящик и если он не может создать файл блокировки, то
+почта не доставляется. Это можно обойти путем присвоения директории “sticky
+bit” или создавая определенную группу для локальной доставки и разрешить этой
+группе доставку в эту директорию (смотрите выше про переменную
+<strong>local_delivery</strong> в конфигурационном файле). Другой подход к настройке
+Exim, не использовать файлы блокировки, а использовать вместо этого функцию
+<em>fcntl()</em>. Однако вы должны делать это только если уверены, что
+пользовательская почтовая программа так же используют <em>fcntl()</em>. Для более
+подробной информации об этих проблемах обратитесь к главе <a class="reference internal" href="ch26.html#ch26-00"><em>26</em></a>.</p>
+<p>Ещё одна вещь, которая не может быть протестирована в системе, в которой уже
+запущен MTA - это получение входящей SMTP почты на стандартном порту SMTP.
+Однако, параметр <strong>-oX</strong> может быть использован для запуска демона Exim,
+который слушает другой порт, или может использоваться <em>inetd</em>. Параметр <strong>-bh</strong>
+и утилита <em>exim_checkaccess</em> может быть использована для проверки политик на
+входящую SMTP почту.</p>
+<p>Проверка новой версии в системе, на которой уже установлен Exim может быть
+легко произведена сборкой бинарного файла с другим значением переменной
+CONFIGURE_FILE. Внутри конфигурационного файла, все файлы и директории с
+именами которые использует Exim могут быть изменены, дабы сохранить чистоту
+версии.</p>
+</div>
+<div class="section" id="mta-exim">
+<span id="ch04-19"></span><h2>Замещение другого MTA Exim&#8217;ом<a class="headerlink" href="#mta-exim" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Собранный и впервые установленный Exim очень часто не является MTA используемым
+по умолчанию. Путь к MTA, который вызывает пользовательский почтовый агент,
+может быть <em>/usr/sbin/sendmail</em> или <em>/usr/lib/sendmail</em> (в зависимости от
+системы) и необходимо указать использование Exim&#8217;а, что бы MUA могли передавать
+письма Exim&#8217;у. Обычно это делается с помощью переименования любого
+существующего файла <em>/usr/sbin/sendmail</em> или <em>/usr/lib/sendmail</em> и создания
+символической ссылки с тем же именем на бинарный файл <em>exim</em>. Хорошей идеей
+является удаление setuid и снятие флага исполнения со старого MTA. Необходимо
+остановить и перезапустить почтового демона, если он был загружен.</p>
+<p>Некоторые операционные системы предоставляют иные пути переключения на другие
+MTA. Например, если вы используете FreeBSD, вам нужно отредактировать файл
+<em>etc/mail/mailer.conf</em> вместо создания символической ссылки, как было только
+что описано. Содержание этого файла, для загрузки Exim:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">sendmail</span>            <span class="o">/</span><span class="n">usr</span><span class="o">/</span><span class="n">exim</span><span class="o">/</span><span class="nb">bin</span><span class="o">/</span><span class="n">exim</span>
+<span class="n">send</span><span class="o">-</span><span class="n">mail</span>           <span class="o">/</span><span class="n">usr</span><span class="o">/</span><span class="n">exim</span><span class="o">/</span><span class="nb">bin</span><span class="o">/</span><span class="n">exim</span>
+<span class="n">mailq</span>               <span class="o">/</span><span class="n">usr</span><span class="o">/</span><span class="n">exim</span><span class="o">/</span><span class="nb">bin</span><span class="o">/</span><span class="n">exim</span> <span class="o">-</span><span class="n">bp</span>
+<span class="n">newaliases</span>          <span class="o">/</span><span class="n">usr</span><span class="o">/</span><span class="nb">bin</span><span class="o">/</span><span class="n">true</span>
+</pre></div>
+</div>
+<p>Как только вы сделали символическую ссылку, или отредактировали
+<em>/etc/mail/mailer.conf</em> ваш инсталлированый Exim “ожил”. Проверьте это, получив
+письмо вашей любимой почтовой программой.</p>
+<p>Вы должны осознавать, что скажете пользователям по поводу смены MTA. Exim может
+иметь разную совместимость с тем, что ранее использовалось, и могут быть
+различия в сообщениях командной строки и в отторгнутых сообщениях. Если вы
+разрешаете Вашим пользователям использовать возможности фильтрования Exim&#8217;а,
+сделайте доступным для них документ с названием <em>Интерфейс Exim для
+фильтрования почты</em> (<em>Exim’s interface to mail filtering</em>).</p>
+</div>
+<div class="section" id="ch04-20">
+<span id="id10"></span><h2>Обновление Exim<a class="headerlink" href="#ch04-20" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Если у вас уже загружен Exim на вашем хосте, после инсталляции новая версия
+автоматически доступна для использования MUA или других программ которые
+вызывают MTA напрямую. Однако, если у вас загружен демон Exim, то вам нужно
+отправить ему HUP сигнал, для того, что бы он перезагрузил себя и загрузил
+новый бинарный файл. Вы не должны прекращать обработку почты для того что бы
+инсталлировать новую версию Exim. Скрипт установки не модифицирует существующий
+конфигурационный файл.</p>
+</div>
+<div class="section" id="exim-solaris">
+<span id="ch04-21"></span><h2>Остановка демона Exim на Solaris&#8217;е<a class="headerlink" href="#exim-solaris" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Стандартной командой остановки демона на Solaris&#8217;е является:</p>
+<div class="highlight-python"><pre>/etc/init.d/sendmail stop</pre>
+</div>
+<p>Если <em>/usr/lib/sendmail</em> является символической ссылкой, скрипт не сможет
+остановить Exim, потому, что он использует команду <tt class="docutils literal"><span class="pre">ps</span> <span class="pre">-e</span></tt> и <tt class="docutils literal"><span class="pre">grep</span></tt> для
+вывода текста <em>sendmail</em>, а ее не будет, потому что настоящее имя программы
+(<em>exim</em>) возвращается командой <tt class="docutils literal"><span class="pre">ps</span></tt> с этими параметрами. Решение состоит в
+том, что бы заменить эту строку на строку получающую идентификатор системного
+процесса, например:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">pid</span><span class="o">=</span><span class="sb">`cat /var/spool/exim/exim-daemon.pid`</span>
+</pre></div>
+</div>
+<p>который получим из файла в который Exim сохраняет его.</p>
+<p>Стоит отметить, что остановка демона, не означает остановки Exim. Сообщения все
+еще могут получаться от локальных процессов и если автоматическая доставка
+настроена (настройки по умолчанию), то доставка будет происходить.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Содержание</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Сборка и инсталляция Exim</a><ul>
+<li><a class="reference internal" href="#ch04-01">Распаковка</a></li>
+<li><a class="reference internal" href="#ch04-02">Разнообразие архитектур и операционных систем</a></li>
+<li><a class="reference internal" href="#pcre">PCRE библиотеки</a></li>
+<li><a class="reference internal" href="#dbm">DBM библиотеки</a></li>
+<li><a class="reference internal" href="#ch04-05">Настройка перед сборкой</a></li>
+<li><a class="reference internal" href="#iconv">Поддержка iconv()</a></li>
+<li><a class="reference internal" href="#tls-ssl">Включение TLS/SSL шифрования</a></li>
+<li><a class="reference internal" href="#tcpwrappers">Использование tcpwrappers</a></li>
+<li><a class="reference internal" href="#ipv6">Включение поддержки IPv6</a></li>
+<li><a class="reference internal" href="#ch04-10">Процесс сборки</a></li>
+<li><a class="reference internal" href="#make">Вывод команды make</a></li>
+<li><a class="reference internal" href="#ch04-12">Переопределение параметры при сборке Exim</a></li>
+<li><a class="reference internal" href="#os">Специфичные для OS заголовки</a></li>
+<li><a class="reference internal" href="#ch04-14">Переопределение параметры при сборке монитора</a></li>
+<li><a class="reference internal" href="#ch04-15">Установка бинарных файлов и скриптов Exim&#8217;а</a></li>
+<li><a class="reference internal" href="#ch04-16">Инсталляция документации</a></li>
+<li><a class="reference internal" href="#spool-directory">Определение буферного каталога (spool directory)</a></li>
+<li><a class="reference internal" href="#ch04-18">Тестирование</a></li>
+<li><a class="reference internal" href="#mta-exim">Замещение другого MTA Exim&#8217;ом</a></li>
+<li><a class="reference internal" href="#ch04-20">Обновление Exim</a></li>
+<li><a class="reference internal" href="#exim-solaris">Остановка демона Exim на Solaris&#8217;е</a></li>
+</ul>
+</li>
+</ul>
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="ch03.html" title="предыдущая глава">Как Exim получает и доставляет почту</a></li>
+      <li>Next: <a href="ch05.html" title="следующая глава">Командная строка Exim</a></li>
+  </ul></li>
+</ul>
+  <h3>На этой странице</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/ch04.txt"
+           rel="nofollow">Показать исходный текст</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Быстрый поиск</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Искать" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Введите слова для поиска или имя модуля, класса или функции.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy; Copyright 2011, Exim Maintainers.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a>.
+    </div>
+  </body>
+</html>

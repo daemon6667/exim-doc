@@ -1,0 +1,109 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Маршрутизатор accept &mdash; Specification of the Exim Mail Transfer Agent 4.70 documentation</title>
+    
+    <link rel="stylesheet" href="_static/flasky.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '4.70',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/translations.js"></script>
+    <link rel="top" title="Specification of the Exim Mail Transfer Agent 4.70 documentation" href="index.html" />
+    <link rel="next" title="Маршрутизатор dnslookup" href="ch17.html" />
+    <link rel="prev" title="Общие параметры для маршрутизаторов" href="ch15.html" />
+   
+  
+  <link media="only screen and (max-device-width: 480px)" href="_static/small_flask.css" type= "text/css" rel="stylesheet" />
+
+  </head>
+  <body>
+    <div class="related">
+      <h3>Просмотр</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="Словарь-указатель"
+             accesskey="I">словарь</a></li>
+        <li class="right" >
+          <a href="ch17.html" title="Маршрутизатор dnslookup"
+             accesskey="N">следующий</a> |</li>
+        <li class="right" >
+          <a href="ch15.html" title="Общие параметры для маршрутизаторов"
+             accesskey="P">предыдущий</a> |</li>
+        <li><a href="index.html">Specification of the Exim Mail Transfer Agent 4.70 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="accept">
+<span id="ch16-00"></span><h1>Маршрутизатор <strong>accept</strong><a class="headerlink" href="#accept" title="Ссылка на этот заголовок">¶</a></h1>
+<p>Маршрутизатор <strong>accept</strong> не имеет собственных специальных параметров. За исключением тех случаев, когда этот маршрутизатор используется при проверке (см. <strong>verify_only</strong>), должен быть определен транспорт при помощи общим параметром <strong>transport</strong>. Если выполняются предопределенные условия, определенные общими параметрами, то маршрутизатор принимает адрес и перенаправляет его в очередь данному транспорту. В основном этот маршрутизатор используется для доставки сообщений в локальные почтовые ящики. Пример:</p>
+<div class="highlight-python"><pre>localusers:
+    driver = accept
+    domains = mydomain.example
+    check_local_user
+    transport = local_delivery</pre>
+</div>
+<p>Условие <strong>domains</strong> в этом примере проверяет домен адреса, а <strong>check_local_user</strong> проверяет, что локальная часть адреса является логином пользователя на этой машине. В случае если оба предопределенных условия выполнены вызывается маршрутизатор <strong>accept</strong> и данный адрес направляется в очередь транспорту <strong>local_delivery</strong>.</p>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper"><h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="ch15.html" title="предыдущая глава">Общие параметры для маршрутизаторов</a></li>
+      <li>Next: <a href="ch17.html" title="следующая глава">Маршрутизатор <strong>dnslookup</strong></a></li>
+  </ul></li>
+</ul>
+  <h3>На этой странице</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/ch16.txt"
+           rel="nofollow">Показать исходный текст</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Быстрый поиск</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Искать" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Введите слова для поиска или имя модуля, класса или функции.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy; Copyright 2011, Exim Maintainers.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a>.
+    </div>
+  </body>
+</html>

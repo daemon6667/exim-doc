@@ -1,0 +1,290 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Аутентификатор plaintext &mdash; Specification of the Exim Mail Transfer Agent 4.70 documentation</title>
+    
+    <link rel="stylesheet" href="_static/flasky.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '4.70',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/translations.js"></script>
+    <link rel="top" title="Specification of the Exim Mail Transfer Agent 4.70 documentation" href="index.html" />
+    <link rel="next" title="Аутентификатор cram_md5" href="ch35.html" />
+    <link rel="prev" title="SMTP-аутентификация" href="ch33.html" />
+   
+  
+  <link media="only screen and (max-device-width: 480px)" href="_static/small_flask.css" type= "text/css" rel="stylesheet" />
+
+  </head>
+  <body>
+    <div class="related">
+      <h3>Просмотр</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="Словарь-указатель"
+             accesskey="I">словарь</a></li>
+        <li class="right" >
+          <a href="ch35.html" title="Аутентификатор cram_md5"
+             accesskey="N">следующий</a> |</li>
+        <li class="right" >
+          <a href="ch33.html" title="SMTP-аутентификация"
+             accesskey="P">предыдущий</a> |</li>
+        <li><a href="index.html">Specification of the Exim Mail Transfer Agent 4.70 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="plaintext">
+<span id="ch34-00"></span><h1>Аутентификатор <strong>plaintext</strong><a class="headerlink" href="#plaintext" title="Ссылка на этот заголовок">¶</a></h1>
+<p>Аутентификатор <strong>plaintext</strong> может быть сконфигурирован для поддержки аутентификационных механизмов PLAIN и LOGIN, оба которые передают аутентификационные данные в виде открытого (не зашифрованного) текста (хотя и кодированного base64). Использование открытого текста - риск для безопасности; настоятельно рекомендуем на использовании SMTP-шифрования (смотрите главу <a class="reference internal" href="ch39.html#ch39-00"><em>39</em></a>), если вы используете механизмы PLAIN и LOGIN. Если вы используете открытый текст, то вы не должны использовать для SMTP-подключений те же самые пароли, что и для учётных записей пользователей <a class="footnote-reference" href="#id6" id="id1">[1]</a>.</p>
+<div class="section" id="ch34-01">
+<span id="id2"></span><h2>Параметры <strong>plaintext</strong><a class="headerlink" href="#ch34-01" title="Ссылка на этот заголовок">¶</a></h2>
+<p>При настройке сервера, <strong>plaintext</strong> имеет следующие параметры:</p>
+<table border="1" class="docutils" id="index-0">
+<colgroup>
+<col width="30%" />
+<col width="29%" />
+<col width="20%" />
+<col width="21%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>server_condition</strong></td>
+<td>Use: authenticators</td>
+<td>Type: string†</td>
+<td>Default: unset</td>
+</tr>
+</tbody>
+</table>
+<p>Фактически, это глобальная аутентификационный параметр, но, она может быть установлена для настройки драйвера <strong>plaintext</strong> как сервера. Её использование описано ниже.</p>
+<table border="1" class="docutils" id="index-1">
+<colgroup>
+<col width="31%" />
+<col width="24%" />
+<col width="22%" />
+<col width="24%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>server_prompts</strong></td>
+<td>Use: plaintext</td>
+<td>Type: string†</td>
+<td>Default: unset</td>
+</tr>
+</tbody>
+</table>
+<p>Содержимое этого параметра, после раскрытия, должно быть списком строк подсказок, разделённых двоеточиями. Если раскрытие неудачно, даётся временное отклонение аутентификации.</p>
+</div>
+<div class="section" id="ch34-02">
+<span id="id3"></span><h2>Использование <strong>plaintext</strong> в сервере<a class="headerlink" href="#ch34-02" title="Ссылка на этот заголовок">¶</a></h2>
+<p>При работе в качестве сервера, <strong>plaintext</strong> выполняет тест аутентификации путём раскрытия строки. Данные посылаются клиентом с командой AUTH, или в ответе на последующие подсказки, закодированные по base64, таким образом, после декодирования они могут содержать любые символы. Если с командой предоставляются какие-то данные, они рассматриваются как список строк, разделённых NUL (бинарным нулём), первые три из которых помещаются в переменные раскрытия $auth1, $auth2 и $auth3 (ни LOGIN ни PLAIN не используют более чем три строки).</p>
+<p>Для совместимости с предыдущими версиями Exim`a, значения, также, помещаются в переменные раскрытия $1, $2 и $3. Однако, использование этих переменных с этой целью, сейчас, осуждается, поскольку оно может привести к беспорядку в раскрытиях строк, которые также их используют для других целей.</p>
+<p>Если в <strong>server_prompts</strong> находится больше строк, чем переданных с командой AUTH, остающиеся подсказки используются для получения дополнительных данных. Каждый ответ клиента может быть списком строк, разделённых NUL-символами.</p>
+<p>Как только получено достаточное число строк данных, раскрывается <strong>server_condition</strong>. Если раскрытие принудительно неудачно, аутентификация не пройдена. Любые другие ошибки аутентификации вызывают возврат временного кода ошибки. Если результат успешного раскрытия - пустая строка,  “0”, “no”, или “false”, - аутентификация неудачна. Если результат раскрытия - “1”, “yes”, или “true”, - аутентификация успешна, и раскрывается общий параметр <strong>server_set_id</strong>, и сохраняется в $authenticated_id. Для любого другого результата, возвращается временный код ошибки, с раскрытой строкой в качестве текста ошибки.</p>
+<div class="admonition warning">
+<p class="first admonition-title">Предупреждение</p>
+<p class="last">Если вы используете, для нахождения пароля пользователя, поиск в раскрытии - убедитесь, что сделали неудачу аутентификации, если пользователь неизвестен. В конце следующего раздела есть хорошие и плохие примеры.</p>
+</div>
+</div>
+<div class="section" id="plain">
+<span id="ch34-03"></span><h2>Аутентификационный механизм PLAIN<a class="headerlink" href="#plain" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Аутентификационный механизм PLAIN (<span class="target" id="index-2"></span><a class="rfc reference external" href="http://tools.ietf.org/html/rfc2595.html"><strong>RFC 2595</strong></a>), определяет, что три строки посылаются как один элемент данных (т.е. одна, комбинированная строка, содержащая два NUL-разделителя). Данные посылаются или как часть команды AUTH, или впоследствии, в ответе на пустую подсказку сервера.</p>
+<p>Вторая и третья строки - имя пользователя и соответствующий пароль. Используя одно фиксированное имя пользователя и пароль, как пример, это могло бы быть сконфигурировано следующим образом:</p>
+<div class="highlight-python"><pre>fixed_plain:
+  driver = plaintext
+  public_name = PLAIN
+  server_prompts = :
+  server_condition = \
+    ${if and {{eq{$auth2}{username}}{eq{$auth3}{mysecret}}}}
+  server_set_id = $auth2</pre>
+</div>
+<p>Отметьте, что по-умолчанию результирующая строка из “if” (“true” или пустая строка) в точности то что мы тут хотим, таким образом, она должна быть не задана. Очевидно, если пароль содержит символы зависимые от раскрытия, например - доллар, обратный слэш, или закрывающую скобку, они будут экранированы.</p>
+<p>Установка <strong>server_prompts</strong> задаёт единственную, пустую подсказку (пустые элементы в конце списка строки - игнорируются). Если все данные прибывают как часть команды AUTH, как обычно и бывает, - подсказка не используется. Об этом аутентификаторе извещается в ответе на EHLO</p>
+<div class="highlight-python"><pre>250-AUTH PLAIN</pre>
+</div>
+<p>и клиентский хост может аутентифицироваться путём посыла команды</p>
+<div class="highlight-python"><pre>AUTH PLAIN AHVzZXJuYW1lAG15c2VjcmV0</pre>
+</div>
+<p>Поскольку тут содержится три строки (больше чем число подсказок), от клиента не требуется больше данных. Альтернативно, клиент может лишь послать</p>
+<div class="highlight-python"><pre>AUTH PLAIN</pre>
+</div>
+<p>для начала аутентификации, в этом случае сервер отвечает пустой подсказкой. Клиент должен ответить комбинированной строкой данных.</p>
+<p>Строка данных - закодирована base64, как требуется по RFC. Этот пример, после расшифровки, - <em>&lt;NUL&gt;username&lt;NUL&gt;mysecret</em>, где <em>&lt;NUL&gt;</em> - нулевой байт. Она разделяется на три строки, первая из которых - пустая. Параметр <strong>server_condition</strong>, в проверках аутентификаторов, что вторые две - <em>username</em> и <em>mysecret</em> - соответствуют.</p>
+<p>Наличие лишь одного фиксированного имени пользователя и пароля, как в этом примере, - не очень реалистично, хотя, для маленькой организации, с горсткой аутентифицируемых клиентов, - это могло бы иметь смысл.</p>
+<p>Более сложный случай этого аутентификатора может использовать имя пользователя в $auth2, для поиска пароля в файле, или БД, и, возможно, делать шифрованное сравнение (смотрите <strong>crypteq</strong>, в главе <a class="reference internal" href="ch11.html#ch11-00"><em>11</em></a>). Вот - пример этого подхода, где пароли ищутся в DBM-файле.</p>
+<div class="admonition warning">
+<p class="first admonition-title">Предупреждение</p>
+<p class="last">Это - неправильный пример</p>
+</div>
+<div class="highlight-python"><pre>server_condition = \
+  ${if eq{$auth3}{${lookup{$auth2}dbm{/etc/authpwd}}}}</pre>
+</div>
+<p>Раскрытие использует имя пользователя ($auth2), как ключ для поиска пароля, который, затем, сравнивается с переданным паролем ($auth3). Почему этот пример неправилен? Он прекрасно работает для существующих пользователей, но рассмотрим, что происходит если даётся имя несуществующего пользователя. Поиск неудачен, но поскольку для поиска не даны строки удачи/неудачи, он приводит к пустой строке. Таким образом, чтобы обойти аутентификацию, все клиенты должны предоставлять несуществующее имя пользователя, и пустой пароль. Корректный способ написать эту проверку:</p>
+<div class="highlight-python"><pre>server_condition = ${lookup{$auth2}dbm{/etc/authpwd}\
+  {${if eq{$value}{$auth3}}} {false}}</pre>
+</div>
+<p>В этом случае, если поиск успешен, результат проверяется; если поиск неудачен, возвращается “false” и аутентификация неудачна. Если вместо <strong>eq</strong> используется <strong>crypteq</strong>, первый пример, фактически, безопасен, поскольку <strong>crypteq</strong> всегда неудачна, если второй аргумент пуст. Однако, второй способ написания проверки, делает логику более понятной.</p>
+</div>
+<div class="section" id="login">
+<span id="ch34-04"></span><h2>Аутентификационный механизм LOGIN<a class="headerlink" href="#login" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Аутентификационный механизм LOGIN не задокументирован в каком-либо RFC, но - он используется множеством программ. С командой AUTH никаких данных не посылается. Вместо этого, имя пользователя и пароль даются раздельно, в ответах на подсказки. Аутентификатор <strong>plaintext</strong> может быть сконфигурирован для поддержки этого, как в этом примере:</p>
+<div class="highlight-python"><pre>fixed_login:
+  public_name = LOGIN
+  server_prompts = User Name : Password
+  server_condition = \
+    ${if and {{eq{$auth1}{username}}{eq{$auth2}{mysecret}}}}
+  server_set_id = $auth1</pre>
+</div>
+<p>Поскольку работает <strong>plaintext</strong>, этот аутентификатор принимает данные предоставленные с командой AUTH (в нарушение спецификации LOGIN), но, если клиент не предоставляет их (как в случае LOGIN клиентов), строка подсказки используется для получения двух элементов данных.</p>
+<p>Некоторые клиенты очень следят за точным текстом подсказок. Например, Outlook Express, как сообщают, распознаёт только “Username:” и “Password:”. Вот - пример аутентификатора LOGIN, использующего эти строки. Они использует условие раскрытия <strong>ldapauth</strong>, для проверки имени пользователя и пароля, путём связи с LDAP-сервером:</p>
+<div class="highlight-python"><pre>login:
+  driver = plaintext
+  public_name = LOGIN
+  server_prompts = Username:: : Password::
+  server_condition = ${if and{{
+    !eq{}{$auth1} }{ \
+    ldapauth{user="cn=${quote_ldap_dn:$auth1},ou=people,o=example.org" \
+    pass=${quote:$auth2} \
+    ldap://ldap.example.org/} }} }
+  server_set_id = uid=$auth1,ou=people,o=example.org</pre>
+</div>
+<p>Мы делаем проверку что имя пользователя не пустое до его использования, поскольку LDAP не разрешает пустые компоненты DN. Также, мы должны использовать оператор <strong>quote_ldap_dn</strong> для корректного квотирования DN для аутентификации. Однако, базовый оператор <strong>quote</strong>, а не любой из операторов квотирования LDAP, явялется правильным при использовании для пароля, поскольку квотирование необходимо лишь для того, чтобы пароль соответствовал синтаксису Exim&#8217;a. На уровне LDAP, пароль - не интерпретируемая строка.</p>
+</div>
+<div class="section" id="ch34-05">
+<span id="id4"></span><h2>Поддержка для иных видов аутентификации<a class="headerlink" href="#ch34-05" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Множество особенностей раскрытия строк предоставлены как интерфейс к иным способам аутентификации пользователей. Они включают проверку традиционно зашифрованных паролей <em>/etc/passwd</em> (или эквивалент), PAM, Radius, <strong>ldapauth</strong>, <em>pwcheck</em>, and <em>saslauthd</em>. Для дополнительных деталей смотрите раздел <a class="reference internal" href="ch11.html#ch11-07"><em>11.7</em></a>.</p>
+</div>
+<div class="section" id="ch34-06">
+<span id="id5"></span><h2>Использование <strong>plaintext</strong> как клиента<a class="headerlink" href="#ch34-06" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Аутентификатор <strong>plaintext</strong> имеет два клиентских параметра:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="41%" />
+<col width="20%" />
+<col width="19%" />
+<col width="20%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td>client_ignore_invalid_base64</td>
+<td>Use: plaintext</td>
+<td>Type: boolean</td>
+<td>Default: false</td>
+</tr>
+</tbody>
+</table>
+<p>Если клиент получает подсказку сервера не являющуюся допустимой base64 строкой, оставляется аутентификация по-умолчанию. Однако, если этот параметр установлен в истину, ошибка в вызове игнорируется, и клиент посылает обычный ответ.</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="21%" />
+<col width="27%" />
+<col width="25%" />
+<col width="27%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td>client_send</td>
+<td>Use: plaintext</td>
+<td>Type: string†</td>
+<td>Default: unset</td>
+</tr>
+</tbody>
+</table>
+<p>Строка - список разделённых двоеточиями строк аутентификационных данных. Каждая строка независимо раскывается до отправки на сервер. Первая строка - посылается с командой AUTH; дополнительные строки посылаются на подсказки сервера. До раскрытия каждой строки, значение новой подсказки помещается в следующую переменную $auth&lt;n&gt;, начинающихся с $auth1, для первой подсказки. Этим способом сохраняется вплоть до трёх подсказок. Таким образом, подсказка полученная в ответ на отправленную первую строку (с командой AUTH), может быть использована в раскрытии второй строки, и так далее. Если получена недопустимая base64 строка при установленном параметре <strong>client_ignore_invalid_base64</strong>, в переменную $auth&lt;n&gt; помещается пустая строка.</p>
+<div class="admonition note">
+<p class="first admonition-title">Примечание</p>
+<p class="last">Вы не можете использовать раскрытия для создания нескольких строк, поскольку у разбиения приоритет выше и оно происходит раньше.</p>
+</div>
+<p>Поскольку аутентификационный механизм PLAIN требует байт NUL (бинарный ноль) в данных, к каждой строке до её отправки применяется дальнейшая обработка. Если в строке есть символы крышки (^), они конвертируются в NUL. Если в строке требуется крышка как данные, символ должен быть удвоен в строке.</p>
+<p>Это - пример клиентской конфигурации, которая воплощает аутентификационный механизм PLAIN с фиксированным именем пользователя и паролем:</p>
+<div class="highlight-python"><pre>fixed_plain:
+  driver = plaintext
+  public_name = PLAIN
+  client_send = ^username^mysecret</pre>
+</div>
+<p>Нехватка двоеточий означает, что весь текст посылается с командой AUTH, с символами крышки преобразованными в NUL. Подобный пример, использующий механизм LOGIN:</p>
+<div class="highlight-python"><pre>fixed_login:
+  driver = plaintext
+  public_name = LOGIN
+  client_send = : username : mysecret</pre>
+</div>
+<p>Начальное двоеточие означает, что первая строка пустая, таким образом, с командой AUTH никаких данных не посылается. Оставшиеся строки посылаются в ответ на подсказки.</p>
+<table class="docutils footnote" frame="void" id="id6" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id1">[1]</a></td><td>имеются ввиду системные учётки - чтоб не могли перехватить и залогинится - прим. lissyara</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Содержание</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Аутентификатор <strong>plaintext</strong></a><ul>
+<li><a class="reference internal" href="#ch34-01">Параметры <strong>plaintext</strong></a></li>
+<li><a class="reference internal" href="#ch34-02">Использование <strong>plaintext</strong> в сервере</a></li>
+<li><a class="reference internal" href="#plain">Аутентификационный механизм PLAIN</a></li>
+<li><a class="reference internal" href="#login">Аутентификационный механизм LOGIN</a></li>
+<li><a class="reference internal" href="#ch34-05">Поддержка для иных видов аутентификации</a></li>
+<li><a class="reference internal" href="#ch34-06">Использование <strong>plaintext</strong> как клиента</a></li>
+</ul>
+</li>
+</ul>
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="ch33.html" title="предыдущая глава">SMTP-аутентификация</a></li>
+      <li>Next: <a href="ch35.html" title="следующая глава">Аутентификатор <strong>cram_md5</strong></a></li>
+  </ul></li>
+</ul>
+  <h3>На этой странице</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/ch34.txt"
+           rel="nofollow">Показать исходный текст</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Быстрый поиск</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Искать" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Введите слова для поиска или имя модуля, класса или функции.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy; Copyright 2011, Exim Maintainers.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a>.
+    </div>
+  </body>
+</html>

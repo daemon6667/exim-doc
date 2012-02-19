@@ -1,0 +1,314 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Маршрутизатор dnslookup &mdash; Specification of the Exim Mail Transfer Agent 4.70 documentation</title>
+    
+    <link rel="stylesheet" href="_static/flasky.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '4.70',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/translations.js"></script>
+    <link rel="top" title="Specification of the Exim Mail Transfer Agent 4.70 documentation" href="index.html" />
+    <link rel="next" title="Маршрутизатор ipliteral" href="ch18.html" />
+    <link rel="prev" title="Маршрутизатор accept" href="ch16.html" />
+   
+  
+  <link media="only screen and (max-device-width: 480px)" href="_static/small_flask.css" type= "text/css" rel="stylesheet" />
+
+  </head>
+  <body>
+    <div class="related">
+      <h3>Просмотр</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="Словарь-указатель"
+             accesskey="I">словарь</a></li>
+        <li class="right" >
+          <a href="ch18.html" title="Маршрутизатор ipliteral"
+             accesskey="N">следующий</a> |</li>
+        <li class="right" >
+          <a href="ch16.html" title="Маршрутизатор accept"
+             accesskey="P">предыдущий</a> |</li>
+        <li><a href="index.html">Specification of the Exim Mail Transfer Agent 4.70 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="dnslookup">
+<span id="ch17-00"></span><h1>Маршрутизатор <strong>dnslookup</strong><a class="headerlink" href="#dnslookup" title="Ссылка на этот заголовок">¶</a></h1>
+<p>Маршрутизатор <strong>dnslookup</strong> при помощи запросов к DNS ищет узлы, обрабатывающие почту для данного домена. Если не установлен gfhfvtnh <strong>verify_only</strong>, то для этого маршрутизатора должен быть всегда определен транспорт.</p>
+<p>Если в конфигурации есть поддержка SRV (см. параметр <strong>check_srv</strong> ниже), Exim сначала ищет SRV-записи. Если они не найдены или поддержка SRV отсутствует, то ищутся MX-записи. Если MX-записей нет, ищутся А-записи. Однако, может быть установлен параметр <strong>mx_domains</strong> для отключения прямого использования адресных записей.</p>
+<p>MX-записи равного приоритета сортируются Exim в случайном порядке. Затем Exim ищет адресные записи имен узлов, полученных из MX- или SRV-записей. Если узел имеет более одного IP-адреса, они сортируются в случайном порядке, за исключением того, что IPv6-адреса всегда сортируются перед IPv4-адресами. Если все найденные IP-адреса отбрасываются общим параметром <strong>ignore_target_hosts</strong>, то маршрутизатор отклоняется.</p>
+<p>Все MX-записи, указывающие на локальный узел или на любое другое имя узла, определенное параметром <strong>hosts_treat_as_local</strong>, и не имеющие наивысший приоритет (меньшее из значений MX-записей), отбрасываются вместе с другими MX-записями равного или меньшего приоритета.</p>
+<p>Если узел, на который указывает MX-запись высшего приоритета или A-запись, является локальным, либо совпадает с указанным параметром <strong>hosts_treat_as_local</strong>, то дальнейшее поведение управляется общим параметром <strong>self</strong>.</p>
+<div class="section" id="dns">
+<span id="ch17-01"></span><h2>Проблемы с поиском в DNS<a class="headerlink" href="#dns" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Бывают проблемы с DNS-серверами при поиске записей SRV. Некоторые плохо настроенные (в оригинале - плохо поступающие) серверы возвращают ошибку DNS или не отвечают вообще (таймаут) при запросе несуществующих записей SRV. Подобные проблемы были зафиксированы и для MX-записей. Глобальный параметр <strong>dns_again_means_nonexist</strong> может помочь с этой проблемой, но грубо, поскольку это глобальный параметр.</p>
+<p>Поэтому, есть два параметра, <strong>srv_fail_domains</strong> и <strong>mx_fail_domains</strong> контролирующие происходящее при поиске в DNS в маршрутизаторе <strong>dnslookup</strong> приводит к ошибке DNS или ответу “try again” (попробуйте снова). Если попытка поиска SRV или MX записи приводит к одному из этих результатов, и домен соответствует уместному(?) списку, то Exim ведёт себя так, будто доменная система ответила - нет такой записи. В случае поиска SRV-записи это значит, что маршрутизатор продолжает искать MX-записи; в случае поиска MX продолжается поиск A или AAAA запись, если домен не совпадает с <strong>mx_domains</strong>, в случае ошибки маршрутизации.</p>
+</div>
+<div class="section" id="ch17-02">
+<span id="id1"></span><h2>Частные параметры для <strong>dnslookup</strong><a class="headerlink" href="#ch17-02" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Ниже приведен список специфичных параметров, которые могут быть использованы для изменения способа обработки поиска в DNS.</p>
+<table border="1" class="docutils" id="index-0">
+<colgroup>
+<col width="35%" />
+<col width="22%" />
+<col width="21%" />
+<col width="22%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>check_secondary_mx</strong></td>
+<td>Use: dnslookup</td>
+<td>Type: boolean</td>
+<td>Default: false</td>
+</tr>
+</tbody>
+</table>
+<p>Если установлен этот параметр, маршрутизатор отклоняется до тех пор пока локальный узел находится в списке узлов, полученном при запросе MX-записей. Она может быть использована для выявления доменов для которых локальный узел является вторичным почтовым сервером. Способ, которым Exim определяет является ли узел локальным узелом, описан в разделе <a class="reference internal" href="ch13.html#ch13-08"><em>13.8</em></a>.</p>
+<table border="1" class="docutils" id="index-1">
+<colgroup>
+<col width="24%" />
+<col width="26%" />
+<col width="24%" />
+<col width="26%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>check_srv</strong></td>
+<td>Use: dnslookup</td>
+<td>Type: string†</td>
+<td>Default: unset</td>
+</tr>
+</tbody>
+</table>
+<p>Маршрутизатор <strong>dnslookup</strong> поддерживает использование SRV-записей (см. <span class="target" id="index-2"></span><a class="rfc reference external" href="http://tools.ietf.org/html/rfc2782.html"><strong>RFC 2782</strong></a>) в дополнение к MX- и A-записям. Поддержка их по умолчанию отключена. Для включения поддержки SRV, нужно определить параметр <strong>check_srv</strong> именем нужной службы. К примеру,</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">check_srv</span> <span class="o">=</span> <span class="n">smtp</span>
+</pre></div>
+</div>
+<p>ищет SRV-записи, относящиеся к нормальной службе <strong>smtp</strong>. Параметр является вычисляемой, таким образом имя службы может меняться от сообщения к сообщению или от адреса к адресу. Это может быть полезно если SRV-записи используются для службы <strong>submission</strong>. Если вычисление значения завершается неудачно, параметр <strong>check_srv</strong> игнорируется и маршрутизатор начинает поиск MX-записей обычным способом.</p>
+<p>Если вычисление значения завершилось успешно, то маршрутизатор сначала ищет SRV-записи для данной службы (подразумевается TCP-протокол). Простая SRV-запись с именем узла “.” указывает на отсутствие такой службы для данного домена. В этом случае маршрутизатор отклоняется. Если находятся другие типы SRV-записей, то они используются для построения списка узлов для доставки в соответствии с правилами <span class="target" id="index-3"></span><a class="rfc reference external" href="http://tools.ietf.org/html/rfc2782.html"><strong>RFC 2782</strong></a>. Поиск MX-записей в этом случае не производится.</p>
+<p>Однако, если ни одной SRV-записи не найдено, то производится поиск MX-записей (и A-записей) традиционным способом. Другими словами SRV-записи имеют приоритет над MX-записями, так же как и MX-записи имеют приоритет над A-записями. Стоит заметить, что такое поведение не одобряется <span class="target" id="index-4"></span><a class="rfc reference external" href="http://tools.ietf.org/html/rfc2782.html"><strong>RFC 2782</strong></a>, хотя предыдущий черновик RFC его определял. Явно утверждается что MX-записей достаточно для нужд электронной почты и что SRV-записи не должны использоваться для этих целей. Однако, SRV-записи имеют дополнительное свойство “вес”, которое некоторые люди могут найти полезным, пытаясь распределить SMTP-нагрузку между узлами разной мощности.</p>
+<p>Смотрите раздел <a class="reference internal" href="#ch17-01"><em>17.1</em></a> для обсуждений поведения Exim`a при ошибках поиска в DNS.</p>
+<table border="1" class="docutils" id="index-5">
+<colgroup>
+<col width="23%" />
+<col width="23%" />
+<col width="30%" />
+<col width="23%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>mx_domains</strong></td>
+<td>Use: dnslookup</td>
+<td>Type: domain list†</td>
+<td>Default: unset</td>
+</tr>
+</tbody>
+</table>
+<p>Домен, попадающий в список <strong>mx_domains</strong> должен иметь либо MX-запись, либо SRV-запись для того чтобы быть распознанным надлежащим образом. (Имя этого параметра может быть усовершенствованно). К примеру, если все почтовые серверы в домене “fict.example” имеют MX-записи, за исключением узлов в “discworld.fict.example”, то вы можете использовать такую запись:</p>
+<div class="highlight-python"><pre>mx_domains = ! *.discworld.fict.example : *.fict.example</pre>
+</div>
+<p>Данная запись определяет что сообщения, адресованные домену, попадающему в этот список, но не имеющему MX-записи, должны быть немедленно отклонены вместо маршрутизации их с использованием A-записи.</p>
+<table border="1" class="docutils" id="index-6">
+<colgroup>
+<col width="29%" />
+<col width="22%" />
+<col width="28%" />
+<col width="22%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>mx_fail_domains</strong></td>
+<td>Use: dnslookup</td>
+<td>Type: domain list†</td>
+<td>Default: unset</td>
+</tr>
+</tbody>
+</table>
+<p>Если DNS-поиск MX-записи для одного из доменов в этом списке вернул ошибку DNS, Exim ведёт себя как будто MX записи вообще не найдены. Смотрите раздел <a class="reference internal" href="#ch17-01"><em>17.1</em></a> для получения подробной информации.</p>
+<table border="1" class="docutils" id="index-7">
+<colgroup>
+<col width="31%" />
+<col width="24%" />
+<col width="22%" />
+<col width="22%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>qualify_single</strong></td>
+<td>Use: dnslookup</td>
+<td>Type: boolean</td>
+<td>Default: true</td>
+</tr>
+</tbody>
+</table>
+<p>Когда данный параметр истинна, параметр RES_DEFNAMES механизма разрешения имен устанавливается для посылки DNS-запросов. Обычно, но не стандартно, это указывает механизму разрешения имен соотносить простые имена с доменом по умолчанию. К примеру, на машине “dictionary.ref.example” домен “thesaurus” будет изменен на “thesaurus.ref.example” внутри механизма разрешения имен. Для подробного описания того, что на самом деле выполняет ваш механизм разрешения имен, обратитесь к разделам справочного руководства <strong>resolver</strong> и <em>resolv.conf</em>.</p>
+<table border="1" class="docutils" id="index-8">
+<colgroup>
+<col width="32%" />
+<col width="24%" />
+<col width="22%" />
+<col width="22%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>rewrite_headers</strong></td>
+<td>Use: dnslookup</td>
+<td>Type: boolean</td>
+<td>Default: true</td>
+</tr>
+</tbody>
+</table>
+<p>Если имя домена в обрабатываемом адресе не является полным, оно может быть раскрыто до своей полной формы при помощи DNS-запроса. К примеру, если адрес определен как “<a class="reference external" href="mailto:dormouse&#37;&#52;&#48;teaparty">dormouse<span>&#64;</span>teaparty</a>”, то домен может быть расширен до teaparty.wonderland.fict.example”. Раскрытие домена также может быть результатом установки параметра <strong>widen_domains</strong>. Если <strong>rewrite_headers</strong> истинно то все экземпляры сокращенного доменного имени во всех “Bcc:”, “Cc:”, “From:”, “Reply-to:”, “Sender:”, и “To:” строках заголовка сообщения заменяются полным доменным именем.</p>
+<p>Этот параметр должен быть отключен только тогда, когда точно известно, что никакое сообщение не будет когда-либо отправлено за пределы того окружения, где сокращение имеет смысл.</p>
+<p>Если при поиске MX-записи в DNS происходит совпадение по шаблону, серверы имен обычно возвращают запись, содержащую найденное имя, тем самым делая невозможным определение присутствия шаблона. Однако, с недавних пор, некоторые серверы DNS возвращают запись шаблона. Если имя, возвращенное в результате DNS-запроса, начинается с “*”, оно не используется для переписывания заголовков.</p>
+<table border="1" class="docutils" id="index-9">
+<colgroup>
+<col width="41%" />
+<col width="20%" />
+<col width="19%" />
+<col width="20%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>same_domain_copy_routing</strong></td>
+<td>Use: dnslookup</td>
+<td>Type: boolean</td>
+<td>Default: false</td>
+</tr>
+</tbody>
+</table>
+<p>Адреса с одинаковым именем домена обычно маршрутизируются маршрутизатором <strong>dnslookup</strong> на один и тот же самый список узлов. Однако, данный факт не может быть доказан, так как параметры маршрутизатора и предусловия могут ссылаться на локальную часть адреса. По умолчанию, Exim маршрутизирует каждый адрес независимо друг от друга. DNS-серверы используют кэширование, таким образом повторные DNS-запросы не являются избыточными. В любом случае, личная почта в основном имеет немного получателей.</p>
+<p>Если вы обслуживаете списки расылки с большим количеством подписчиков в одном и том же домене, и используете маршрутизатора <strong>dnslookup</strong>, который независим от локальной части, вы можете включить параметр <strong>same_domain_copy_routing</strong> чтобы избегать повторяющихся DNS-запросов для идентичных доменов в одном письме. В этом случае, если <strong>dnslookup</strong> маршрутизирует адрес удаленному транспорту, все остальные адреса в сообщении с тем же самым именем домена получателя автоматически аналогично маршрутизируются без независимой обработки, обеспечивая следующие условия:</p>
+<ul class="simple">
+<li>Маршрутизатор не обрабатывает адреса, определенные параметрами <strong>headers_add</strong> или <strong>headers_remove</strong>.</li>
+<li>Маршрутизатор не изменяет адреса в любом случае, к примеру, способом <strong>widening</strong> домена.</li>
+</ul>
+<table border="1" class="docutils" id="index-10">
+<colgroup>
+<col width="31%" />
+<col width="24%" />
+<col width="22%" />
+<col width="24%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>search_parents</strong></td>
+<td>Use: dnslookup</td>
+<td>Type: boolean</td>
+<td>Default: false</td>
+</tr>
+</tbody>
+</table>
+<p>Когда этот параметр истинна, параметр RES_DNSRCH резолвера устанавливается для выполнения DNS-запросов, что отличается от параметра <strong>qualify_single</strong>, в которой это применимо к доменам, содержащем точки. Обычно, но не стандартно, это указывает механизму разрешения имен искать имя в текущем и родительском доменах. К примеру, если на машине в домене “fict.example” DNS-запрос “teaparty.wonderland” не разрешился, то резолвер попытается разрешить имя “teaparty.wonderland.fict.example”. Для подробного описания того, что на самом деле выполняет ваш механизм разрешения имен, обратитесь к разделам справочного руководства по <strong>resolver</strong> и <em>resolv.conf</em>.</p>
+<p>Установка этого параметра в значение “true” может вызвать проблемы в доменах, имеющих шаблонную MX-запись, потому что любой домен, не имеющий своей собственной MX-записи, совпадает с локальным шаблоном.</p>
+<table border="1" class="docutils" id="index-11">
+<colgroup>
+<col width="30%" />
+<col width="21%" />
+<col width="27%" />
+<col width="21%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>srv_fail_domains</strong></td>
+<td>Use: dnslookup</td>
+<td>Type: domain list†</td>
+<td>Default: unset</td>
+</tr>
+</tbody>
+</table>
+<p>Если DNS-поиск SRV-записи для одного из доменов в этом списке вернул ошибку DNS, Exim ведёт себя как будто SRV записи вообще не найдены. Смотрите разде <a class="reference internal" href="#ch17-01"><em>17.1</em></a> для получения подробной информации.</p>
+<table border="1" class="docutils" id="index-12">
+<colgroup>
+<col width="27%" />
+<col width="23%" />
+<col width="27%" />
+<col width="23%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>widen_domains</strong></td>
+<td>Use: dnslookup</td>
+<td>Type: string list</td>
+<td>Default: unset</td>
+</tr>
+</tbody>
+</table>
+<p>Если DNS-запрос завершился неудачно и этот параметр установлен, то каждая из этих строк по очереди добавляется в конец имени домена, и запрос выполняется снова. К примеру, если</p>
+<div class="highlight-python"><pre>widen_domains = fict.example:ref.example</pre>
+</div>
+<p>указана и запрос имени “klingon.dictionary” завершился неудачно, запрашивается “klingon.dictionary.fict.example”, а если и он не разрешился, то пробуется “klingon.dictionary.ref.example”. Заметьте, что параметры <strong>qualify_single</strong> и <strong>search_parents</strong>, описанные выше, могут дополнить доменное имя, чтобы быть принятыми сервисом DNS.</p>
+</div>
+<div class="section" id="qualify-single-search-parents">
+<span id="ch17-03"></span><h2>Эффект параметров <strong>qualify_single</strong> и <strong>search_parents</strong><a class="headerlink" href="#qualify-single-search-parents" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Когда домен получателя изменяется механизмом разрешения имен в результате применения параметров <strong>qualify_single</strong> или <strong>search_parents</strong>, Exim переписывает соответствующий адрес в строках заголовка письма, если параметр <strong>rewrite_headers</strong> не установлена в “false”. Затем Exim маршрутизирует адрес заново, используя полное доменное имя.</p>
+<p>Эти два параметра действуют только на DNS-запрос, который выполняется маршрутизатором для домена маршрутизируемого адреса. Они не действуют на запросы, выполняемые для записей такого рода:</p>
+<div class="highlight-python"><pre>domains = @mx_any</pre>
+</div>
+<p>что может случиться во время обработки предопределенных условий маршрутизатора перед входом в него. Для таких запросов расширение никогда не выполняется.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Содержание</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Маршрутизатор <strong>dnslookup</strong></a><ul>
+<li><a class="reference internal" href="#dns">Проблемы с поиском в DNS</a></li>
+<li><a class="reference internal" href="#ch17-02">Частные параметры для <strong>dnslookup</strong></a></li>
+<li><a class="reference internal" href="#qualify-single-search-parents">Эффект параметров <strong>qualify_single</strong> и <strong>search_parents</strong></a></li>
+</ul>
+</li>
+</ul>
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="ch16.html" title="предыдущая глава">Маршрутизатор <strong>accept</strong></a></li>
+      <li>Next: <a href="ch18.html" title="следующая глава">Маршрутизатор <strong>ipliteral</strong></a></li>
+  </ul></li>
+</ul>
+  <h3>На этой странице</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/ch17.txt"
+           rel="nofollow">Показать исходный текст</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Быстрый поиск</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Искать" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Введите слова для поиска или имя модуля, класса или функции.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy; Copyright 2011, Exim Maintainers.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a>.
+    </div>
+  </body>
+</html>

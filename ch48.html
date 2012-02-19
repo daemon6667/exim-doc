@@ -1,0 +1,120 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Использование Exim’a как клиента без очереди сообщений &mdash; Specification of the Exim Mail Transfer Agent 4.70 documentation</title>
+    
+    <link rel="stylesheet" href="_static/flasky.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '4.70',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/translations.js"></script>
+    <link rel="top" title="Specification of the Exim Mail Transfer Agent 4.70 documentation" href="index.html" />
+    <link rel="next" title="Файлы логов" href="ch49.html" />
+    <link rel="prev" title="Некоторые общие параметры конфигурации" href="ch47.html" />
+   
+  
+  <link media="only screen and (max-device-width: 480px)" href="_static/small_flask.css" type= "text/css" rel="stylesheet" />
+
+  </head>
+  <body>
+    <div class="related">
+      <h3>Просмотр</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="Словарь-указатель"
+             accesskey="I">словарь</a></li>
+        <li class="right" >
+          <a href="ch49.html" title="Файлы логов"
+             accesskey="N">следующий</a> |</li>
+        <li class="right" >
+          <a href="ch47.html" title="Некоторые общие параметры конфигурации"
+             accesskey="P">предыдущий</a> |</li>
+        <li><a href="index.html">Specification of the Exim Mail Transfer Agent 4.70 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="exim-a">
+<span id="ch48-00"></span><h1>Использование Exim&#8217;a как клиента без очереди сообщений<a class="headerlink" href="#exim-a" title="Ссылка на этот заголовок">¶</a></h1>
+<p>На персональном компьютере, обычным требованием является отсылка почты на “умный хост” (“smart host”). Существует множество MUA, которые могут быть сконфигурированы для работы таким образом, под все популярные операционные системы. Однако, некоторые MUA для UNIX-подобных систем, которые не могут сконфигурированы: они посылают сообщения используя интерфейс командной строки <em>/usr/sbin/sendmail</em>. Кроме того, таким способом сообщения посылают утилиты типа <em>cron</em>.</p>
+<p>Если персональный компьютер работает непрерывно, нет никаких проблем, поскольку он может работать как обычный MTA, обрабатывающий доставку на умный хост, и обрабатывая любые задержки через механизм очередей. Однако, если компьютер не работает постоянно, или в резное время управляется разными операционными системами, организация почтовых очередей - нежелательна.</p>
+<p>Поэтому, существуют требования для предоставления интерфейса <em>/usr/sbin/sendmail</em>, но доставки сообщений к умному хосту без средств организации очередей и повторов. Кроме того, доставка на умный хост должна быть синхронной, чтобы в случае её неудачи немедленно послать информацию MUA. Другими словами, нам необходимо что-то, что расширяет MUA, который передаёт на локальный MTA через командную строку, таким образом, чтобы оно вело себя подобно удалённому умному хосту, использующему TCP/SMTP.</p>
+<p>Есть множество приложений (например, одно называется <em>ssmtp</em>), которые проделывают эту работу. Однако, люди находят их в разной степени недостаточными. Например, вы могли бы желать завершения перенапрвления и подстановки синонима до отсылки сообщения на умный хост.</p>
+<p>Exim уже имеет необходимую инфраструктуру для выполнения этой работы. Чтобы заставить его вести себя как требуется, необходимо немного настройки, хотя, это - что то вроде забивания гвоздей микроскопом, - использовать полноценный MTA для этой цели.</p>
+<p>Есть глобальный булев параметр, называемая <strong>mua_wrapper</strong>, по умолчанию установленная в ложь. Установка <strong>mua_wrapper</strong> в истину вызывает работу Exim`a в специальном режиме, в котором он, как предполагается, используется для “обёртки” командной строки MUA в вышеописанной манере. При установке <strong>mua_wrapper</strong>, также необходимо предоставить совместимую конфигурацию маршрутизатора и транспорта. Чаще всего, бывает лишь один маршрутизатор, и один транспорт, отсылающий всё на умный хост.</p>
+<p>Когда Exim работает в режиме обёртки MUA, его поведение меняется следующим образом:</p>
+<ul class="simple">
+<li>Даемон не может быть запущен, также Exim не может принимать входящие сообщения от <em>inetd</em>. Другими словами, есть лишь один способ приёма сообщений - через командную строку.</li>
+<li>Каждое сообщение синхронно доставляется как только оно принято (предполагается <strong>-odi</strong>). Все параметры касающиеся организации очередей (<strong>queue_only</strong>, <strong>queue_smtp_domains</strong>, <strong>control</strong> в ACL, и т.п.) - тихо игнорируются. Принимающий процесс Exim`a не завершается, пока не завершится попытка доставки. Если доставка успешна, выдаётся нулевой код возврата.</li>
+<li>Переадресация адресов разрешена, но финальная маршрутизация для всех адресов должна приводить к одному и тому же удалённому транспорту, и к тому же самому списку хостов. Кроме того, адрес возврата (отправитель конверта) должен быть одним и тем же для всех получателей, как и любые добавленные или удалённые строки заголовков. Другими словами, должно быть возможным доставить сообщения в одной SMTP-транзакции, несмотря на множество получателей.</li>
+<li>Если эти условия не выполняются, или если маршрутизация любого адреса приводит к ошибке, или статусу отсрочки, или если Exim не в состоянии успешно доставить всех получателей на один из умных хостов, доставка всего сообщения - неудачна.</li>
+<li>Поскольку очереди не разрешены, все ошибки рассматриваются как постоянные; между кодами 5xx и 4xx выданными в SMTP ответе умного хоста, различий не делается. Более того, поскольку вызывающему можно дать лишь один ответ yes/no, невозможно доставить одних получателей и не доставить других. Если происходит ошибка (временная или постоянная) для любого получателя, все они - неудачны.</li>
+<li>Если перечислен более чем один умный хост, Exim будет пробовать обычным способом другой хост, после ошибки соединений или таймаута. Однако, если этот вид ошибки происходит для всех хостов, доставка неудачна.</li>
+<li>Когда доставка неудачна, сообщение о ошибке пишется в стандартный поток ошибок (так же как и в лог Exim`a), и Exim выходит, возвращая вызвавшему код возврата 1. Сообщение вычёркивается из файлов спула Exim`a. Рикошет не создается.</li>
+<li>Данные повторов не обслуживаются, и любые правила повторов игнорируются.</li>
+<li>Множество параметров Exim`a игнорируется: <strong>deliver_drop_privilege</strong> - принудительно успешна, <strong>max_rcpt</strong> в транспорте <strong>smtp</strong> - принудительно приводится к <strong>unlimited</strong>, <strong>remote_max_parallel</strong> - принудительно приводится к единице, и запасные хосты - игнорируются.</li>
+</ul>
+<p>Общий эффект - что Exim создаёт одну синхронную попытку доставки сообщения, приводя к неудаче при любом виде проблем. Поскольку локальные доставки не производятся, и даемон не может быть запущен, Exim не нуждается в root`овых привилегиях. По возможности, он должен работать как setuid <em>exim</em>, вместо setuid <em>root</em>. Смотрите раздел <a class="reference internal" href="ch52.html#ch52-03"><em>52.3</em></a>, для обсуждения преимуществ и неудобств запуска без root`овых привилегий.</p>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper"><h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="ch47.html" title="предыдущая глава">Некоторые общие параметры конфигурации</a></li>
+      <li>Next: <a href="ch49.html" title="следующая глава">Файлы логов</a></li>
+  </ul></li>
+</ul>
+  <h3>На этой странице</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/ch48.txt"
+           rel="nofollow">Показать исходный текст</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Быстрый поиск</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Искать" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Введите слова для поиска или имя модуля, класса или функции.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy; Copyright 2011, Exim Maintainers.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a>.
+    </div>
+  </body>
+</html>

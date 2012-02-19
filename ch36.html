@@ -1,0 +1,200 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Аутентификатор cyrus_sasl &mdash; Specification of the Exim Mail Transfer Agent 4.70 documentation</title>
+    
+    <link rel="stylesheet" href="_static/flasky.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '4.70',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/translations.js"></script>
+    <link rel="top" title="Specification of the Exim Mail Transfer Agent 4.70 documentation" href="index.html" />
+    <link rel="next" title="Аутентификатор dovecot" href="ch37.html" />
+    <link rel="prev" title="Аутентификатор cram_md5" href="ch35.html" />
+   
+  
+  <link media="only screen and (max-device-width: 480px)" href="_static/small_flask.css" type= "text/css" rel="stylesheet" />
+
+  </head>
+  <body>
+    <div class="related">
+      <h3>Просмотр</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="Словарь-указатель"
+             accesskey="I">словарь</a></li>
+        <li class="right" >
+          <a href="ch37.html" title="Аутентификатор dovecot"
+             accesskey="N">следующий</a> |</li>
+        <li class="right" >
+          <a href="ch35.html" title="Аутентификатор cram_md5"
+             accesskey="P">предыдущий</a> |</li>
+        <li><a href="index.html">Specification of the Exim Mail Transfer Agent 4.70 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="cyrus-sasl">
+<span id="ch36-00"></span><h1>Аутентификатор <strong>cyrus_sasl</strong><a class="headerlink" href="#cyrus-sasl" title="Ссылка на этот заголовок">¶</a></h1>
+<p>Код для этого аутентификатора был предоставлен Matthew Byng-Maddick of A L Digital Ltd (<a class="reference external" href="http://www.aldigital.co.uk">http://www.aldigital.co.uk</a>).</p>
+<p>Аутентификатор <strong>cyrus_sasl</strong> предоставляет серверную поддержку для реализации <span class="target" id="index-0"></span><a class="rfc reference external" href="http://tools.ietf.org/html/rfc2222.html"><strong>RFC 2222</strong></a> (“Simple Authentication and Security Layer”) библиотекой Cyrus SASL. Эта библиотека поддерживает множество аутентификационных механизмов, включая PLAIN и LOGIN, а также несколько других, которые Exim не поддерживает непосредственно. В частности, есть поддержка для аутентификации Kerberos.</p>
+<p>Аутентификатор <strong>cyrus_sasl</strong> предоставляет шлюзовой механизм напрямую к интерфейсу Cyrus, таким образом, ваша библиотека Cyrus может, например, CRAM-MD5, что может аутентификатор <strong>cyrus_sasl</strong>. По умолчанию, им используется публичное имя драйвера, для определения, какой механизм поддерживать.</p>
+<p>Когда требуется доступ к какому-то секретному файлу, например, в GSSAPI или CRAM-MD5, нужно отметить, что аутентификатор выполняется от пользователя Exim`a, и, что библиотека Cyrus SASL не может повысить привилегии по умолчанию. Также, вам может понадобиться установить переменные окружения, в зависимости от используемого драйвера.</p>
+<p>Имя приложения для Exim&#8217;a - “exim”, таким образом различные параметры SASL могут быть установлены в <em>exim.conf</em> в вашей директории SASL. Если для Kerberos вы используете GSSAPI, заметьте, что что из-за ограничений интерфейса GSSAPI изменение сервера <em>keytab</em> может потребовать немедленного сообщения на уровень Kerberos. Механизм для этого зависит от реализации Kerberos. Например, для Heimdal, переменная окружения KRB5_KTNAME может быть установлена в альтернативный файл <em>keytab</em>. Exim передаёт эту переменную через своё собственное окружение когда запускается от root или пользователя Exim&#8217;a. Пользователя Exim должен иметь право читать файл <em>keytab</em>.</p>
+<div class="section" id="ch36-01">
+<span id="id1"></span><h2>Использование <strong>cyrus_sasl</strong> в качестве сервера<a class="headerlink" href="#ch36-01" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Аутентификатор <strong>cyrus_sasl</strong> обладает четырьмя частными параметрами. Он помещает имя пользователя (из успешной аутентификации) в $auth1. Для совместимости с предыдущими версиями Exim`a, имя пользователя, также, помещается в переменную $1. Однако, использование этой переменной для данной цели, в настоящее время осуждается, поскольку может привести к беспорядку при раскрытиях строк, использующих цифровые переменные для других целей.</p>
+<table border="1" class="docutils" id="index-1">
+<colgroup>
+<col width="29%" />
+<col width="23%" />
+<col width="20%" />
+<col width="28%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>server_hostname</strong></td>
+<td>Use: cyrus_sasl</td>
+<td>Type: string†</td>
+<td>Default: see below</td>
+</tr>
+</tbody>
+</table>
+<p>Этот параметр выбирает имя хоста, используемое при связи с библиотекой. Значение по умолчанию -  $primary_hostname. Она выше нижележащего плагина SASL, который работает с этими данными.</p>
+<table border="1" class="docutils" id="index-2">
+<colgroup>
+<col width="25%" />
+<col width="25%" />
+<col width="20%" />
+<col width="30%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>server_mech</strong></td>
+<td>Use: cyrus_sasl</td>
+<td>Type: string</td>
+<td>Default: see below</td>
+</tr>
+</tbody>
+</table>
+<p>Этот параметр выбирает аутентификационный механизм который должен использовать этот драйвер. Значение по умолчанию - значение общего параметра <strong>public_name</strong>. Она позволяет вам использовать иной основной механизм для объявленного имени. Например:</p>
+<div class="highlight-python"><pre>sasl:
+  driver = cyrus_sasl
+  public_name = X-ANYTHING
+  server_mech = CRAM-MD5
+  server_set_id = $auth1</pre>
+</div>
+<table border="1" class="docutils" id="index-3">
+<colgroup>
+<col width="28%" />
+<col width="26%" />
+<col width="21%" />
+<col width="25%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>server_realm</strong></td>
+<td>Use: cyrus_sasl</td>
+<td>Type: string</td>
+<td>Default: unset</td>
+</tr>
+</tbody>
+</table>
+<p>Этот параметр определяет область SASL, в которой осуществляется сервер.</p>
+<table border="1" class="docutils" id="index-4">
+<colgroup>
+<col width="31%" />
+<col width="26%" />
+<col width="21%" />
+<col width="22%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>server_service</strong></td>
+<td>Use: cyrus_sasl</td>
+<td>Type: string</td>
+<td>Default: smtp</td>
+</tr>
+</tbody>
+</table>
+<p>Это - сервис SASL, в области которого осуществляется сервер.</p>
+<p>Для прямых случаев, вы не должны устанавливать какую-либо из частных параметров аутентификатора. Всё что вам необходимо сделать - задать соответствующий механизм как публичное имя. Таким образом, если у вас есть библиотека SASL, поддерживающая CRAM-MD5 и PLAIN, вы могли бы обладать двумя аутентификаторами, как показано далее:</p>
+<div class="highlight-python"><pre>sasl_cram_md5:
+  driver = cyrus_sasl
+  public_name = CRAM-MD5
+  server_set_id = $auth1
+
+sasl_plain:
+  driver = cyrus_sasl
+  public_name = PLAIN
+  server_set_id = $auth2</pre>
+</div>
+<p>Cyrus SASL действительно осуществляет аутентификационный метод LOGIN, несмотря на то, что это - нестандартный метод. По умолчанию, это отключено в исходных кодах, но присутствует во многих двоичных дистрибутивах.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Содержание</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Аутентификатор <strong>cyrus_sasl</strong></a><ul>
+<li><a class="reference internal" href="#ch36-01">Использование <strong>cyrus_sasl</strong> в качестве сервера</a></li>
+</ul>
+</li>
+</ul>
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="ch35.html" title="предыдущая глава">Аутентификатор <strong>cram_md5</strong></a></li>
+      <li>Next: <a href="ch37.html" title="следующая глава">Аутентификатор <strong>dovecot</strong></a></li>
+  </ul></li>
+</ul>
+  <h3>На этой странице</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/ch36.txt"
+           rel="nofollow">Показать исходный текст</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Быстрый поиск</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Искать" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Введите слова для поиска или имя модуля, класса или функции.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy; Copyright 2011, Exim Maintainers.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a>.
+    </div>
+  </body>
+</html>

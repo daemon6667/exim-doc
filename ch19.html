@@ -1,0 +1,241 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Маршрутизатор iplookup &mdash; Specification of the Exim Mail Transfer Agent 4.70 documentation</title>
+    
+    <link rel="stylesheet" href="_static/flasky.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '4.70',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/translations.js"></script>
+    <link rel="top" title="Specification of the Exim Mail Transfer Agent 4.70 documentation" href="index.html" />
+    <link rel="next" title="Маршрутизатор manualroute" href="ch20.html" />
+    <link rel="prev" title="Маршрутизатор ipliteral" href="ch18.html" />
+   
+  
+  <link media="only screen and (max-device-width: 480px)" href="_static/small_flask.css" type= "text/css" rel="stylesheet" />
+
+  </head>
+  <body>
+    <div class="related">
+      <h3>Просмотр</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="Словарь-указатель"
+             accesskey="I">словарь</a></li>
+        <li class="right" >
+          <a href="ch20.html" title="Маршрутизатор manualroute"
+             accesskey="N">следующий</a> |</li>
+        <li class="right" >
+          <a href="ch18.html" title="Маршрутизатор ipliteral"
+             accesskey="P">предыдущий</a> |</li>
+        <li><a href="index.html">Specification of the Exim Mail Transfer Agent 4.70 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="iplookup">
+<span id="ch19-00"></span><h1>Маршрутизатор <strong>iplookup</strong><a class="headerlink" href="#iplookup" title="Ссылка на этот заголовок">¶</a></h1>
+<p>Маршрутизатор <strong>iplookup</strong> был написан для выполнения специальных требований в университете Кэмбриджа. По этой причине, он не включен в бинарный файл Exim по умолчанию. Если вы хотите включить его, то вы должны указать</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">ROUTER_IPLOOKUP</span><span class="o">=</span><span class="n">yes</span>
+</pre></div>
+</div>
+<p>в конфигурационном файле <em>Local/Makefile</em>.</p>
+<p><strong>iplookup</strong> маршрутизирует адрес путем посылки его посредством TCP или UDP соединения одному или нескольким особым узлам. Затем узел может возвратить либо тот же самый, либо другой адрес - в действительности переписав адрес получателя в конверте сообщения. Затем новый адрес передается последующим маршрутизатором, или доставка может быть задержана. Так как <strong>iplookup</strong> - только маршрутизатор перезаписи, транспорт(транспортировка) не должен быть определен для этого.</p>
+<table border="1" class="docutils" id="index-0">
+<colgroup>
+<col width="19%" />
+<col width="27%" />
+<col width="25%" />
+<col width="29%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>hosts</strong></td>
+<td>Use: iplookup</td>
+<td>Type: string</td>
+<td>Default: unset</td>
+</tr>
+</tbody>
+</table>
+<p>Этот параметр должен быть установлен. Его значение - это список имен узлов, разделенный двоеточиями. Разрешение IP-адресов узлов осуществляется при помощи функций <em>gethostbyname()</em> (или <em>getipnodebyname()</em> если доступна). Затем адреса пробуются по очереди, до тех пор пока один из них не ответит на запрос. Если ни один узел не ответил, то дальнейшие действия управляются параметром <strong>optional</strong>.</p>
+<table border="1" class="docutils" id="index-1">
+<colgroup>
+<col width="23%" />
+<col width="25%" />
+<col width="25%" />
+<col width="27%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>optional</strong></td>
+<td>Use: iplookup</td>
+<td>Type: boolean</td>
+<td>Default: false</td>
+</tr>
+</tbody>
+</table>
+<p>Если <strong>optional</strong> истинна (true), и если ни от одного узла не поступил ответ, то адрес передается следующему маршрутизатору, перекрывая параметр <strong>no_more</strong>. Если <strong>optional</strong> ложна (false), то доставка на этот адрес откладывается.</p>
+<table border="1" class="docutils" id="index-2">
+<colgroup>
+<col width="18%" />
+<col width="30%" />
+<col width="30%" />
+<col width="23%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>port</strong></td>
+<td>Use: iplookup</td>
+<td>Type: integer</td>
+<td>Default: 0</td>
+</tr>
+</tbody>
+</table>
+<p>Этот параметр должен быть установлен. Он определяет номер TCP- или UDP-порта назначения.</p>
+<table border="1" class="docutils" id="index-3">
+<colgroup>
+<col width="24%" />
+<col width="27%" />
+<col width="24%" />
+<col width="24%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>protocol</strong></td>
+<td>Use: iplookup</td>
+<td>Type: string</td>
+<td>Default: udp</td>
+</tr>
+</tbody>
+</table>
+<p>Этот параметр может быть установлен либо в udp, либо в tcp для определения какой из этих двух протоколов использовать.</p>
+<table border="1" class="docutils" id="index-4">
+<colgroup>
+<col width="17%" />
+<col width="25%" />
+<col width="25%" />
+<col width="34%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>query</strong></td>
+<td>Use: iplookup</td>
+<td>Type: string†</td>
+<td>Default: see below</td>
+</tr>
+</tbody>
+</table>
+<p>Параметр определяет содержание запроса, посылаемого на удаленные узлы. Значение по умолчанию:</p>
+<div class="highlight-python"><pre>$local_part@$domain $local_part@$domain</pre>
+</div>
+<p>Повтор служит как способ проверки, что ответ на корректный запрос приходит в регистре по умолчанию (см. параметр <strong>response_pattern</strong> ниже).</p>
+<table border="1" class="docutils" id="index-5">
+<colgroup>
+<col width="22%" />
+<col width="25%" />
+<col width="25%" />
+<col width="27%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>reroute</strong></td>
+<td>Use: iplookup</td>
+<td>Type: string†</td>
+<td>Default: unset</td>
+</tr>
+</tbody>
+</table>
+<p>Если этот параметр не определен, то адрес измененного маршрута (rerouted address) есть строка байтов, возвращенная удаленным узлом до первого пробела. Она может включать в себя фрагменты, полученные в ответ на параметр <strong>response_pattern</strong>, ссылаясь на них посредством числовых переменных, таких как “$1”, “$2” и т.д. Переменная “$0” ссылается на целую входную строку, независимо от использования шаблона. Во всех случаях, адрес измененного маршрута должен оканчиваться в виде “<a class="reference external" href="mailto:local_part&#37;&#52;&#48;domain">local_part<span>&#64;</span>domain</a>”.</p>
+<table border="1" class="docutils" id="index-6">
+<colgroup>
+<col width="34%" />
+<col width="22%" />
+<col width="20%" />
+<col width="24%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>response_pattern</strong></td>
+<td>Use: iplookup</td>
+<td>Type: string</td>
+<td>Default: unset</td>
+</tr>
+</tbody>
+</table>
+<p>Этот параметр может быть определена как регулярное выражение, которое применяется к строке, возвращаемой удаленным узлом. Если шаблон не совпадает с ответом, маршрутизатор отклоняется. Если параметр <strong>response_pattern</strong> не определен, то проверки ответа не происходит, пока запрос не выполнен, в этом случае проверяется что текст, возвращенный после первого пробела, является исходным адресом. Этим проверяется, что полученный ответ является откликом на корректный вопрос. К примеру, если ответ это просто новый домен, то может быть использована следующая конструкция:</p>
+<div class="highlight-python"><pre>response_pattern = ^([^@]+)$
+reroute = $local_part@$1</pre>
+</div>
+<table border="1" class="docutils" id="index-7">
+<colgroup>
+<col width="24%" />
+<col width="29%" />
+<col width="22%" />
+<col width="24%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>timeout</strong></td>
+<td>Use: iplookup</td>
+<td>Type: time</td>
+<td>Default: 5s</td>
+</tr>
+</tbody>
+</table>
+<p>Этот определяет время ожидания ответа удаленного узла. Таймаут с этим же значением используется функцией <em>connect()</em> в случае TCP-соединения. Параметр к протоколу UDP неприменим.</p>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper"><h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="ch18.html" title="предыдущая глава">Маршрутизатор <strong>ipliteral</strong></a></li>
+      <li>Next: <a href="ch20.html" title="следующая глава">Маршрутизатор <strong>manualroute</strong></a></li>
+  </ul></li>
+</ul>
+  <h3>На этой странице</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/ch19.txt"
+           rel="nofollow">Показать исходный текст</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Быстрый поиск</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Искать" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Введите слова для поиска или имя модуля, класса или функции.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy; Copyright 2011, Exim Maintainers.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a>.
+    </div>
+  </body>
+</html>

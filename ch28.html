@@ -1,0 +1,209 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Транспорт lmtp &mdash; Specification of the Exim Mail Transfer Agent 4.70 documentation</title>
+    
+    <link rel="stylesheet" href="_static/flasky.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '4.70',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/translations.js"></script>
+    <link rel="top" title="Specification of the Exim Mail Transfer Agent 4.70 documentation" href="index.html" />
+    <link rel="next" title="Транспорт pipe" href="ch29.html" />
+    <link rel="prev" title="Транспорт autoreply" href="ch27.html" />
+   
+  
+  <link media="only screen and (max-device-width: 480px)" href="_static/small_flask.css" type= "text/css" rel="stylesheet" />
+
+  </head>
+  <body>
+    <div class="related">
+      <h3>Просмотр</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="Словарь-указатель"
+             accesskey="I">словарь</a></li>
+        <li class="right" >
+          <a href="ch29.html" title="Транспорт pipe"
+             accesskey="N">следующий</a> |</li>
+        <li class="right" >
+          <a href="ch27.html" title="Транспорт autoreply"
+             accesskey="P">предыдущий</a> |</li>
+        <li><a href="index.html">Specification of the Exim Mail Transfer Agent 4.70 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="lmtp">
+<span id="ch28-00"></span><h1>Транспорт <strong>lmtp</strong><a class="headerlink" href="#lmtp" title="Ссылка на этот заголовок">¶</a></h1>
+<p>Транспорт <strong>lmtp</strong> выполняет протокол LMTP (<span class="target" id="index-0"></span><a class="rfc reference external" href="http://tools.ietf.org/html/rfc2033.html"><strong>RFC 2033</strong></a>) через трубу (pipe) к указанной команде, или взаимодействуя с сокетом UNIX. Этот транспорт - нечто среднее между транспортами <strong>pipe</strong> и <strong>smtp</strong>. Также Exim поддерживает LMTP через TCP/IP, эта функция реализована в виде параметра транспорта <strong>smtp</strong>. Поскольку, ожидается, что LMTP будет не очень интересен, в скрипте <em>configure</em> по умолчанию, в <em>src/EDITME</em> он за комментирован. Вы должны гарантировать, что</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">TRANSPORT_LMTP</span><span class="o">=</span><span class="n">yes</span>
+</pre></div>
+</div>
+<p>присутствует в вашем <em>Local/Makefile</em>, для включения транспорта <strong>lmtp</strong> в исполняемом файле Exim`a. Частные параметра транспорта <strong>lmtp</strong> таковы:</p>
+<table border="1" class="docutils" id="index-1">
+<colgroup>
+<col width="25%" />
+<col width="19%" />
+<col width="27%" />
+<col width="29%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>batch_id</strong></td>
+<td>Use: lmtp</td>
+<td>Type: string†</td>
+<td>Default: unset</td>
+</tr>
+</tbody>
+</table>
+<p>Смотрите описание пакетной локальной доставки в главе <a class="reference internal" href="ch25.html#ch25-00"><em>25</em></a>.</p>
+<table border="1" class="docutils" id="index-2">
+<colgroup>
+<col width="29%" />
+<col width="20%" />
+<col width="29%" />
+<col width="22%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>batch_max</strong></td>
+<td>Use: lmtp</td>
+<td>Type: integer</td>
+<td>Default: 1</td>
+</tr>
+</tbody>
+</table>
+<p>Этот параметр ограничивает число адресов, которые могут быть обработаны в одной доставке. Большинство серверов LMTP могут обрабатывать сразу несколько адресов, таким образом, обычно, увеличение этого числа - хорошая идея. Смотрите описание пакетной локальной доставки в главе <a class="reference internal" href="ch25.html#ch25-00"><em>25</em></a>.</p>
+<table border="1" class="docutils" id="index-3">
+<colgroup>
+<col width="23%" />
+<col width="19%" />
+<col width="28%" />
+<col width="30%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>command</strong></td>
+<td>Use: lmtp</td>
+<td>Type: string†</td>
+<td>Default: unset</td>
+</tr>
+</tbody>
+</table>
+<p>Этот параметр должен быть задан, если не задан параметр <strong>socket</strong>. Строка - команда, которая запускается в отдельном процессе. Она разделяется на имя команды и список аргументов, каждый из которых отдельно раскрывается (таким образом, раскрытие не может изменить число аргументов). Команда выполняется напрямую, не через shell. Сообщение передаётся новому процессу, используя стандартный ввод и вывод для управления протоколом LMTP.</p>
+<table border="1" class="docutils" id="index-4">
+<colgroup>
+<col width="31%" />
+<col width="17%" />
+<col width="25%" />
+<col width="27%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>ignore_quota</strong></td>
+<td>Use: lmtp</td>
+<td>Type: boolean</td>
+<td>Default: false</td>
+</tr>
+</tbody>
+</table>
+<p>Если этот параметр установлен в истину, в команды RCPT добавляется строка <tt class="docutils literal"><span class="pre">IGNOREQUOTA</span></tt>, при условии что сервер LMTP информировал о поддержке <tt class="docutils literal"><span class="pre">IGNOREQUOTA</span></tt> в его ответе на команду LHLO.</p>
+<table border="1" class="docutils" id="index-5">
+<colgroup>
+<col width="22%" />
+<col width="20%" />
+<col width="28%" />
+<col width="30%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>socket</strong></td>
+<td>Use: lmtp</td>
+<td>Type: string†</td>
+<td>Default: unset</td>
+</tr>
+</tbody>
+</table>
+<p>Этот параметр должен быть задан, если не задан параметр <strong>command</strong>. Результат раскрытия должен быть именем UNIX-сокета. Транспорт соединяется с сокетом и доставляет в него сообщение, используя протокол LMTP.</p>
+<table border="1" class="docutils" id="index-6">
+<colgroup>
+<col width="27%" />
+<col width="22%" />
+<col width="24%" />
+<col width="27%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>timeout</strong></td>
+<td>Use: lmtp</td>
+<td>Type: time</td>
+<td>Default: 5m</td>
+</tr>
+</tbody>
+</table>
+<p>Транспорт прекращает свою работу, если созданный процесс или Unix сокет не отвечает на команды LMTP, или происходит этот таймаут при передаче сообщения. Доставка задерживается, и будет попробована позднее. Это - пример типичного транспорта LMTP:</p>
+<div class="highlight-python"><pre>lmtp:
+  driver = lmtp
+  command = /some/local/lmtp/delivery/program
+  batch_max = 20
+  user = exim</pre>
+</div>
+<p>Он доставляет до 20 адресов одновременно, если необходимо, в смешанные домены, работая как пользователь <em>exim</em>.</p>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper"><h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="ch27.html" title="предыдущая глава">Транспорт <strong>autoreply</strong></a></li>
+      <li>Next: <a href="ch29.html" title="следующая глава">Транспорт <strong>pipe</strong></a></li>
+  </ul></li>
+</ul>
+  <h3>На этой странице</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/ch28.txt"
+           rel="nofollow">Показать исходный текст</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Быстрый поиск</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Искать" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Введите слова для поиска или имя модуля, класса или функции.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy; Copyright 2011, Exim Maintainers.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a>.
+    </div>
+  </body>
+</html>

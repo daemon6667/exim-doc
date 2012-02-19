@@ -1,0 +1,787 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Транспорт pipe &mdash; Specification of the Exim Mail Transfer Agent 4.70 documentation</title>
+    
+    <link rel="stylesheet" href="_static/flasky.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '4.70',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/translations.js"></script>
+    <link rel="top" title="Specification of the Exim Mail Transfer Agent 4.70 documentation" href="index.html" />
+    <link rel="next" title="Транспорт smtp" href="ch30.html" />
+    <link rel="prev" title="Транспорт lmtp" href="ch28.html" />
+   
+  
+  <link media="only screen and (max-device-width: 480px)" href="_static/small_flask.css" type= "text/css" rel="stylesheet" />
+
+  </head>
+  <body>
+    <div class="related">
+      <h3>Просмотр</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="Словарь-указатель"
+             accesskey="I">словарь</a></li>
+        <li class="right" >
+          <a href="ch30.html" title="Транспорт smtp"
+             accesskey="N">следующий</a> |</li>
+        <li class="right" >
+          <a href="ch28.html" title="Транспорт lmtp"
+             accesskey="P">предыдущий</a> |</li>
+        <li><a href="index.html">Specification of the Exim Mail Transfer Agent 4.70 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="pipe">
+<span id="ch29-00"></span><h1>Транспорт <strong>pipe</strong><a class="headerlink" href="#pipe" title="Ссылка на этот заголовок">¶</a></h1>
+<p>Транспорт <strong>pipe</strong> использует доставку через трубу (pipe) к команде, выполняющейся в ином процессе. Один пример - использование <strong>pipe</strong> как псевдоудалённого транспорта для передачи сообщений какому-то иному механизму доставки (типа UUCP). Другой - использование отдельными пользователями для автоматической обработки их входящих сообщений. Транспорт <strong>pipe</strong> может использоваться одним из следующих способов:</p>
+<ul class="simple">
+<li>Маршрутизатор направляет один адрес на транспорт обычным способом, транспорт сконфигурен как транспорт <strong>pipe</strong>. В этом случае, $local_part содержит локальную часть адреса (как обычно), и запускаемая команда задана в транспорте, параметром <strong>command</strong>.</li>
+<li>Если параметр <strong>batch_max</strong> установлена более чем в 1 (значение по умолчанию - 1), транспорт может обработать более одного адреса за один запуск. В этом случае, когда к транспорту маршрутизируется более одного адреса, $local_part не установлена (поскольку она не уникальна). Однако, псевдопеременная $pipe_addresses (описанная в разделе <a class="reference internal" href="#ch29-03"><em>29.3</em></a>) содержит все адреса которые маршрутизируются к транспорту.</li>
+<li>Маршрутизатор переадресует адрес напрямую к команде pipe (например, из файла синонимов и перенаправлений). В этом случае, $address_pipe содержит текст команды pipe, и параметр <strong>command</strong> в маршрутизаторе - игнорируется. Если транспортируется лишь один адрес (<strong>batch_max</strong> более одного, или лишь один адрес был передресован к команде трубы), $local_part содержит переадресованную локальную часть.</li>
+</ul>
+<p>Транспорт <strong>pipe</strong> - неинтерактивный метод доставки. Также, Exim может доставлять сообщения через трубы, используя интерактивный протокол LMTP. Это осуществляется транспортом <strong>lmtp</strong>.</p>
+<p>В случае, когда <strong>pipe</strong> работает как следствие совпадения в локальном пользовательском файле <em>.forward</em>, команда запускается под uid и gid этого пользователя. В других случаях, uid и gid должны быть заданы явно, или в транспорте, или в маршрутизаторе обрабатывающем адрес. Текущая и “домашняя” директории также управляемы. Для получения дополнительных деталей о окружении детальной доставки, смотрите главу <a class="reference internal" href="ch23.html#ch23-00"><em>23</em></a> и главу <a class="reference internal" href="ch25.html#ch25-00"><em>25</em></a> для обсуждения пакетной локальной доставки.</p>
+<div class="section" id="ch29-01">
+<span id="id1"></span><h2>Конкурирующие доставки<a class="headerlink" href="#ch29-01" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Если два сообщения приходят почти одновременно, и оба маршрутизируются на доставку pipe, два транспорта <strong>pipe</strong> могут быть запущены одновременно. Вы должны гарантировать, что любые команды pipe, установленные вами, являются корректными для этого случая. Если команда пишет в файл, может быть полезна утилита <em>exim_lock</em>.</p>
+</div>
+<div class="section" id="ch29-02">
+<span id="id2"></span><h2>Возвращаемый статус и данные<a class="headerlink" href="#ch29-02" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Если команда выходит со статусом отличным от нуля, доставка считается неудачной, если не установлен параметр <strong>ignore_status</strong> (в этом случае код возврата обрабатывается как ноль), или возвращаемый код - один из перечисленных в параметре <strong>temp_errors</strong>, которые интерпретируются со смыслом “попробуйте позднее” (“try again later”). В этом случае, доставка задерживается. Детали постоянной ошибки записываются в лог, но не включаются в рикошет, который просто содержит “local delivery failed”.</p>
+<p>Если код возврата более чем 128, и выполняемая команда - shell-скрипт, это, обычно, означает, что скрипт был уничтожен сигналом, чьё значение равно - код возврата минус 128.</p>
+<p>Если Exim не может запустить команду (т.е. - если <em>execve()</em> неудачна), код возврата устанавливается равным 127. Это - значение, возвращаемое shell`ом, если запрашивают о запуске невыполняемой команды. Формулировка для логов наводит на мысль, что проблемой может быть несуществующая команда.</p>
+<p>Параметр <strong>return_output</strong> может затрагивать результат доставки. Если он установлен, предполагается, что любой вывод от команды в стандартный поток вывода или ошибок является признаком ошибки команды, даже если она вернула нулевой код возврата, или установлен параметре <strong>ignore_status</strong>. Вывод команды включается как часть сообщения рикошета. Параметр <strong>return_fail_output</strong> подобна вышеописанной, за исключением что вывод возвращается лишь когда команда выходит с ошибочным кодом возврата, т.е. значениями кроме нуля или совпадающим с <strong>temp_errors</strong>.</p>
+</div>
+<div class="section" id="ch29-03">
+<span id="id3"></span><h2>Как выполняется команда<a class="headerlink" href="#ch29-03" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Командная строка (по умолчанию) разбирается в имя команды и аргументы непосредственно транспортом <strong>pipe</strong>. Параметры <strong>allow_commands</strong> и <strong>restrict_to_path</strong> могут использоваться для ограничения команд, которые могут быть запущены.</p>
+<p>Элементы не помещённые в кавычки разделяются пробелами. Если аргумент помещён в двойные кавычки, обратный слэш интерпретируется как обычно, - как специальный символ. Если аргумент фигурирует в одинарных кавычках, интерпретации специальных символов не производится <a class="footnote-reference" href="#id11" id="id4">[1]</a>.</p>
+<p>К командной строке применяется раскрытие строки, кроме случаев когда она приходит из традиционного файла <em>.forward</em> (команды из файла фильтра раскрываются). Раскрытие применяется по очереди, к каждому аргументу, а не ко всей строке. Поэтому, любой любой элемент раскрытия, содержащий пробелы, должен быть помещён в кавычки таким образом, чтобы он был внутри одного аргумента. Установка типа</p>
+<div class="highlight-python"><pre>command = /some/path ${if eq{$local_part}{postmaster}{xx}{yy}}</pre>
+</div>
+<p>работать не будет, поскольку элемент раскрытия разбивается на несколько аргументов. Вы должны написать</p>
+<div class="highlight-python"><pre>command = /some/path "${if eq{$local_part}{postmaster}{xx}{yy}}"</pre>
+</div>
+<p>чтобы гарантировать, что всё это будет в одном аргументе. Раскрытие производится этим способом, аргумент за аргументом, таким образом, число аргументов не может быть изменено в результате раскрытия, и кавычки или обратные слэши во вставленных параметрах не взаимодействуют с внешними кавычками. Однако, это приводит к проблемам - если вы хотите создавать много параметров (или имя команды, плюс аргументы) из одного раскрытия. В этой ситуации, самое простое решение - использовать shell. Например:</p>
+<div class="highlight-python"><pre>command = /bin/sh -c ${lookup{$local_part}lsearch{/some/file}}</pre>
+</div>
+<p>Имеет место специальная обработка, когда аргумент состоит в точности из текста $pipe_addresses. Это - не общая переменая раскрытия; единственное место, где распознаётся эта строка - когда она появляется как параметр для трубы, или команды транспортного фильтра. Она вызывает каждый обрабатываемый адрес для вставки в список аргументов, в этой точке, как отдельный параметр. Это позволяет избежать любых проблем с пробелами или метасимволами shell, и используется когда транспорт <strong>pipe</strong> обрабатывает группу адресов в пакете.</p>
+<p>После разделения на параметры и раскрытие, результирующая команда запускается в субпроцессе напрямую от транспорта, не под shell`ом. Доставляемое сообщение предоставляется на стандартном вводе, и оба - стандартный вывод, и стандартный вывод для ошибок, связаны с одной трубой, читаемой Exim&#8217;ом. Параметр <strong>max_output</strong> - контролирует, как много вывода может произвести команда, и параметра <strong>return_output</strong> и <strong>return_fail_output</strong> - управляют, что с ним делается.</p>
+<p>Невыполнение команды под shell`ом (по умолчанию), уменьшает риск безопасности в случаях, когда команда из пользовательского фильтра строится из данных взятых из входящего сообщения. Если shell требуется, он, разумеется, может быть явно определён как команда, которая выполнится. Однако, существуют обстоятельства, когда существующие команды (например, в файлах <em>.forward</em>) ожидают своего выполнения под shell`ом,и не могут быть легко модифицированы. Для разрешениия этих случаев, есть параметр, называемый <strong>use_shell</strong>, которая изменяет способ работы транспорта <strong>pipe</strong>. Вместо описанной разбивки командной строки, она раскрывает её как одну строку, и передаёт результат <em>/bin/sh</em>. Параметр <strong>restrict_to_path</strong> и средство $pipe_addresses не могут использоваться с <strong>use_shell</strong>, а сам механизм - менее безопасен.</p>
+</div>
+<div class="section" id="ch29-04">
+<span id="id5"></span><h2>Переменные окружения<a class="headerlink" href="#ch29-04" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Перечисленные ниже переменные окружения устанавливаются при вызове команды. Список - компромисс, для максимальной совместимости с другими MTA. Отметтьте, что для добавления дополнительных переменных окружения может использоваться параметр <strong>environment</strong>.</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="24%" />
+<col width="76%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td>DOMAIN</td>
+<td>домен адреса</td>
+</tr>
+<tr class="row-even"><td>HOME</td>
+<td>домашняя директория; если задана</td>
+</tr>
+<tr class="row-odd"><td>HOST</td>
+<td>имя хоста при вызове из маршрутизатора (смотрите ниже)</td>
+</tr>
+<tr class="row-even"><td>LOCAL_PART</td>
+<td>смотрите ниже</td>
+</tr>
+<tr class="row-odd"><td>LOCAL_PART_PREFIX</td>
+<td>смотрите ниже</td>
+</tr>
+<tr class="row-even"><td>LOCAL_PART_SUFFIX</td>
+<td>смотрите ниже</td>
+</tr>
+<tr class="row-odd"><td>LOGNAME</td>
+<td>смотрите ниже</td>
+</tr>
+<tr class="row-even"><td>MESSAGE_ID</td>
+<td>локальный идентификатор сообщения Exim`a</td>
+</tr>
+<tr class="row-odd"><td>PATH</td>
+<td>как задано путём параметра <strong>path</strong></td>
+</tr>
+<tr class="row-even"><td>QUALIFY_DOMAIN</td>
+<td>квалификационный домен отправителя</td>
+</tr>
+<tr class="row-odd"><td>RECIPIENT</td>
+<td>полный адрес получателя</td>
+</tr>
+<tr class="row-even"><td>SENDER</td>
+<td>отправитель сообщения (пустой - если рикошет)</td>
+</tr>
+<tr class="row-odd"><td>SHELL</td>
+<td>/bin/sh</td>
+</tr>
+<tr class="row-even"><td>TZ</td>
+<td>значение параметра <strong>timezone</strong>; если установлен</td>
+</tr>
+<tr class="row-odd"><td>USER</td>
+<td>смотрите ниже</td>
+</tr>
+</tbody>
+</table>
+<p>Когда транспорт <strong>pipe</strong> вызывается непосредственно из (например) маршрутизатора <strong>accept</strong>, LOCAL_PART устанавливается в локальную часть адреса. Когда он вызывается как результат раскрытия перенаправления или синонима, LOCAL_PART устанавливается в локальную часть адреса, который был раскрыт. В обоих случаях, любые аффиксы удаляются из локальной части, и становятся доступны в LOCAL_PART_PREFIX и LOCAL_PART_SUFFIX, соответственно. LOGNAME и USER устанавливаются в тоже значение, что и LOCAL_PART, для совместимости с другими MTA.</p>
+<p>HOST - устанавливается лишь когда транспорт <strong>pipe</strong> вызывается из маршрутизатора, который ассоциирует хосты с адресами, обычно, когда <strong>pipe</strong> используется как псевдоудалённый транспорт. В качестве значения HOST используется первое имя хоста переданное маршрутизатором.</p>
+<p>Если установлен общий транспортный параметр <strong>home_directory</strong>, его значение используется для переменной окружения HOME.  Иначе, домашняя директория может быть установлена маршрутизатором, путём параметра <strong>transport_home_directory</strong>, с домашним каталогом пользователя в качестве значения по умолчанию, если задан параметр <strong>check_local_user</strong>.</p>
+</div>
+<div class="section" id="ch29-05">
+<span id="id6"></span><h2>Частные параметры для <strong>pipe</strong><a class="headerlink" href="#ch29-05" title="Ссылка на этот заголовок">¶</a></h2>
+<table border="1" class="docutils" id="index-0">
+<colgroup>
+<col width="31%" />
+<col width="15%" />
+<col width="31%" />
+<col width="24%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>allow_commands</strong></td>
+<td>Use: pipe</td>
+<td>Type: string list†</td>
+<td>Default: unset</td>
+</tr>
+</tbody>
+</table>
+<p>Строка раскрывается, и, затем, интерпретируется как раздёлённый двоеточиями список допустимых команд. Если <strong>restrict_to_path</strong> не установлена, разрешены лишь команды перечисленные в списке <strong>allow_commands</strong>. Они не должны быть абсолютными путями; параметр <strong>path</strong> продолжает использоваться для относительных путей. Если <strong>restrict_to_path</strong> установлена с <strong>allow_commands</strong>, команда должна быть в списке <strong>allow_commands</strong>, или именем без каких-либо слэшей найденных в путях. Другими словами, если не установлена ни <strong>allow_commands</strong>, ни <strong>restrict_to_path</strong> - нет никаких ограничений на команды, но иначе, разрешены лишь команды допускаемые тем или иным параметром. Например, если</p>
+<div class="highlight-python"><pre>allow_commands = /usr/bin/vacation</pre>
+</div>
+<p>и <strong>restrict_to_path</strong> не установлена, разрешена лишь команда <em>/usr/bin/vacation</em>. Параметр <strong>allow_commands</strong> не может быть установлена, если установлена <strong>use_shell</strong>.</p>
+<table border="1" class="docutils" id="index-1">
+<colgroup>
+<col width="25%" />
+<col width="19%" />
+<col width="27%" />
+<col width="29%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>batch_id</strong></td>
+<td>Use: pipe</td>
+<td>Type: string†</td>
+<td>Default: unset</td>
+</tr>
+</tbody>
+</table>
+<p>Смотрите описание пакетной локальной доставки в главе <a class="reference internal" href="ch25.html#ch25-00"><em>25</em></a>.</p>
+<table border="1" class="docutils" id="index-2">
+<colgroup>
+<col width="29%" />
+<col width="20%" />
+<col width="29%" />
+<col width="22%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>batch_max</strong></td>
+<td>Use: pipe</td>
+<td>Type: integer</td>
+<td>Default: 1</td>
+</tr>
+</tbody>
+</table>
+<p>Этот параметр ограничивает число адресов, которые могут быть обработаны в одной доставке. Смотрите описание пакетной локальной доставки в главе <a class="reference internal" href="ch25.html#ch25-00"><em>25</em></a>.</p>
+<table border="1" class="docutils" id="index-3">
+<colgroup>
+<col width="31%" />
+<col width="18%" />
+<col width="24%" />
+<col width="27%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>check_string</strong></td>
+<td>Use: pipe</td>
+<td>Type: string</td>
+<td>Default: unset</td>
+</tr>
+</tbody>
+</table>
+<p>Когда <strong>pipe</strong> пишет сообщение, начало каждой строки проверяется на совпадение с <strong>check_string</strong>, и если оно происходит, начальные совпавшие символы заменяются содержимым <strong>escape_string</strong>, если обе установлены. Значение <strong>check_string</strong> - литеральная строка, а не регулярное выражение, и регистр букв имеет значение. Когда установлена <strong>use_bsmtp</strong>, содержимое <strong>check_string</strong> и <strong>escape_string</strong> приводится к значениям, которые оформлены протоколом экранирования SMTP <a class="footnote-reference" href="#id12" id="id7">[2]</a>. Любые настройки сделанные в конфигурационном файле - игнорируются.</p>
+<table border="1" class="docutils" id="index-4">
+<colgroup>
+<col width="23%" />
+<col width="19%" />
+<col width="28%" />
+<col width="30%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>command</strong></td>
+<td>Use: pipe</td>
+<td>Type: string†</td>
+<td>Default: unset</td>
+</tr>
+</tbody>
+</table>
+<p>Этот параметр не должен быть установлен, когда <strong>pipe</strong> используется для доставки в трубы, полученные непосредственно от переназначения адресов. В других случаях, параметр должен быть установлен, для предоставления команды, которая будет выполнена. Он не нуждается в абсолютном пути (смотрите ниже, параметр <strong>path</strong>). Команда разделяется Exim`ом на отдельные параметры, и каждый аргумент отдельно раскрывается, как описано выше, в разделе <a class="reference internal" href="#ch29-03"><em>29.3</em></a>.</p>
+<table border="1" class="docutils" id="index-5">
+<colgroup>
+<col width="29%" />
+<col width="18%" />
+<col width="25%" />
+<col width="27%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>environment</strong></td>
+<td>Use: pipe</td>
+<td>Type: string†</td>
+<td>Default: unset</td>
+</tr>
+</tbody>
+</table>
+<p>Этот параметр используется для добавления дополнительный переменных к среде окружения, в которой выполняется команда (смотрите раздел <a class="reference internal" href="#ch29-04"><em>29.4</em></a>, для получения списка значений по умолчанию). Ее значение - строка, которая вначале раскрывается, и затем интерпретируется, как список, разделённый двоеточиями, установок среды окружения в форме <em>&lt;name&gt;=&lt;value&gt;</em>.</p>
+<table border="1" class="docutils" id="index-6">
+<colgroup>
+<col width="33%" />
+<col width="17%" />
+<col width="23%" />
+<col width="27%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>escape_string</strong></td>
+<td>Use: pipe</td>
+<td>Type: string</td>
+<td>Default: unset</td>
+</tr>
+</tbody>
+</table>
+<p>Смотрите выше параметр <strong>check_string</strong>.</p>
+<table border="1" class="docutils" id="index-7">
+<colgroup>
+<col width="36%" />
+<col width="16%" />
+<col width="23%" />
+<col width="25%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>freeze_exec_fail</strong></td>
+<td>Use: pipe</td>
+<td>Type: boolean</td>
+<td>Default: false</td>
+</tr>
+</tbody>
+</table>
+<p>Ошибка выполнения команды в транспорте <strong>pipe</strong>, по умолчанию, обрабатывается как любая другая ошибка при запуске команды. Однако, если установлен параметр <strong>freeze_exec_fail</strong>, ошибка выполнения обрабатывается особым образом, и вызывает заморозку сообщения вне зависимости от установки <strong>ignore_status</strong>.</p>
+<table border="1" class="docutils" id="index-8">
+<colgroup>
+<col width="32%" />
+<col width="17%" />
+<col width="25%" />
+<col width="26%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>ignore_status</strong></td>
+<td>Use: pipe</td>
+<td>Type: boolean</td>
+<td>Default: false</td>
+</tr>
+</tbody>
+</table>
+<p>Если этот параметр истинна, статус возвращаемый субпроцессом запустившим команду - игнорируется, и Exim ведёт себя так, как будто был возвращён ноль. Иначе, ненулевой статус или завершение по сигналу вызывают ошибку транспорта, если статус - не одно из значений перечисленных в <strong>temp_errors</strong>; они вызывают задержку доставки и дальнейшие, более поздние попытки доставки.</p>
+<div class="admonition note">
+<p class="first admonition-title">Примечание</p>
+<p class="last">Этот параметр не касается таймаутов, которые не возвращают статус. Смотрите параметр <strong>timeout_defer</strong>, для информации о обработке таймаутов.</p>
+</div>
+<table border="1" class="docutils" id="index-9">
+<colgroup>
+<col width="36%" />
+<col width="16%" />
+<col width="23%" />
+<col width="25%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>log_defer_output</strong></td>
+<td>Use: pipe</td>
+<td>Type: boolean</td>
+<td>Default: false</td>
+</tr>
+</tbody>
+</table>
+<p>Если этот параметр установлен, и статус возвращаемый командой - один из кодов перечисленных в <strong>temp_errors</strong> (т.е. доставка была задержана), и ею был создан какой-либо вывод, его первая строка записывается в главный лог.</p>
+<table border="1" class="docutils" id="index-10">
+<colgroup>
+<col width="35%" />
+<col width="16%" />
+<col width="24%" />
+<col width="25%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>log_fail_output</strong></td>
+<td>Use: pipe</td>
+<td>Type: boolean</td>
+<td>Default: false</td>
+</tr>
+</tbody>
+</table>
+<p>Если этот параметр установлен, и команда возвращает какой-либо вывод, и, также, завершается с кодом возврата не равным ни нулю, ни кодам перечисленным в <strong>temp_errors</strong> (т.е. - доставка неудачна), первая строка вывода записывается в главный лог. Этот параметр, и <strong>log_output</strong> - взаимоисключающие. Лишь одна из них может быть установлена.</p>
+<table border="1" class="docutils" id="index-11">
+<colgroup>
+<col width="28%" />
+<col width="18%" />
+<col width="26%" />
+<col width="28%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>log_output</strong></td>
+<td>Use: pipe</td>
+<td>Type: boolean</td>
+<td>Default: false</td>
+</tr>
+</tbody>
+</table>
+<p>Если этот параметр установлен, и команда возвращает какой-либо вывод, первая строка вывода записывается в главный лог вне зависимости от возвращённого кода. Этот параметр и <strong>log_fail_output</strong> - взаимоисключающие. Лишь один из них может быть установлен.</p>
+<table border="1" class="docutils" id="index-12">
+<colgroup>
+<col width="29%" />
+<col width="19%" />
+<col width="27%" />
+<col width="25%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>max_output</strong></td>
+<td>Use: pipe</td>
+<td>Type: integer</td>
+<td>Default: 20K</td>
+</tr>
+</tbody>
+</table>
+<p>Этот параметр определяет максимальное количество вывода, который команда может создать на своём стандартном выводе и стандартном файле ошибок в совокупности. Если лимит исчерпан, процесс, выполняющий команду, уничтожается. Это - мера безопасности, для поимки неудержимо растущих процессов. Ограничение применяется независимо от настроек параметров контролирующих что происходит с этим выводом (например, <strong>return_output</strong>). Из-за эффекта буферизации, объём вывода может немного превысить ограничение, до того, как Exim это заметит.</p>
+<table border="1" class="docutils" id="index-13">
+<colgroup>
+<col width="31%" />
+<col width="16%" />
+<col width="22%" />
+<col width="31%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>message_prefix</strong></td>
+<td>Use: pipe</td>
+<td>Type: string†</td>
+<td>Default: see below</td>
+</tr>
+</tbody>
+</table>
+<p>Заданная строка раскрывается, и выводится в начале каждого сообщения. По умолчанию, она не задана, если установлен параметр <strong>use_bsmtp</strong>. Иначе, она</p>
+<div class="highlight-python"><pre>message_prefix = \
+  From ${if def:return_path{$return_path}{MAILER-DAEMON}}\
+       ${tod_bsdinbox}\n</pre>
+</div>
+<p>Обычно, это требуется для программы <em>/usr/bin/vacation</em>. Однако, она не должна присутствовать, если производится доставка на Cyrus IMAP server, или локальному агенту доставки “tmail”. Префикс может быть запрещён путём установки</p>
+<div class="highlight-python"><pre>message_prefix =</pre>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Примечание</p>
+<p class="last">Если вы устанавливаете параметр <strong>use_crlf</strong> вы должны изменить все “n” на “rn” в параметре <strong>message_prefix</strong>.</p>
+</div>
+<table border="1" class="docutils" id="index-14">
+<colgroup>
+<col width="31%" />
+<col width="16%" />
+<col width="22%" />
+<col width="31%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>message_suffix</strong></td>
+<td>Use: pipe</td>
+<td>Type: string†</td>
+<td>Default: see below</td>
+</tr>
+</tbody>
+</table>
+<p>Заданная строка раскрывается, и выводится в начале каждого сообщения. По умолчанию, она не задана, если установлен параметр <strong>use_bsmtp</strong>. Иначе, он - одна новая строка. Суффикс может быть запрещён путём установки</p>
+<div class="highlight-python"><pre>message_suffix =</pre>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Примечание</p>
+<p class="last">Если вы устанавливаете параметр <strong>use_crlf</strong> вы должны изменить все “n” на “rn” в параметре <strong>message_suffix</strong>.</p>
+</div>
+<table border="1" class="docutils" id="index-15">
+<colgroup>
+<col width="17%" />
+<col width="19%" />
+<col width="26%" />
+<col width="38%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>path</strong></td>
+<td>Use: pipe</td>
+<td>Type: string</td>
+<td>Default: see below</td>
+</tr>
+</tbody>
+</table>
+<p>Этот параметр определяет строку, которая устанавливается в переменную окружения PATH, субпроцесса. Значение по умолчанию:</p>
+<div class="highlight-python"><pre>/bin:/usr/bin</pre>
+</div>
+<p>Если параметр <strong>command</strong> не приводит к абсолютному имени пути, команда разыскивается в директориях PATH обычным способом.</p>
+<p>..warning:: Это не применяется к команде, заданной как транспортный фильтр.</p>
+<table border="1" class="docutils" id="index-16">
+<colgroup>
+<col width="35%" />
+<col width="16%" />
+<col width="24%" />
+<col width="25%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>permit_coredump</strong></td>
+<td>Use: pipe</td>
+<td>Type: boolean</td>
+<td>Default: false</td>
+</tr>
+</tbody>
+</table>
+<p>Normally Exim inhibits core-dumps during delivery. If you have a need to get a core-dump of a pipe command, enable this command. This enables core-dumps during delivery and affects both the Exim binary and the pipe command run. It is recommended that this option remain off unless and until you have a need for it and that this only be enabled when needed, as the risk of excessive resource consumption can be quite high. Note also that Exim is typically installed as a setuid binary and most operating systems will inhibit coredumps of these by default, so further OS-specific action may be required.</p>
+<table border="1" class="docutils" id="index-17">
+<colgroup>
+<col width="35%" />
+<col width="16%" />
+<col width="24%" />
+<col width="25%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>pipe_as_creator</strong></td>
+<td>Use: pipe</td>
+<td>Type: boolean</td>
+<td>Default: false</td>
+</tr>
+</tbody>
+</table>
+<p>Если не задан общий параметр <strong>user</strong>, и этот параметр истинна, процесс доставки запускается под uid, который был у Exim при при изначальном вызове для приёма сообщения. Если не установлен идентификатор группы (через общий параметр <strong>group</strong>), в силе gid, который был у Exim при при изначальном вызове для приёма сообщения.</p>
+<table border="1" class="docutils" id="index-18">
+<colgroup>
+<col width="36%" />
+<col width="16%" />
+<col width="23%" />
+<col width="25%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>restrict_to_path</strong></td>
+<td>Use: pipe</td>
+<td>Type: boolean</td>
+<td>Default: false</td>
+</tr>
+</tbody>
+</table>
+<p>Когда этот параметр установлен, любое имя команды не перечисленное в <strong>allow_commands</strong> не должно содержать каких-бы то ни было слэшей. Команда ищется лишь в директориях перечисленных в параметре <strong>path</strong>. Этот параметр предназначен для случая, когда команда трубы была создана из пользовательского файла <em>.forward</em>. Обычно, это обрабатывается транспортом <strong>pipe</strong>, называемым <strong>address_pipe</strong>.</p>
+<table border="1" class="docutils" id="index-19">
+<colgroup>
+<col width="38%" />
+<col width="16%" />
+<col width="22%" />
+<col width="24%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>return_fail_output</strong></td>
+<td>Use: pipe</td>
+<td>Type: boolean</td>
+<td>Default: false</td>
+</tr>
+</tbody>
+</table>
+<p>Если этот параметр установлен в истину, и команда производит какой-либо вывод, и завершается с кодом возврата не равным нулю или не содержащимся в кодах перечисленных в <strong>temp_errors</strong> (т.е. ошибка доставки), вывод возвращается в рикошете. Однако, если сообщение имеет пустого отправителя (т.е. оно само по себе рикошет), вывод команды отбрасывается. Этот параметр и <strong>return_output</strong> - взаимоисключающие. Лишь один из них может быть установлен.</p>
+<table border="1" class="docutils" id="index-20">
+<colgroup>
+<col width="32%" />
+<col width="17%" />
+<col width="25%" />
+<col width="26%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>return_output</strong></td>
+<td>Use: pipe</td>
+<td>Type: boolean</td>
+<td>Default: false</td>
+</tr>
+</tbody>
+</table>
+<p>Если этот параметр установлен в истину, и команда производит какой-либо вывод, доставка считается неудачной вне зависимости от кода возврата, и вывод возвращается в рикошете. Иначе, вывод просто игнорируется. Однако, если сообщение имеет пустого отправителя (т.е. оно само по себе рикошет), вывод всегда команды отбрасывается, вне зависимости от установки этого параметра. Этот параметр и <strong>return_fail_output</strong> - взаимоисключающие. Лишь один из них может быть установлен.</p>
+<table border="1" class="docutils" id="index-21">
+<colgroup>
+<col width="25%" />
+<col width="15%" />
+<col width="29%" />
+<col width="31%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>temp_errors</strong></td>
+<td>Use: pipe</td>
+<td>Type: string list</td>
+<td>Default: see below</td>
+</tr>
+</tbody>
+</table>
+<p>Этот параметр содержит или список, разделённый двоеточиями, или единственную звёздочку. Если параметр <strong>ignore_status</strong> - ложь, и <strong>return_output</strong> - не задан, и команда выходит с ненулевым кодом, ошибка обрабатывается как временная, и доставка задерживается - если код возврата совпадает с одним из чисел, или если стоит звёздочка. Иначе, ненулевые коды возврата обрабатываются как постоянные ошибки. Значение по умолчанию содержит коды заданные EX_TEMPFAIL и EX_CANTCREAT в “sysexits.h”. Если Exim собран на системе не задающей эти макросы, они принимают значения 75 и 73, соответственно.</p>
+<table border="1" class="docutils" id="index-22">
+<colgroup>
+<col width="27%" />
+<col width="22%" />
+<col width="24%" />
+<col width="27%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>timeout</strong></td>
+<td>Use: pipe</td>
+<td>Type: time</td>
+<td>Default: 1h</td>
+</tr>
+</tbody>
+</table>
+<p>Если команда не смогла завершится в течение этого времени, она уничтожена. Обычно, это вызывает ошибку доставки (но, посмотрите параметр <strong>timeout_defer</strong>). Нулевой интервал времени задаёт, что нет таймаута. Для гарантии, что любые созданные командой субпроцессы также уничтожены, Exim делает начальный процесс лидером группы процессов, и по таймауту всю группу процессов. Однако, это может быть обойдено, если один из процессов начинает новую группу процессов.</p>
+<table border="1" class="docutils" id="index-23">
+<colgroup>
+<col width="32%" />
+<col width="17%" />
+<col width="25%" />
+<col width="26%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>timeout_defer</strong></td>
+<td>Use: pipe</td>
+<td>Type: boolean</td>
+<td>Default: false</td>
+</tr>
+</tbody>
+</table>
+<p>Таймаут в транспорте <strong>pipe</strong>, или в команде, запускаемой транспортом, или в ассоциированном с ним транспортном фильтре, по умолчанию обрабатывается как жёсткая ошибка, и доставка неудачна. Однако, если <strong>timeout_defer</strong> установлена в истину, оба вида таймаута становятся временными, вызывая задержку доставки.</p>
+<table border="1" class="docutils" id="index-24">
+<colgroup>
+<col width="18%" />
+<col width="18%" />
+<col width="39%" />
+<col width="24%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>umask</strong></td>
+<td>Use: pipe</td>
+<td>Type: octal integer</td>
+<td>Default: 022</td>
+</tr>
+</tbody>
+</table>
+<p>Этот параметр определяет установку umask для субпроцесса выполняющего команду.</p>
+<table border="1" class="docutils" id="index-25">
+<colgroup>
+<col width="27%" />
+<col width="18%" />
+<col width="27%" />
+<col width="29%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>use_bsmtp</strong></td>
+<td>Use: pipe</td>
+<td>Type: boolean</td>
+<td>Default: false</td>
+</tr>
+</tbody>
+</table>
+<p>Если этот параметр установлен в истину, транспорт <strong>pipe</strong> пишет сообщения в формате “пакетного SMTP”, с отправителем конверта и получателем (получателями) включенными как SMTP-команды. Если вы хотите включить начальную команду HELO с каждым сообщением, вы можете сделать это, путём установки параметра <strong>message_prefix</strong>. Для получения дополнительных деталей о пакетном SMTP, смотрите раздел <a class="reference internal" href="ch45.html#ch45-10"><em>45.10</em></a>.</p>
+<table border="1" class="docutils" id="index-26">
+<colgroup>
+<col width="38%" />
+<col width="16%" />
+<col width="22%" />
+<col width="24%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>use_classresources</strong></td>
+<td>Use: pipe</td>
+<td>Type: boolean</td>
+<td>Default: false</td>
+</tr>
+</tbody>
+</table>
+<p>Этот параметр доступен лишь в случае, если Exim работает на FreeBSD, NetBSD, или BSD/OS <a class="footnote-reference" href="#id13" id="id8">[3]</a>. Если она установлена в истину, функция <em>setclassresources()</em> используется для установки ограничений ресурсов, когда транспорт <strong>pipe</strong> производит доставку. Лимиты для uid, под которым работает труба, получаются из БД классов логинов <a class="footnote-reference" href="#id14" id="id9">[4]</a>.</p>
+<table border="1" class="docutils" id="index-27">
+<colgroup>
+<col width="25%" />
+<col width="19%" />
+<col width="27%" />
+<col width="29%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>use_crlf</strong></td>
+<td>Use: pipe</td>
+<td>Type: boolean</td>
+<td>Default: false</td>
+</tr>
+</tbody>
+</table>
+<p>Этот параметр заставляет завершаться строки двухсимвольной CR LF последовательностью (возврат каретки, новая строка), вместо одного символа перевода строки. В случае пакетного SMTP, записанная в трубу последовательность байтов - точное подобие того, что было бы послано в реальном SMTP-подключении.</p>
+<p>Содержимое параметра <strong>message_prefix</strong> и <strong>message_suffix</strong> пишется дословно, таким образом, они должны содержать свои символы возврата каретки, если они им необходимы. Когда не задан параметр <strong>use_bsmtp</strong>, значение по умолчанию для обоих - <strong>message_prefix</strong> и <strong>message_suffix</strong> оканчивается одним переводом строки, таким образом, их значения должны быть изменены, чтобы они завершались “rn”, если задан параметр <strong>use_crlf</strong>.</p>
+<table border="1" class="docutils" id="index-28">
+<colgroup>
+<col width="27%" />
+<col width="18%" />
+<col width="27%" />
+<col width="29%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>use_shell</strong></td>
+<td>Use: pipe</td>
+<td>Type: boolean</td>
+<td>Default: false</td>
+</tr>
+</tbody>
+</table>
+<p>Если этот параметр задан, команда передаётся <em>/bin/sh</em> вместо непосредственного выполнения в транспорте, как описано в разделе <a class="reference internal" href="#ch29-03"><em>29.3</em></a>. Это менее безопасно, но требуется в некоторых ситуациях, где ожидается, что команда будет выполняться шелом и она не может быть легко изменена. Параметр <strong>allow_commands</strong>, <strong>restrict_to_path</strong>, средство $pipe_address не совместимы с <strong>use_shell</strong>. Команда расширяется как одиночная строка, и обрабатывается <em>/bin/sh</em> как аргумент параметра <strong>-с</strong>.</p>
+</div>
+<div class="section" id="ch29-06">
+<span id="id10"></span><h2>Использование внешнего (стороннего) агента локальной доставки<a class="headerlink" href="#ch29-06" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Транспорт <strong>pipe</strong> может использоваться для передачи всех сообщений, которым требуется локальная доставка, отдельному локальному агенту доставки, типа <strong>procmail</strong>. Когда это делается, нужно быть осторожным, чтобы гарантировать, что труба выполняется под соответствующими uid и gid. В некоторых конфигурациях, требуется, чтобы это был uid, которому доверяет агент доставки, для предоставления корректного отправителя сообщения. Может потребоваться повторно пересобрать или перенастроить агента доставки таким образом, чтобы он доверял соответствующему пользователю. Далее - пример конфигурации транспорта и маршрутизатора, для <strong>procmail</strong>:</p>
+<div class="highlight-python"><pre># transport
+procmail_pipe:
+  driver = pipe
+  command = /usr/local/bin/procmail -d $local_part
+  return_path_add
+  delivery_date_add
+  envelope_to_add
+  check_string = "From "
+  escape_string = "&gt;From "
+  user = $local_part
+  group = mail
+
+# router
+procmail:
+  driver = accept
+  check_local_user
+  transport = procmail_pipe</pre>
+</div>
+<p>В этом примере, труба запускается как локальный пользователь, но с установленной группой <em>mail</em>. Как альтернатива - запускать трубу под определённым пользователем, типа <em>mail</em> или <em>exim</em>, но в этом случае вы должны принять меры, чтобы <em>procmail</em> доверял этому пользователю для предоставления корректного адреса отправителя. Если вы не задаёте или параметр <strong>group</strong> или параметр <strong>user</strong>, команда трубы запускается под локальным пользователем. Домашняя директория по умолчанию - домашний каталог пользователя.</p>
+<div class="admonition note">
+<p class="first admonition-title">Примечание</p>
+<p>Команда, которая запускает транспорт <strong>pipe</strong>, не начинается с</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">IFS</span><span class="o">=</span><span class="s">&quot; &quot;</span>
+</pre></div>
+</div>
+<p class="last">как показано в некоторой документации на <em>procmail</em>, поскольку Exim, по умолчанию, не использует shell для запуска команд канала.</p>
+</div>
+<p>Следующий пример показывает транспорт и маршрутизатор для систем, где локальные доставки обрабатываются Cyrus IMAP server.</p>
+<div class="highlight-python"><pre># transport
+local_delivery_cyrus:
+  driver = pipe
+
+  command = /usr/cyrus/bin/deliver \
+    -m ${substr_1:$local_part_suffix} -- $local_part
+  user = cyrus
+  group = mail
+  return_output
+  log_output
+  message_prefix =
+  message_suffix =
+
+
+# router
+local_user_cyrus:
+  driver = accept
+  check_local_user
+  local_part_suffix = .*
+  transport = local_delivery_cyrus</pre>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Примечание</p>
+<p class="last">Не заданы <strong>message_prefix</strong> и <strong>message_suffix</strong>, и использование <strong>return_output</strong>, для того, чтобы любой текст, записанный Cyrus`ом, был возвращён отправителю.</p>
+</div>
+<table class="docutils footnote" frame="void" id="id11" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id4">[1]</a></td><td>имеются ввиду символы начинающиеся с обратного слэша - прим. lissyara</td></tr>
+</tbody>
+</table>
+<table class="docutils footnote" frame="void" id="id12" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id7">[2]</a></td><td>? - невкурил... - прим. lissyara</td></tr>
+</tbody>
+</table>
+<table class="docutils footnote" frame="void" id="id13" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id8">[3]</a></td><td>FreeBSD - форева; - извините, прим. lissyara :)</td></tr>
+</tbody>
+</table>
+<table class="docutils footnote" frame="void" id="id14" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id9">[4]</a></td><td>/etc/login.conf - прим. lissyara</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Содержание</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Транспорт <strong>pipe</strong></a><ul>
+<li><a class="reference internal" href="#ch29-01">Конкурирующие доставки</a></li>
+<li><a class="reference internal" href="#ch29-02">Возвращаемый статус и данные</a></li>
+<li><a class="reference internal" href="#ch29-03">Как выполняется команда</a></li>
+<li><a class="reference internal" href="#ch29-04">Переменные окружения</a></li>
+<li><a class="reference internal" href="#ch29-05">Частные параметры для <strong>pipe</strong></a></li>
+<li><a class="reference internal" href="#ch29-06">Использование внешнего (стороннего) агента локальной доставки</a></li>
+</ul>
+</li>
+</ul>
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="ch28.html" title="предыдущая глава">Транспорт <strong>lmtp</strong></a></li>
+      <li>Next: <a href="ch30.html" title="следующая глава">Транспорт <strong>smtp</strong></a></li>
+  </ul></li>
+</ul>
+  <h3>На этой странице</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/ch29.txt"
+           rel="nofollow">Показать исходный текст</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Быстрый поиск</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Искать" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Введите слова для поиска или имя модуля, класса или функции.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy; Copyright 2011, Exim Maintainers.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a>.
+    </div>
+  </body>
+</html>

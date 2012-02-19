@@ -1,0 +1,272 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Формат файлов спула &mdash; Specification of the Exim Mail Transfer Agent 4.70 documentation</title>
+    
+    <link rel="stylesheet" href="_static/flasky.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '4.70',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/translations.js"></script>
+    <link rel="top" title="Specification of the Exim Mail Transfer Agent 4.70 documentation" href="index.html" />
+    <link rel="next" title="Поддержка DKIM (DOMAINKEYS IDENTIFIED MAIL (почты идентифицированной доменными ключами)) - RFC 4871" href="ch54.html" />
+    <link rel="prev" title="Обсуждение безопасности" href="ch52.html" />
+   
+  
+  <link media="only screen and (max-device-width: 480px)" href="_static/small_flask.css" type= "text/css" rel="stylesheet" />
+
+  </head>
+  <body>
+    <div class="related">
+      <h3>Просмотр</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="Словарь-указатель"
+             accesskey="I">словарь</a></li>
+        <li class="right" >
+          <a href="ch54.html" title="Поддержка DKIM (DOMAINKEYS IDENTIFIED MAIL (почты идентифицированной доменными ключами)) - RFC 4871"
+             accesskey="N">следующий</a> |</li>
+        <li class="right" >
+          <a href="ch52.html" title="Обсуждение безопасности"
+             accesskey="P">предыдущий</a> |</li>
+        <li><a href="index.html">Specification of the Exim Mail Transfer Agent 4.70 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="ch53-00">
+<span id="id1"></span><h1>Формат файлов спула<a class="headerlink" href="#ch53-00" title="Ссылка на этот заголовок">¶</a></h1>
+<p>Сообщение в очереди Exim&#8217;a состоит из двух файлов, чьи имена - идентификатор сообщения, заканчивающиеся на <tt class="docutils literal"><span class="pre">-D</span></tt> и <tt class="docutils literal"><span class="pre">-H</span></tt>, соответственно. Часть данных сообщения сохраняется отдельно в файле <tt class="docutils literal"><span class="pre">-D</span></tt>. Конверт сообщения, статус и заголовки сохраняются в файле <tt class="docutils literal"><span class="pre">-H</span></tt>, чей формат описан в этой части. Каждый из этих двух файлов содержит в первой строке свое полное имя <a class="footnote-reference" href="#id3" id="id2">[1]</a>. Это страховка от дисковых ошибок, когда директория потеряна, но сами файлы восстановить возможно.</p>
+<p>Некоторые люди соблазняются редактированием файлов <tt class="docutils literal"><span class="pre">-D</span></tt> с целью модифицировать сообщения. Если делаете так - вы должны быть чрезвычайно осторожны; это не рекомендуется, и вы делаете это на свой страх и риск. Вот, некоторые из ловушек:</p>
+<ul class="simple">
+<li>Вы должны гарантировать, что Exim не попытается доставить сообщение в тот момент когда вы играетесь с ним. Самый безопасный способ - заблокировать <tt class="docutils literal"><span class="pre">-D</span></tt> файл, также как это делает Exim - используя <em>fcntl()</em>. Если вы обновите файл на месте, блокировка останется. Если вы запишете новый файл и переименуете его, блокировка будет потеряна в момент переименования.</li>
+<li>Если вы измените число строк в файле, значение $body_linecount, которое сохранено в файле <tt class="docutils literal"><span class="pre">-H</span></tt>, будет некорректным. В настоящее время, это значение не используется Exim&#8217;ом, но нет никаких гарантий, что так будет и дальше.</li>
+<li>Если сообщение в формате MIME, вы должны позаботиться, чтобы не повредить его.</li>
+<li>Если сообщение криптографически подписано, любое изменение делает подпись недействительной.</li>
+<li>В общем, модификация файлов <tt class="docutils literal"><span class="pre">-D</span></tt> - опасна.</li>
+</ul>
+<p>Файлы, чьи имена заканчиваются на <tt class="docutils literal"><span class="pre">-J</span></tt>, также могут быть замечены в директории <em>input</em> (или в её поддиректориях, когда установлена <strong>split_spool_directory</strong>). Это файлы журналов, используемые для записи адресов на которые сообщение было доставлено во время попытки доставки. Если в конце доставки присутствуют недоставленные получатели, файл <tt class="docutils literal"><span class="pre">-H</span></tt> обновляется, и файл <tt class="docutils literal"><span class="pre">-J</span></tt> - удаляется. Однако, если происходит сбой (например, отключение питания) до того как это произойдёт, файлы <tt class="docutils literal"><span class="pre">-J</span></tt> остаются. При следующей обработке сообщения, Exim, найдя файл <tt class="docutils literal"><span class="pre">-J</span></tt>, использует его для обновления файла <tt class="docutils literal"><span class="pre">-H</span></tt> до начала следующей попытки доставки.</p>
+<div class="section" id="h">
+<span id="ch53-01"></span><h2>Формат файла -H<a class="headerlink" href="#h" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Вторая строка файла <tt class="docutils literal"><span class="pre">-H</span></tt> содержит логин для uid процесса который вызвал Exim для чтения сообщения, сопровождаемое цифровыми uid и gid. Обычно для локально созданных сообщений - это пользователь пославший сообщение. Для сообщения полученного демоном через TCP/IP - обычно, это пользователь Exim&#8217;a.</p>
+<p>Третья строка файла содержит адрес отправителя сообщения как передано в конверте, содержащийся в угловых скобках. Для рикошетов - адрес отправителя пустой. Для входящей SMTP почты, отправитель даётся в команде MAIL. Для локально созданных сообщений, адрес отправителя создаётся Exim&#8217;ом из логина текущего пользователя и сконфигурированного <strong>qualify_domain</strong>. Однако, такой порядок может быть изменен путём установки параметра <strong>-f</strong> или начальной строки “From ”, если вызывающий - доверенный, или если предоставленный адрес - “&lt;&gt;”, или адрес совпадает с <strong>untrusted_set_senders</strong>.</p>
+<p>Четвёртая строка содержит два числа. Первое - время когда сообщение было получено, в обычном формате UNIX - число секунд от начала эпохи. Второе число - счётчик посланных отправителю предупреждений о задержанной доставке получателю.</p>
+<p>Далее следует множество строк, начинающихся с дефиса. Они могут появляться в любом порядке, и пропущены, если неуместны:</p>
+<blockquote>
+<div><dl class="docutils">
+<dt><strong>-acl &lt;number&gt; &lt;length&gt;</strong></dt>
+<dd>Этот элемент является устаревшим, и не создается начиная с версии 4.61 Exim; вместо него используются <strong>-aclc</strong> и <strong>-aclm</strong>. Однако, <strong>-acl</strong> всё ещё распознаётся, для обеспечения обратной совместимости. В старом формате, строки этой формы присутствуют для каждой переменной ACL которая не пуста. Число идентифицирует переменную; переменные <strong>acl_cx</strong> нумеруются 0-9 и переменные <strong>acl_mx</strong> нумеруются от 10 до 19. &lt;number&gt; - длинна строки данных для переменной. Сама строка начинается со следующей строки, и сопровождается символом новой строки. Она может содержать внутренние новые строки.</dd>
+<dt><strong>-aclc &lt;rest-of-name&gt; &lt;length&gt;</strong></dt>
+<dd>Строка этой формы представлена для каждой заданной переменной ACL соединения. Отметьте, что между <strong>-aclc</strong> и началом имени - пустое пространство. &lt;length&gt; - длинна строки данных для переменной. Сама строка начинается со следующей строки, и сопровождается символом новой строки. Она может содержать внутренние новые строки.</dd>
+<dt><strong>-aclm &lt;rest-of-name&gt; &lt;length&gt;</strong></dt>
+<dd>Строка этой формы представлена для каждой переменной ACL сообщения, которая не пуста. Отметьте, что между <strong>-aclm</strong> и началом имени - пустое пространство. &lt;length &gt;- длинна строки данных для переменной. Сама строка начинается со следующей строки, и сопровождается символом новой строки. Она может содержать внутренние новые строки.</dd>
+<dt><strong>-active_hostname &lt;hostname&gt;</strong></dt>
+<dd>Она присутствует, если сообщение было передано через SMTP, и значение $smtp_active_hostname отличается от значения $primary_hostname.</dd>
+<dt><strong>-allow_unqualified_recipient</strong></dt>
+<dd>Она представлена если в строках заголовков разрешён неквалифицированные адрес получателя (для предотвращения таких адресов от квалификации, если перезапись происходит во время транспортировки). Локальные сообщения, которые были введены используя <strong>-bnq</strong> и удалённые сообщения от хостов, которые совпадают с <strong>recipient_unqualified_hosts</strong> устанавливают этот флаг.</dd>
+<dt><strong>-allow_unqualified_sender</strong></dt>
+<dd>Она представлена если в строках заголовков разрешён неквалифицированный адрес отправителя (для предотвращения таких адресов от квалификации, если перезапись происходит в транспортное время). Локальные сообщения, которые были введены используя <strong>-bnq</strong> и удалённые сообщения от хостов, которые совпадают с <strong>sender_unqualified_hosts</strong> устанавливают этот флаг.</dd>
+<dt><strong>-auth_id &lt;text&gt;</strong></dt>
+<dd>Идентификационная информация для сообщения, полученного в аутентифицированной сессии - значение переменной $authenticated_id.</dd>
+<dt><strong>-auth_sender &lt;address&gt;</strong></dt>
+<dd>Адрес аутентифицированного отправителя - значение переменной “$authenticated_sender”.</dd>
+<dt><strong>-body_linecount &lt;number&gt;</strong></dt>
+<dd>Тут записано число строк сообщения, и присутствует всегда.</dd>
+<dt><strong>-body_zerocount &lt;number&gt;</strong></dt>
+<dd>Тут записано число бинарных нулей в теле сообщения, и она представлена если число больше нуля.</dd>
+<dt><strong>-deliver_firsttime</strong></dt>
+<dd>Она записывается когда новое сообщение первый раз добавляется в спул. Когда файл спула обновляется после задержки, она опускается.</dd>
+<dt><strong>-frozen &lt;time&gt;</strong></dt>
+<dd>Сообщение заморожено, и заморозка произошла в “&lt;time&gt;”.</dd>
+<dt><strong>-helo_name &lt;text&gt;</strong></dt>
+<dd>Она записывает имя хоста заданное удалённым хостом в команде HELO или EHLO.</dd>
+<dt><strong>-host_address &lt;address&gt;.&lt;port&gt;</strong></dt>
+<dd>Она записывает IP-адрес хоста с которого передано сообщение и номер использованного удалённого порта. Она опускается для локально созданых сообщений.</dd>
+<dt><strong>-host_auth &lt;text&gt;</strong></dt>
+<dd>Если сообщение передано через аутентифицированное SMTP соединение, она записывает имя аутентификатора - значение переменной $sender_host_authenticated.</dd>
+<dt><strong>-host_lookup_failed</strong></dt>
+<dd>Она представлена если попытка поиска имени хоста отправителя по его IP-адресу была неудачной. Она соответствует переменной $host_lookup_failed.</dd>
+<dt><strong>-host_name &lt;text&gt;</strong></dt>
+<dd>Она записывает имя удалённого хоста с которого было передано сообщение, если имя хоста найдено из IP-адреса, когда сообщение было получено. Она отсутствует, если обратный поиск не был завершён.</dd>
+<dt><em>-ident &lt;text&gt;*</em></dt>
+<dd>Для локально переданных сообщений, эта запись - логин исходного пользователя, кроме случая когда пользователь доверенный и для задания значения ident использовался параметр <strong>-oMt</strong>. Для сообщений переданных через TCP/IP, эта запись - строка ident, предоставленная удалённым хостом, если она была.</dd>
+<dt><strong>-interface_address &lt;address&gt;.&lt;port&gt;</strong></dt>
+<dd>Это - запись IP-адреса локального интерфейса и имя порта через который сообщение было принято с удалённого хоста. Она опущена для локально созданых сообщений.</dd>
+<dt><strong>-local</strong></dt>
+<dd>Сообщение от локального отправителя.</dd>
+<dt><strong>-localerror</strong></dt>
+<dd>Сообщение - локально созданный рикошет.</dd>
+<dt><strong>-local_scan &lt;string&gt;</strong></dt>
+<dd>Она записывает строку данных которую вернула функция <strong>local_scan()</strong>, когда сообщение было получено - значение переменной $local_scan_data. Она опущена, если данных возвращено не было.</dd>
+<dt><strong>-manual_thaw</strong></dt>
+<dd>Сообщение было заморожено, но было оттаяно вручную, т.е. явной командой Exim&#8217;a, а не процессом автооттаивания.</dd>
+<dt><strong>-N</strong></dt>
+<dd>Процесс тестирования был начат используя параметр <strong>-N</strong> для подавления любых актуальных доставок, но доставка задержана. Для любых последующих попыток доставки, <strong>-N</strong> - присутствует.</dd>
+<dt><strong>-received_protocol</strong></dt>
+<dd>Она записывает значение переменной $received_protocol, которая содержит имя протокола, по которому было получено сообщение.</dd>
+<dt><strong>-sender_set_untrusted</strong></dt>
+<dd>Отправитель конверта этого сообщения был установлен не доверенным локальным вызовом (используется для гарантии, что вызывающий показан в списках очереди).</dd>
+<dt><strong>-spam_score_int &lt;number&gt;</strong></dt>
+<dd>Если сообщение было проверено SpamAssassin, она присутствует Она записывает значение $spam_score_int.</dd>
+<dt><strong>-tls_certificate_verified</strong></dt>
+<dd>TLS сертификат был получен от клиента, который послал это сообщение, и сертификат был проверен сервером.</dd>
+<dt><strong>-tls_cipher &lt;cipher name&gt;</strong></dt>
+<dd>Когда сообщение получено через шифрованное соединение, она записывает имя использовавшегося алгоритма шифрования.</dd>
+<dt><strong>-tls_peerdn &lt;peer DN&gt;</strong></dt>
+<dd>Когда сообщение было получено по шифрованному соединению, и сертификат был передан с клиента, она записывает Distinguished Name (DN) этого сертификата.</dd>
+</dl>
+</div></blockquote>
+<p>После параметров присутствует список тех адресов на которые сообщение не было доставлено. Этот набор адресов инициализируется из командной строки когда используется параметр <strong>-t</strong> и установлен <strong>extract_addresses_remove_arguments</strong>; иначе она выпускается пустой. Каждый раз, когда произведена успешная доставка, адрес добавляется к этому набору. Адреса сохраняются внутренне, как сбалансированное бинарное дерево, и это - представление того дерева которое пишется в файл спула. Если адрес раскрывается через файл синонимов или паренаправлений, оригинальный адрес добавляется к дереву, когда завершается доставка всех дочерних адресов.</p>
+<p>Если дерево пусто, присутствует единственная строка в файле спула, содержащая лишь текст “XX”. Иначе, каждая строка содержит две буквы, являющиеся “Y” или “N”, сопровождаемые адресом. Адрес - значение для узла дерева, и буквы указывают имеет ли узел присоединенную левую ветвь и/или правую ветвь, соответственно. Если ветви существуют, они следуют немедленно. Вот пример дерева с тремя узлами:</p>
+<div class="highlight-python"><pre>YY darcy@austen.fict.example
+NN alice@wonderland.fict.example
+NN editor@thesaurus.ref.example</pre>
+</div>
+<p>После дерева не-получателей, есть список получателей сообщения. Это простой список, со счётчиком в начале. Он включает оригинальных получателей сообщения, включая те, кому сообщение уже доставлено. В простом случае, список содержит один адрес на строку. Например:</p>
+<div class="highlight-python"><pre>4
+editor@thesaurus.ref.example
+darcy@austen.fict.example
+rdo@foundation
+alice@wonderland.fict.example</pre>
+</div>
+<p>Однако, когда дочерний адрес добавляется к списку вышестоящих адресов как результат использования параметра <strong>one_time</strong> в маршрутизаторе <strong>redirect</strong>, каждая строка имеет следующую форму:</p>
+<div class="highlight-python"><pre>&lt;top-level address&gt; &lt;errors_to address&gt; &lt;length&gt;,&lt;parent number&gt;#&lt;flag bits&gt;</pre>
+</div>
+<p>Флаг 01 указывает присутствие трёх других полей, которые сопровождают адрес высшего уровня. Иные биты могут использоваться в будущем, для поддержки дополнительных полей. Смещение <em>&lt;parent number&gt;</em> в списке получателей оригинального родителя адресов “one time” . Первые два поля - отправитель конверта, который ассоциирован с этим адресом и его длиной. Если длинна - ноль, специальный отправитель конверта отсутствует (тогда в строке два символа пробела). Непустое поле может являться результатом маршрутизатора <strong>redirect</strong> у котором установлена <strong>errors_to</strong>.</p>
+<p>Пустая строка отделяет конверт и статусную информацию от следующих заголовков. Заголовок может занять несколько строк файла, и с целью экономии усилий при его чтении, каждому заголовку предшествует число и идентификационный символ. Число - чисто символов в заголовке, включая любые встроенные новые строки и завершающую новую строку. Символ - один из следующих:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="11%" />
+<col width="89%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td>&lt;blank&gt;</td>
+<td>заголовок который не интересует Exim</td>
+</tr>
+<tr class="row-even"><td>B</td>
+<td>заголовок <em>Bcc:</em></td>
+</tr>
+<tr class="row-odd"><td>C</td>
+<td>заголовок <em>Cc:</em></td>
+</tr>
+<tr class="row-even"><td>F</td>
+<td>заголовок <em>From:</em></td>
+</tr>
+<tr class="row-odd"><td>I</td>
+<td>заголовок <em>Message-id:</em></td>
+</tr>
+<tr class="row-even"><td>P</td>
+<td>заголовок <em>Received:</em> (P - означает почтовый штемпель)</td>
+</tr>
+<tr class="row-odd"><td>R</td>
+<td>заголовок <em>Reply-To:</em></td>
+</tr>
+<tr class="row-even"><td>S</td>
+<td>заголовок <em>Sender:</em></td>
+</tr>
+<tr class="row-odd"><td>T</td>
+<td>заголовок <em>To:</em></td>
+</tr>
+<tr class="row-even"><td>*</td>
+<td>заменённый или удалённый заголовок</td>
+</tr>
+</tbody>
+</table>
+<p>Удалённые или заменённые (перезаписанные) заголовки остаются в файле спула для отладки. Они не передаются при доставке сообщения. Вот - типичный набор заголовков:</p>
+<div class="highlight-python"><pre>111P Received: by hobbit.fict.example with local (Exim 4.00)
+id 14y9EI-00026G-00; Fri, 11 May 2001 10:28:59 +0100
+049  Message-Id: &lt;E14y9EI-00026G-00@hobbit.fict.example&gt;
+038* X-rewrote-sender: bb@hobbit.fict.example
+042* From: Bilbo Baggins &lt;bb@hobbit.fict.example&gt;
+049F From: Bilbo Baggins &lt;B.Baggins@hobbit.fict.example&gt;
+099* To: alice@wonderland.fict.example, rdo@foundation,
+darcy@austen.fict.example, editor@thesaurus.ref.example
+104T To: alice@wonderland.fict.example, rdo@foundation.example,
+darcy@austen.fict.example, editor@thesaurus.ref.example
+038  Date: Fri, 11 May 2001 10:28:59 +0100</pre>
+</div>
+<p>Заголовки помеченные звёздочкой указывают, что отправитель конверта, заголовок “From:”, и заголовок “To:” были перезаписаны, последний потому что маршрутизация привела к неквалифицированному домену <em>foundation</em>.</p>
+<table class="docutils footnote" frame="void" id="id3" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id2">[1]</a></td><td>вместе с <tt class="docutils literal"><span class="pre">-D</span></tt> и <tt class="docutils literal"><span class="pre">-H</span></tt></td></tr>
+</tbody>
+</table>
+<table class="docutils footnote" frame="void" id="id4" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label">[2]</td><td>нифига не понzл чё написал - прим. lissyara</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Содержание</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Формат файлов спула</a><ul>
+<li><a class="reference internal" href="#h">Формат файла -H</a></li>
+</ul>
+</li>
+</ul>
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="ch52.html" title="предыдущая глава">Обсуждение безопасности</a></li>
+      <li>Next: <a href="ch54.html" title="следующая глава">Поддержка DKIM (DOMAINKEYS IDENTIFIED MAIL (почты идентифицированной доменными ключами)) - <strong>RFC 4871</strong></a></li>
+  </ul></li>
+</ul>
+  <h3>На этой странице</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/ch53.txt"
+           rel="nofollow">Показать исходный текст</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Быстрый поиск</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Искать" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Введите слова для поиска или имя модуля, класса или функции.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy; Copyright 2011, Exim Maintainers.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a>.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,192 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Аутентификатор cram_md5 &mdash; Specification of the Exim Mail Transfer Agent 4.70 documentation</title>
+    
+    <link rel="stylesheet" href="_static/flasky.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '4.70',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/translations.js"></script>
+    <link rel="top" title="Specification of the Exim Mail Transfer Agent 4.70 documentation" href="index.html" />
+    <link rel="next" title="Аутентификатор cyrus_sasl" href="ch36.html" />
+    <link rel="prev" title="Аутентификатор plaintext" href="ch34.html" />
+   
+  
+  <link media="only screen and (max-device-width: 480px)" href="_static/small_flask.css" type= "text/css" rel="stylesheet" />
+
+  </head>
+  <body>
+    <div class="related">
+      <h3>Просмотр</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="Словарь-указатель"
+             accesskey="I">словарь</a></li>
+        <li class="right" >
+          <a href="ch36.html" title="Аутентификатор cyrus_sasl"
+             accesskey="N">следующий</a> |</li>
+        <li class="right" >
+          <a href="ch34.html" title="Аутентификатор plaintext"
+             accesskey="P">предыдущий</a> |</li>
+        <li><a href="index.html">Specification of the Exim Mail Transfer Agent 4.70 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="cram-md5">
+<span id="ch35-00"></span><h1>Аутентификатор <strong>cram_md5</strong><a class="headerlink" href="#cram-md5" title="Ссылка на этот заголовок">¶</a></h1>
+<p>Аутентификационный механизм <strong>cram_md5</strong> описан в <span class="target" id="index-0"></span><a class="rfc reference external" href="http://tools.ietf.org/html/rfc2195.html"><strong>RFC 2195</strong></a>. Сервер посылает клиенту строку вызова, и ответ содержит имя пользователя и CRAM-MD5 строки вызова, комбинированные с секретной строкой (паролем), который известен обоим, серверу и клиенту. Таким образом, секретная строка не посылается по сети открытым текстом, что делает этот аутентификатор более безопасным, чем <strong>plaintext</strong>. Однако, обратная сторона - это то, что секретная строка должна быть доступна в открытом виде с обоих сторон.</p>
+<div class="section" id="ch35-01">
+<span id="id1"></span><h2>Использование <strong>cram_md5</strong> как сервера<a class="headerlink" href="#ch35-01" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Этот аутентификатор имеет одну серверный параметр, который должен быть установлен для настройки аутентификатора как сервера:</p>
+<table border="1" class="docutils" id="index-1">
+<colgroup>
+<col width="30%" />
+<col width="23%" />
+<col width="23%" />
+<col width="25%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>server_secret</strong></td>
+<td>Use: cram_md5</td>
+<td>Type: string†</td>
+<td>Default: unset</td>
+</tr>
+</tbody>
+</table>
+<p>Когда сервер получает ответ клиента, имя пользователя помещается в переменную раскрытия $auth1, и <strong>server_secret</strong> раскрывается, для получения пароля этого пользователя. Тогда сервер вычисляет CRAM-MD5, который должен был послать клиент, и проверяет, что получена корректная строка. Если раскрытие <strong>server_secret</strong> принудительно неудачно, - аутентификация неудачна. Если раскрытие неудачно по иной причине, клиенту возвращается временный код ошибки.</p>
+<p>Для совместимости с предыдущими версиями Exim`a, имя пользователя, также помещается в $1. Однако, использование этой переменной для этой цели, сейчас, не приветствуется, поскольку может привести к беспорядку в раскрытиях строк, которые также используют числовые переменные для других целей.</p>
+<p>Например, следующий аутентификатор проверяет, что имя пользователя данное клиентом - “ph10”, и, если это так, используется “secret” как пароль. Для любых других имён пользователя - аутентификация неудачна.</p>
+<div class="highlight-python"><pre>fixed_cram:
+  driver = cram_md5
+  public_name = CRAM-MD5
+  server_secret = ${if eq{$auth1}{ph10}{secret}fail}
+  server_set_id = $auth1</pre>
+</div>
+<p>Если аутентификация успешна, установка <strong>server_set_id</strong> сохраняет имя пользователя в $authenticated_id. Более типичная конфигурация могла бы искать секретную строку в файле, используя имя пользователя как ключ. Например:</p>
+<div class="highlight-python"><pre>lookup_cram:
+  driver = cram_md5
+  public_name = CRAM-MD5
+  server_secret = ${lookup{$auth1}lsearch{/etc/authpwd}\
+    {$value}fail}
+  server_set_id = $auth1</pre>
+</div>
+<p>Отметьте, что это раскрытие явно вызывает принудительную неудачу, если поиск неудачен, поскольку $auth1 содержит неизвестное имя пользователя.</p>
+</div>
+<div class="section" id="ch35-02">
+<span id="id2"></span><h2>Использование <strong>cram_md5</strong> как клиента<a class="headerlink" href="#ch35-02" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Когда аутентификатор <strong>cram_md5</strong> используется как клиент, он обладает двумя параметрами:</p>
+<table border="1" class="docutils" id="index-2">
+<colgroup>
+<col width="21%" />
+<col width="18%" />
+<col width="18%" />
+<col width="42%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>client_name</strong></td>
+<td>Use: cram_md5</td>
+<td>Type: string†</td>
+<td>Default: the primary host name</td>
+</tr>
+</tbody>
+</table>
+<p>Эта строка раскрывается, и результат используется как данные имени пользователя, при вычислении ответа на подсказку сервера.</p>
+<table border="1" class="docutils" id="index-3">
+<colgroup>
+<col width="30%" />
+<col width="23%" />
+<col width="23%" />
+<col width="25%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>client_secret</strong></td>
+<td>Use: cram_md5</td>
+<td>Type: string†</td>
+<td>Default: unset</td>
+</tr>
+</tbody>
+</table>
+<p>Этот параметр должен быть установлен, чтобы аутентификатор работал как клиент. Это значение раскрывается, и результат используется как секретная строка, когда вычисляется ответ.</p>
+<p>Для различных серверов могут использоваться различные имена пользователей и пароли, используя переменные $host и $host_address. Принудительная неудача любой раскрываемой строки обрабатывается как признак того, что этот аутентификатор не готов обработать этот случай. Exim двигается к следующему сконфигурированному клиентскому аутентификатору. Любые другие ошибки раскрытия заставляют Exim прекратить попытки отправить сообщение текущему серверу.</p>
+<p>Простая конфигурация аутентификатора <strong>cram_md5</strong>, использующая фиксированные строки, такова:</p>
+<div class="highlight-python"><pre>fixed_cram:
+  driver = cram_md5
+  public_name = CRAM-MD5
+  client_name = ph10
+  client_secret = secret</pre>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Содержание</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Аутентификатор <strong>cram_md5</strong></a><ul>
+<li><a class="reference internal" href="#ch35-01">Использование <strong>cram_md5</strong> как сервера</a></li>
+<li><a class="reference internal" href="#ch35-02">Использование <strong>cram_md5</strong> как клиента</a></li>
+</ul>
+</li>
+</ul>
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="ch34.html" title="предыдущая глава">Аутентификатор <strong>plaintext</strong></a></li>
+      <li>Next: <a href="ch36.html" title="следующая глава">Аутентификатор <strong>cyrus_sasl</strong></a></li>
+  </ul></li>
+</ul>
+  <h3>На этой странице</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/ch35.txt"
+           rel="nofollow">Показать исходный текст</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Быстрый поиск</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Искать" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Введите слова для поиска или имя модуля, класса или функции.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy; Copyright 2011, Exim Maintainers.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a>.
+    </div>
+  </body>
+</html>

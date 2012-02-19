@@ -1,0 +1,457 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Добавляем функцию local_scan() в Exim &mdash; Specification of the Exim Mail Transfer Agent 4.70 documentation</title>
+    
+    <link rel="stylesheet" href="_static/flasky.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '4.70',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/translations.js"></script>
+    <link rel="top" title="Specification of the Exim Mail Transfer Agent 4.70 documentation" href="index.html" />
+    <link rel="next" title="Системная фильтрация сообщений" href="ch43.html" />
+    <link rel="prev" title="Проверка контента во время выполнения ACL" href="ch41.html" />
+   
+  
+  <link media="only screen and (max-device-width: 480px)" href="_static/small_flask.css" type= "text/css" rel="stylesheet" />
+
+  </head>
+  <body>
+    <div class="related">
+      <h3>Просмотр</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="Словарь-указатель"
+             accesskey="I">словарь</a></li>
+        <li class="right" >
+          <a href="ch43.html" title="Системная фильтрация сообщений"
+             accesskey="N">следующий</a> |</li>
+        <li class="right" >
+          <a href="ch41.html" title="Проверка контента во время выполнения ACL"
+             accesskey="P">предыдущий</a> |</li>
+        <li><a href="index.html">Specification of the Exim Mail Transfer Agent 4.70 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="local-scan-exim">
+<span id="ch42-00"></span><h1>Добавляем функцию <em>local_scan()</em> в Exim<a class="headerlink" href="#local-scan-exim" title="Ссылка на этот заголовок">¶</a></h1>
+<p>В наши дни, когда количество email-червей, вирусов, спама постоянно увеличивается, некоторые сайты хотят увеличить количество проверок сообщений прежде чем примут их.</p>
+<p>Расширение для проверки контента сообщений (глава <a class="reference internal" href="ch41.html#ch41-00"><em>41</em></a>) имеет средство для передачи возможности проверки контента на спам и вирусы внешним программам. Вы также можете делать это непосредственно в Exim, через строки расширения и условия <strong>condition</strong> в ACL который запускается после команды SMTP DATA ли ACL для не-SMTP сообщений (см. главу <a class="reference internal" href="ch40.html#ch40-00"><em>40</em></a>), но здесь есть ограничения.</p>
+<p>Для поддержки дополнительных настроек в соответствии с требованиями сайта, можно собрать Exim со своей функцией проверки контента, написанной на C. Если вы хотите запустить код написанный на чем то другом, чем C, вы конечно же можете использовать C заглушки для вызова функции.</p>
+<p>Функция local scan запускается единожды для каждого входящего сообщения, в тот момент когда Exim собирается принять сообщение. Поэтому эта возможность может использоваться для локальных не-SMTP сообщений также, как и для сообщений пришедших по SMTP.</p>
+<p>Exim применяет таймаут к запросам функции local scan, параметр которая задает это, называется <strong>local_scan_timeout</strong>. По умолчанию параметр равен 5 минутам. Ноль обозначает «непрерывно». Exim так же настраивает обработчики сигналов для SIGSEGV, SIGILL, SIGFPE, и  SIGBUS перед вызовом функции local scan, для того что бы общие типы некорректного завершения были очевидны. Если время перерыва превышено или получен один из сигналов, входящее сообщение отклоняется с ошибкой по времени, если это SMTP сообщение. Для не-SMTP сообщений сообщение сбрасывается и Exim завершает работу с кодом ошибки. Происшествие отражается в main и reject логах.</p>
+<div class="section" id="exim-local-scan">
+<span id="ch42-01"></span><h2>Сборка Exim с использованием функции <em>local_scan()</em><a class="headerlink" href="#exim-local-scan" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Для использования функции local scan, вы должны указать указать местоположение Вашей функции перед сборкой Exim, установкой LOCAL_SCAN_SOURCE в файле <em>Local/Makefile</em>. Рекомендованное место хранения директория <em>Local</em>” поэтому можно установить</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">LOCAL_SCAN_SOURCE</span><span class="o">=</span><span class="n">Local</span><span class="o">/</span><span class="n">local_scan</span><span class="o">.</span><span class="n">c</span>
+</pre></div>
+</div>
+<p>для примера. Функция должна называться <em>local_scan()</em>. Она вызывается Exim&#8217;ом после получения сообщения, перед отправкой кода успешного выполнения. Это после всех запущенных ACL. Код возврата вашей функции контролирует принято ли сообщение или нет. Есть закоментированый шаблон функции (который принимает сообщение) в файле <em>src/local_scan.c_</em>.</p>
+<p>Если вы хотите использовать файл конфигурации Exim&#8217;а для установки параметров для вашей функции <em>local_scan()</em>, вы должны установить</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">LOCAL_SCAN_HAS_OPTIONS</span><span class="o">=</span><span class="n">yes</span>
+</pre></div>
+</div>
+<p>в файле <em>Local/Makefile</em> (смотрите раздел <a class="reference internal" href="#ch42-03"><em>42.3</em></a> ниже).</p>
+</div>
+<div class="section" id="api-local-scan">
+<span id="ch42-02"></span><h2>API для <em>local_scan()</em><a class="headerlink" href="#api-local-scan" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Вы должны включить эту строку в начале вашего кода:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="c">#include &quot;local_scan.h&quot;</span>
+</pre></div>
+</div>
+<p>Этот заголовочный файл определяет количество переменных, других значений и прототип самой функции. Exim написан для использования, практически исключительно, беззнаковых символов (unsigned char) и одна из вещей которую определяет заголовок – сокращение для беззнаковых символов, называемое  uschar. Он так же содержит следующие макро определения, для упрощения отбора символьных строк и указателей на символьные строки.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="c">#define CS   (char *)</span>
+<span class="c">#define CCS  (const char *)</span>
+<span class="c">#define CSS  (char **)</span>
+<span class="c">#define US   (unsigned char *)</span>
+<span class="c">#define CUS  (const unsigned char *)</span>
+<span class="c">#define USS  (unsigned char **)</span>
+</pre></div>
+</div>
+<p>Прототип функции <em>local_scan()</em> это:</p>
+<div class="highlight-python"><pre>extern int local_scan(int fd, uschar **return_text);</pre>
+</div>
+<p>Аргументы следующие:</p>
+<ul>
+<li><p class="first"><strong>fd</strong> – файловый дескриптор для файла который содержит тело сообщения (“-D” файл). Файл открыт для записи и чтения, но обновление не рекомендуется.</p>
+<div class="admonition warning">
+<p class="first admonition-title">Предупреждение</p>
+<p class="last">Вы не должны закрывать файловый дескриптор.</p>
+</div>
+<p>Дескриптор позиционируется на 19 символе в файле, в котором первый символ само тело, потому как первые 19 символов ID сообщения, следующий за ним -D и символ newline. Если вы переместитесь в начало файла, вы должны использовать макрос SPOOL_DATA_START_OFFSET для того что бы сбросить начало данных, чтобы не зависеть отт изменений в последующих версиях.</p>
+</li>
+<li><p class="first"><strong>return_text</strong> – адрес который вы можете использовать возвратив указатель на текстовую строку в конце функции. Значение на которое указывает при входе - NULL.</p>
+</li>
+</ul>
+<p>Функция должна возвратить значение <strong>int</strong>, которое является одним из следующих макросов:</p>
+<blockquote>
+<div><dl class="docutils">
+<dt><strong>LOCAL_SCAN_ACCEPT</strong></dt>
+<dd>Сообщение принято. Если вы пропустите назад строку текста, это сохранится с сообщением и будет доступно в переменной $local_scan_data. Никаких символов новых строк не поддерживается (если таковые присутствуют, они буду превращены в пробел) и максимальная длина текста 1000 символов.</dd>
+<dt><strong>LOCAL_SCAN_ACCEPT_FREEZE</strong></dt>
+<dd>Ведет себя так же как и LOCAL_SCAN_ACCEPT, за исключением того, что принятое сообщение становиться в очередь без незамедлительной доставки и замораживается.</dd>
+<dt><strong>LOCAL_SCAN_ACCEPT_QUEUE</strong></dt>
+<dd>Ведет себя так же как и LOCAL_SCAN_ACCEPT, за исключением того, что принятое сообщение становиться в очередь без незамедлительной доставки.</dd>
+<dt><strong>LOCAL_SCAN_REJECT</strong></dt>
+<dd>Сообщение отклонено; возвращаемый текст используется как ошибка, который отсылается обратно отправителю и которое протоколируется. Символы newlines поддерживаются, они разрешают многострочный ответ для SMTP отклонений, но конвертируются в “n” в логах. Если никакое сообщение не присвоено, используется “Administrative prohibition”.</dd>
+<dt><strong>LOCAL_SCAN_TEMPREJECT</strong></dt>
+<dd>Сообщение временно отклонено. Возвращаемый текст используется как сообщение об ошибке, так же как и LOCAL_SCAN_REJECT. Если никакое сообщение не присвоено используется “Temporary local problem”.</dd>
+<dt><strong>LOCAL_SCAN_REJECT_NOLOGHDR</strong></dt>
+<dd>Ведет себя так же как и LOCAL_SCAN_REJECT, за исключением того что заголовок отклоненного сообщения не записывается в лог отклонений. Эффект неустановленного “rejected_header” в выборе логов только для этого отклонения. Если <strong>rejected_header</strong> уже не установлен (см. обсуждение <strong>log_selection</strong> в разделе <a class="reference internal" href="ch49.html#ch49-15"><em>49.15</em></a>) код тот же самый что и у LOCAL_SCAN_REJECT.</dd>
+<dt><strong>LOCAL_SCAN_TEMPREJECT_NOLOGHDR</strong></dt>
+<dd>Этот код – такое же изменение LOCAL_SCAN_TEMPREJECT, как и LOCAL_SCAN_REJECT_NOLOGHDR изменение LOCAL_SCAN_REJECT.</dd>
+</dl>
+</div></blockquote>
+<p>Если сообщение не было получено интерактивно по SMTP, об отклонениях сообщается  записью в “stderr” или отправкой письма, как настроено параметрами <strong>-oe</strong> в командной строке.</p>
+</div>
+<div class="section" id="local-scan">
+<span id="ch42-03"></span><h2>Параметры конфигурации для <em>local_scan()</em><a class="headerlink" href="#local-scan" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Возможно использовать установку параметра, которая устанавливает значения в статических переменных, в модуле <em>local_scan()</em>. Если вы этого хотите, вы должны иметь строку</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">LOCAL_SCAN_HAS_OPTIONS</span><span class="o">=</span><span class="n">yes</span>
+</pre></div>
+</div>
+<p>в файле <em>Local/Makefile</em> когда вы собираете Exim. (Эта строка находится в <em>OS/Makefile-Default</em>, закомментированная). Затем в исходном файле <em>local_scan()</em> вы должны определить статические переменные, для хранения значений и таблицу, определяющую их.</p>
+<p>Таблица должна быть вектором называемым <strong>local_scan_options</strong>, типа “optionlist”. Каждая точка входа – тройное значение состоящее из имени, типа параметра, и указателя на переменную содержащую значение. Точки входа должны следовать в алфавитном порядке. Следуя за <strong>local_scan_options</strong>, вы должны так же определить значение переменной называемой <strong>local_scan_options_count</strong> содержащую количество входов в таблицу. Вот краткий пример, демонстрирующий два параметра:</p>
+<div class="highlight-python"><pre>static int my_integer_option = 42;
+static uschar *my_string_option = US"a default string";
+optionlist local_scan_options[] = {
+  { "my_integer", opt_int,       &amp;my_integer_option },
+  { "my_string",  opt_stringptr, &amp;my_string_option }
+};
+
+int local_scan_options_count =
+  sizeof(local_scan_options)/sizeof(optionlist);</pre>
+</div>
+<p>Значения переменных могут быть изменены Exim&#8217;ом из файла конфигурации включением секции local scan, так, как в этом примере:</p>
+<div class="highlight-python"><pre>begin local_scan
+my_integer = 99
+my_string = some string of text...</pre>
+</div>
+<p>Доступные типы данных следующие:</p>
+<blockquote>
+<div><dl class="docutils">
+<dt><strong>opt_bool</strong></dt>
+<dd>Определяет булев параметр (да/нет). Адрес должен указывать на переменную типа BOOL, которая устанавливается в TRUE или FALSE, которые являются макросами определенными как 1 и 0, соответственно. Если вы хотите определить была ли установлена такая переменная вообще, то вы можете вызвать ее как TRUE_UNSET. (Переменные BOOL – целочисленные, которые могут содержать более двух значений).</dd>
+<dt><strong>opt_fixed</strong></dt>
+<dd>Этот параметр определяет число с фиксированной точкой (целочисленное). Адрес должен указывать на переменную типа int. Хранимое значение умножается на 1000, так например, значение 1.4142 отрежется и сохранится как 1414.</dd>
+<dt><strong>opt_int</strong></dt>
+<dd>Этот параметр определяет целое число, адрес должен указывать на переменную типа int. Значение может быть определено в любом целочисленном формате, понимаемым Exim&#8217;ом.</dd>
+<dt><strong>opt_mkint</strong></dt>
+<dd>То же самое как <strong>opt_int</strong>, за исключением того, что значение выводится в <strong>-bP</strong> листинг, если в нем точное число килобайтов и мегабайтов, печатается с суффиксом K или M.</dd>
+<dt><strong>opt_octint</strong></dt>
+<dd>Параметр тоже определяет число, как целочисленное, только значение интерпретируется всегда как восьмиричное целочисленное. Начинается с цифры 0 и выводится в восьмиричном счислении.</dd>
+<dt><strong>opt_stringptr</strong></dt>
+<dd>Определяет значение строки, адрес должен быть указателем на переменную, которая указывает на строку (например, тип uschar *).</dd>
+<dt><strong>opt_time</strong></dt>
+<dd>Определяет интервал времени. Адрес должен указывать на переменную типа int. Значение которое туда записывается, число в секундах.</dd>
+</dl>
+</div></blockquote>
+<p>Если в командной строке за local_scan следует параметр <strong>-bP</strong>, Exim выводит значения всех параметров <em>local_scan()</em>.</p>
+</div>
+<div class="section" id="exim">
+<span id="ch42-04"></span><h2>Доступные переменные Exim<a class="headerlink" href="#exim" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Заголовок <em>local_scan.h</em> дает вам доступ к некоторым С переменным. Тут перечислены только те, которые, гарантировано, будут поддерживаться от релиза к релизу. Заметьте, как бы то ни было, вы можете получить любое значение переменной Exim, включая $recipients вызывая функцию <em>expand_string()</em>. Экспортируемые переменные “C” следующие:</p>
+<blockquote>
+<div><dl class="docutils">
+<dt><strong>int body_linecount</strong></dt>
+<dd>Эта переменная содержит число строк в теле сообщения.</dd>
+<dt><strong>int body_zerocount</strong></dt>
+<dd>Эта переменная содержит число бинарных нулей в теле сообщения.</dd>
+<dt><strong>unsigned int debug_selector</strong></dt>
+<dd><p class="first">Это переменная устанавливается в ноль, когда отладка не производится. Иначе – это набор значений отладочных селекторов. Два бита используются в функции  <em>local_scan()</em>; они определяются как макросы:</p>
+<ul class="simple">
+<li>D_v - бит установлен, когда <strong>-v</strong> присутствует в коммандной строке. Эта тестовый параметр не на что не влияет, любой вызов может установить его. Остальные биты могут установить только администраторы.</li>
+<li>D_local_scan – бит для использования функцией <em>local_scan()</em>; устанавливается в “+local_scan” отладочным селектором. По умолчанию не включается в набор отладочных битов по умолчанию.</li>
+</ul>
+<p>Таким образом, что бы получить отладочный вывод, только когда “+local_scan” включен, вам нужно написать следующее:</p>
+<div class="last highlight-python"><pre>if ((debug_selector &amp; D_local_scan) != 0)
+debug_printf("xxx", ...);</pre>
+</div>
+</dd>
+<dt><strong>uschar *expand_string_message</strong></dt>
+<dd>После неудачной попытки вызвать <em>expand_string()</em> (Возвращаемое значение NULL) переменная <strong>expand_string_message</strong> содержит сообщение об ошибке, завершается нулем.</dd>
+<dt><strong>header_line *header_list</strong></dt>
+<dd>Указатель на цепочку строк заголовка. Структура <strong>header_line</strong> обсуждается ниже.</dd>
+<dt><strong>header_line *header_last</strong></dt>
+<dd>Указатель на последнюю строку заголовка.</dd>
+<dt><strong>uschar *headers_charset</strong></dt>
+<dd>Значение параметра конфигурации “headers_charset”.</dd>
+<dt><strong>BOOL host_checking</strong></dt>
+<dd>Эта переменная TRUE в момент проверки хоста, инициализируемого параметром <strong>-bh</strong> командной строки.</dd>
+<dt><strong>uschar *interface_address</strong></dt>
+<dd>IP адрес интерфейса который получает сообщения, тип – строка. Значение NULL для локальных сообщений.</dd>
+<dt><strong>int interface_port</strong></dt>
+<dd>Порт, на котором было получено это сообщение. При тестировании с параметром командной строки <strong>-bh</strong>, значение этой переменной равно “-1”, кроме случая когда порт был определён через параметр <strong>-oMi</strong>.</dd>
+<dt><strong>uschar *message_id</strong></dt>
+<dd>Переменная содержащая идентификаторы сообщений Exim&#8217;а для входящих сообщений (значение $message_exim_id), заканчивающаяся нулем.</dd>
+<dt><strong>uschar *received_protocol</strong></dt>
+<dd>Имя протокола, по которому было получено сообщение.</dd>
+<dt><strong>int recipients_count</strong></dt>
+<dd>Число подтвержденных получателей.</dd>
+<dt><strong>recipient_item *recipients_list</strong></dt>
+<dd>Список подтвержденных получателей, хранящийся как вектор длины <strong>recipients_count</strong>. Структура <strong>recipient_item</strong> обсуждается ниже. Вы можете добавлять получателей вызывая, <em>receive_add_recipient()</em> (см. ниже). Вы можете удалять получателей, убирая их из вектора и исправляя значение в <strong>recipients_count</strong>. В частности, устанавливая <strong>recipients_count</strong> в ноль вы удаляете всех получателей. Если вы затем возвратите значение LOCAL_SCAN_ACCEPT, сообщение будет принято, но тут же исчезнет. Для замещения получателей вы можете установить <strong>recipients_count</strong> в ноль и затем вызвать <em>receive_add_recipient()</em> так часто как это необходимо.</dd>
+<dt><strong>uschar *sender_address</strong></dt>
+<dd>Адрес отправителя. Для отвергнутых сообщений это пустая строка.</dd>
+<dt><strong>uschar *sender_host_address</strong></dt>
+<dd>IP адрес хоста отправителя. Для локальных сообщений NULL.</dd>
+<dt><strong>uschar *sender_host_authenticated</strong></dt>
+<dd>Имя аутентификационного механизма, который был использован, или NULL если сообщение было получено не через SMTP соединение с аутентификацией.</dd>
+<dt><strong>uschar *sender_host_name</strong></dt>
+<dd>Имя хоста отправителя, если известно.</dd>
+<dt><strong>int sender_host_port</strong></dt>
+<dd>Порт хоста отправителя.</dd>
+<dt><strong>BOOL smtp_input</strong></dt>
+<dd>Переменная равна TRUE для всех входящих SMTP, включая BSMTP.</dd>
+<dt><strong>BOOL smtp_batched_input</strong></dt>
+<dd>Переменная равна TRUE для входящих BSMTP.</dd>
+<dt><strong>int store_pool</strong></dt>
+<dd>Содержимое этой переменной определяет какой пул памяти будет использоваться для новых запросов. (См. раздел <a class="reference internal" href="#ch42-08"><em>42.8</em></a> для более детальной информации).</dd>
+</dl>
+</div></blockquote>
+</div>
+<div class="section" id="header-line">
+<span id="ch42-05"></span><h2>Структура <strong>header_line</strong><a class="headerlink" href="#header-line" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Структура <strong>header_line</strong>, содержит элементы упомянутые ниже. Вы можете добавить дополнительные строки заголовка, вызывая функцию <em>header_add()</em> (см. ниже). Вы можете комментировать (удалять) линии заголовка, устанавливая их тип в “*”.</p>
+<blockquote>
+<div><dl class="docutils">
+<dt><strong>struct header_line *next</strong></dt>
+<dd>Указатель на следующую строку заголовка, или на NULL, для последней строки.</dd>
+<dt><strong>int type</strong></dt>
+<dd>Код идентифицирующий определенные заголовки, которые Exim распознает. Коды, печатные символы, документированные в главе <a class="reference internal" href="ch53.html#ch53-00"><em>53</em></a> этого руководства. Обратите внимание, любая строка заголовка тип которой - “*”, не передается с сообщением. Эта отметка используется для линий заголовка которые были перезаписаны, (например “Envelope-sender: header lines”). Зачастую, “*” означает “удалено”.</dd>
+<dt><strong>int slen</strong></dt>
+<dd>Число символов в строке заголовка, включая символы завершения и символы новой строки.</dd>
+<dt><strong>uschar *text</strong></dt>
+<dd>Указатель на текст заголовка. Всегда заканчивается символом новой строки, сопровождаемый нулевым байтом. Внутренние символы новой строки сохраняются.</dd>
+</dl>
+</div></blockquote>
+</div>
+<div class="section" id="recipient-item">
+<span id="ch42-06"></span><h2>Структура <strong>recipient_item</strong><a class="headerlink" href="#recipient-item" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Структура <strong>recipient_item</strong> содержит следующие элементы:</p>
+<blockquote>
+<div><dl class="docutils">
+<dt><strong>uschar *address</strong></dt>
+<dd>Указатель на адрес получателя, который был получен.</dd>
+<dt><strong>int pno</strong></dt>
+<dd>Используется Exim&#8217;ом позже в обработке, когда главные адреса созданы параметром <strong>one_time</strong>. Несущественна, в то время, когда <em>local_scan()</em> работает, и должен содержать всегда -1 на этом этапе.</dd>
+<dt><strong>uschar *errors_to</strong></dt>
+<dd>Если значение не NULL, отталкивет сообщение из-за невозможности доставки получателю по адресу который содержит. Другими словами отвергает отправителя конверта для одного адресата (Сравните с <strong>errors_to</strong> в общих параметрах маршрутизации). Если функция <em>local_scan()</em> устанавливает поле <strong>errors_to</strong> неквалифицированному адресу, Exim квалифицирует используя домен из <strong>qualify_recipient</strong>. Когда функция <em>local_scan()</em> вызвана, поле <strong>errors_to</strong> содержит NULL для всех адресатов.</dd>
+</dl>
+</div></blockquote>
+</div>
+<div class="section" id="ch42-07">
+<span id="id1"></span><h2>Доступные функции Exim<a class="headerlink" href="#ch42-07" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Заголовок <em>local_scan.h</em> дает вам доступ к некоторому числу функций Exim. Здесь представлены только те, которые гарантированно будут поддерживаться от версии к версии.</p>
+<blockquote>
+<div><dl class="docutils">
+<dt><strong>pid_t child_open(uschar **argv, uschar **envp, int newumask, int *infdptr, int *outfdptr,   BOOL make_leader)</strong></dt>
+<dd><p class="first">Эта функция создает дочерний процесс, который запускает команду определенную в <strong>argv</strong>. Окружение этого процесса определено в <strong>envp</strong>, который может быть NULL, если не передаются переменные окружения. Новое unmask служит для процесса в <strong>newumask</strong>.</p>
+<p>Пайпы стандартного ввода и вывода нового процесса уже настроены и возвращаются вызвавшему через аргументы <strong>infdptr</strong> и <strong>outfdptr</strong>. Стандартная ошибка клонируется в стандартный вывод. Если есть дескрипторы для файла «в пути» в новом процессе, то они закрываются. Если последний аргумент TRUE, новый процесс возглавляет группу процессов.</p>
+<p class="last">Функция возвращает pid нового процесса, или -1 если что то пошло не так.</p>
+</dd>
+<dt><strong>int child_close(pid_t pid, int timeout)</strong></dt>
+<dd><p class="first">Функция ждет, когда дочерний процесс завершится, или таймаут (в секундах). Значение таймаута установленное в 0, означает ждать столько, сколько потребуется. Возвращаемые значения следующие:</p>
+<ul class="last simple">
+<li>&gt;= 0 Завершение процесса корректно, возвращаемое значение это статус процесса.</li>
+<li>&lt; 0 and &gt; –256 Процесс завершен сигналом, и возвращаемое значение сигнал процесса со знаком минус.</li>
+<li>–256 Время процесса истекло.</li>
+<li>–257 Произошла какая-то другая ошибка в <em>wait()</em>; <strong>errno</strong> все еще установлен.</li>
+</ul>
+</dd>
+<dt><strong>pid_t child_open_exim(int *fd)</strong></dt>
+<dd><p class="first">Функция предоставляет Вам средства создания нового сообщения Exim. (Конечно вы можете всегда вызвать <em>/usr/sbin/sendmail</em> сами, если хотите, в этом пакете есть все для вас). Функция создает пайп, форки и подпроцесс который запускается</p>
+<div class="highlight-python"><pre>exim -t -oem -oi -f &lt;&gt;</pre>
+</div>
+<p>и возвращает (через аргумент int *) файловый дескриптор для пайпа который подключен к стандартному вводу. Конечный результат фукции - PID подпроцесса. Затем вы можете написать сообщение файловому дескриптору, с получателями в поле “To”, “Cc:” и/или “Bcc:” строками в заголовке.</p>
+<p class="last">Когда вы закончите, вызовите <em>child_close()</em>, подождите пока процесс завершится и получите его статус окончания. Таймаут со значением ноль обычно неплохо в этих обстоятельствах. До тех пор пока вы не сделаете ошибку в адресе получателя, вы должны получать код возврата 0.</p>
+</dd>
+<dt><strong>pid_t child_open_exim2(int *fd, uschar *sender, uschar *sender_authentication)</strong></dt>
+<dd><p class="first">Эта функция более сложная версия <em>child_open()</em>. Команда которая загружает ее:</p>
+<div class="highlight-python"><pre>exim -t -oem -oi -f sender -oMas sender_authentication</pre>
+</div>
+<p class="last">Третий аргумент может быть NULL, в этом случае параметр <strong>-oMas</strong> опущен.</p>
+</dd>
+<dt><strong>void debug_printf(char *, ...)</strong></dt>
+<dd><p class="first">Это отладочная функция Exim&#8217;а, с аргументами как для <em>printf()</em>. Вывод производится в поток стандартных ошибок. Если отладка не выбрана вызов <em>debug_printf()</em> не будет иметь эффекта. Обычно вы должны делать вызовы по состоянию селекторов local_scan написав это так:</p>
+<div class="last highlight-python"><pre>if ((debug_selector &amp; D_local_scan) != 0)
+  debug_printf("xxx", ...);</pre>
+</div>
+</dd>
+<dt><strong>uschar *expand_string(uschar *string)</strong></dt>
+<dd>Интерфейс для расширения строки Exim&#8217;а. Возвращаемое значение - расширяемая строка, или NULL, если расширение не произошло. Переменная C <strong>expand_string_message</strong> содержит сообщение об ошибке, после невозможности расширения. Если расширение не меняет строку, возвращаемое значение является указателем на строку ввода. В другом случае, возвращаемое значение указывает на новый блок памяти, который был получен вызовом <em>store_get()</em>. (см. раздел <a class="reference internal" href="#ch42-08"><em>42.8</em></a> ниже, где обсуждается выделение памяти).</dd>
+<dt><strong>void header_add(int type, char *format, ...)</strong></dt>
+<dd>Эта функция позволяет добавить дополнительную строку заголовка в конец уже существующей. Первый аргумент – тип, который обычно начинается пробелом. Второй аргумент форматированная строка, и любой номер заменяемых аргументов как для <em>sprintf()</em>. Вы можете включать внутренний символ новой строки и вы должны убедится, что строка заканчивается символом новой строки.</dd>
+<dt><strong>void header_add_at_position(BOOL after, uschar *name, BOOL topnot, int type, char *format,   ...)</strong></dt>
+<dd><p class="first">Функция добавляет новую строку заголовка в определенную точку в цепочке заголовков.  Сам заголовок определен как для <em>header_add()</em>.</p>
+<p>Если <strong>name</strong> NULL, новый заголовок добавляется в конец цепочки, при условии что <strong>after</strong> TRUE, или в начало, если <strong>after</strong> FALSE. Если <strong>name</strong> не NULL, строки заголовка ищутся до первого неудаленного заголовка, который совпадает с именем. Если что то найдено, новый заголовок добавляется до него, если значение <strong>after</strong> FALSE. Если <strong>after</strong> TRUE, добавляется новый заголовок после найденного заголовка и любых найденных последующих с таким же именем (даже если они отмечены как <strong>deleted</strong>). Если нет совпадений с non-deleted заголовком, то параметр <strong>topnot</strong> проверяет где был добавлен заголовок. Если он добавлялся – дополнение на верху, если нет то – внизу. Таким образом, что бы добавить заголовок после всех заголовков с полем “Received:” или в начало, если нет заголовков “Received:”, вы должны использовать:</p>
+<div class="highlight-python"><pre>header_add_at_position(TRUE, US"Received", TRUE,
+  ' ', "X-xxx: ...");</pre>
+</div>
+<p class="last">Обычно присутствует хотя бы один не удаленный заголовок “Received:”, но его может не оказаться если <strong>received_header_text</strong> расширяется пустой строкой.</p>
+</dd>
+<dt><strong>void header_remove(int occurrence, uschar *name)</strong></dt>
+<dd>Функция удаляет строки заголовка. Если <strong>occurrence</strong> равно нулю или отрицательное - заголовок удаляется.  Если <strong>occurrence</strong> больше нуля, удаляется часть заголовка. Если никаких совпадений не найдено, функция не делает ничего.</dd>
+<dt><strong>BOOL header_testname(header_line *hdr, uschar *name, int length, BOOL notdel)</strong></dt>
+<dd><p class="first">Функция проверяет имеет ли данный заголовок данное имя. Это не просто сравнение строк, потому что непоказываемый пробел допускается между именем и двоеточием. Если аргумент <strong>notdel</strong> TRUE, тогда возвращаемое FALSE применяется для всех <strong>deleted</strong> заголовков, иначе они не рассматриваются. Например:</p>
+<div class="last highlight-python"><pre>if (header_testname(h, US"X-Spam", 6, TRUE)) ...</pre>
+</div>
+</dd>
+<dt><strong>uschar *lss_b64encode(uschar *cleartext, int length)</strong></dt>
+<dd>Эта функция кодирует (base64) строку, которая передаётся по адресу и длине. Текст может содержать байты любого значения включая ноль. Результат возвращается в динамическую память которая динамически получается вызовом <em>store_get()</em>. Заканчивается нулем.</dd>
+<dt><strong>int lss_b64decode(uschar *codetext, uschar **cleartext)</strong></dt>
+<dd>Функция декодирования  base64 строки. Если аргумент заканчивающаяся нулем base64 строка, и адрес переменной который указывает на результат, находящийся в динамической памяти. Длина декодируемой строки получается после выполнения функции. Если вводимые данные неправильные, то результат -1. Нулевой байт добавляется в конце выводимой строки, для более простого ее определения, как С строки (предполагается что она не содержит собственных нулей). Добавляемый нулевой байт не считается.</dd>
+<dt><strong>int lss_match_domain(uschar *domain, uschar *list)</strong></dt>
+<dd><p class="first">Функция проверяет совпадения в доменном списке. Домены всегда выбираются бессистемно. Возвращемое значение одно из следующих:</p>
+<div class="highlight-python"><pre>OK      match succeeded
+FAIL    match failed
+DEFER   match deferred</pre>
+</div>
+<p class="last">DEFER обычно вызван каким либо поиском, таким как невозможность связаться с базой данных.</p>
+</dd>
+<dt><strong>int lss_match_local_part(uschar *localpart, uschar *list, BOOL caseless)</strong></dt>
+<dd>Функция проверяет совпадения в локальном списке. Третий аргумент контролирует чувствительность к регистру. Возвращаемое значение такое же как и для <em>lss_match_domain()</em>.</dd>
+<dt><strong>int lss_match_address(uschar *address, uschar *list, BOOL caseless)</strong></dt>
+<dd>Эта функция проверяет совпадения для списка адресов. Третий аргумент контролирует чувствительность к регистру. Домены всегда выбираются бессистемно. Возвращаемое значение такое же как и для <em>lss_match_domain()</em>.</dd>
+<dt><strong>int lss_match_host(uschar *host_name, uschar *host_address, uschar *list)</strong></dt>
+<dd><p class="first">Функция проверяет совпадения в списке хостов. Самое распространенное использование:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">lss_match_host</span><span class="p">(</span><span class="n">sender_host_name</span><span class="p">,</span> <span class="n">sender_host_address</span><span class="p">,</span> <span class="o">...</span><span class="p">)</span>
+</pre></div>
+</div>
+<p class="last">Пустое поле адреса, совпадает с пустым записью в списке хостов. Если имя хоста  NULL, соответствие названия $sender_host_address ищется автоматически, если название хоста должно совпадать с именем в списке. Возвращаемые значения такие же как и в <em>lss_match_domain()</em>, но в дополнении <em>lss_match_domain()</em> возвращает ERROR в случае, когда имя искалось и не нашлось.</p>
+</dd>
+<dt><strong>void log_write(unsigned int selector, int which, char *format, ...)</strong></dt>
+<dd>Эта функция записывает лог файлы Exim&#8217;а. Первый аргумент должен быть 0 (это связано с <strong>log_selector</strong>). Следующий аргумент должен быть LOG_MAIN или LOG_REJECT, или LOG_PANIC или любую их комбинацию (лог. “ИЛИ” (“OR”)). Это определяет в какой лог или логи будет записано сообщение. Оставшиеся аргументы – это формат и вставка. Строка не должна включать символов новой строки, даже в конце.</dd>
+<dt><strong>void receive_add_recipient(uschar *address, int pno)</strong></dt>
+<dd><p class="first">Эта функция добавляет дополнительного получателя к сообщению. Первый аргумент – это адрес получателя. Если адрес не квалифицирован (не имеет домена) он квалифицируется с <strong>qualify_recipient</strong> доменом. Второй аргумент должен быть всегда -1.</p>
+<p>Функция не позволяет вам определить частный <strong>errors_to</strong> адрес (как описано в структуре <strong>recipient_item</strong> выше) потому что это предшествует дополнению поля к структуре. Однако, в последствии легко добавить это значение. Например:</p>
+<div class="last highlight-python"><pre>receive_add_recipient(US"monitor@mydom.example", -1);
+recipients_list[recipients_count-1].errors_to =
+  US"postmaster@mydom.example";</pre>
+</div>
+</dd>
+<dt><strong>BOOL receive_remove_recipient(uschar *recipient)</strong></dt>
+<dd>Эта удобная функция для удаления названного получателя из списка получателей. Если возвращаемое значение TRUE получатель удален и FALSE если совпадающий получатель не найден. Аргумент должен быть полным e-mail адресом.</dd>
+<dt><strong>uschar rfc2047_decode(uschar *string, BOOL lencheck, uschar *target, int zeroval, int *lenptr,   uschar **error)</strong></dt>
+<dd><p class="first">Эта функция декодирует строку которая закодирована согласно <span class="target" id="index-0"></span><a class="rfc reference external" href="http://tools.ietf.org/html/rfc2047.html"><strong>RFC 2047</strong></a>. Обычно это содержимое файлов заголовка. Сперва, каждое “закодированное слово”  декодируется от Q или B кодировки в байтовую строку.  Затем, если представлено имя таблицы кодировки, и если <em>iconv()</em> функция доступна, предпринимается попытка перевести результаты к данной кодовой таблице. Если это сделать не удается, бинарная строка возвращает сообщение об ошибке.</p>
+<p>Первый аргумент – строка которая должна быть дешифрована. Если <strong>lencheck</strong> TRUE, устанавливается максимальная длина MIME слова. Третий агрумент – перекодированое слово, или NULL если перекодировка не удалась.</p>
+<p>Если бинарный ноль попадается в строке, то он заменяется в соответствии с содержимым аргумента <strong>zeroval</strong>. Для использования с заголовками Exim, значение должно быть не ноль, поскольку строки заголовков заканчиваются нулем.</p>
+<p>Функция возвращает результат обработки строки, заканчивающийся нулем; если <strong>lenptr</strong> не NULL, то длина обработки устанавливается в переменную на которую она указывает. Когда <strong>zeroval</strong> равен 0, <strong>lenptr</strong> не должен быть NULL.</p>
+<p class="last">Если возникла ошибка функция возвращает NULL и использует <strong>error</strong> аргумент для возврата сообщения об ошибке. Переменная указывающая на error устанавливается в NULL если не было ошибки; она может быть установлена в не NULL даже когда функция возвращает не NULL значение при удачной расшифровке, но есть проблемы с перекодировкой.</p>
+</dd>
+<dt><strong>int smtp_fflush(void)</strong></dt>
+<dd>Функция используется совместно с <em>smtp_printf()</em>, как описано ниже.</dd>
+<dt><strong>void smtp_printf(char *, ...)</strong></dt>
+<dd><p class="first">Аргументы такие же как и у <em>printf()</em>; она записывает в выходной поток SMTP. Вы должны использовать эту функцию только когда есть выходной SMTP поток, то есть тогда когда получается через SMTP входящее сообщение, в этом случае <strong>smtp_input</strong> TRUE, а <strong>smtp_batched_input</strong> FALSE. Если вам нужно протестировать  сообщение с другого хоста (в противоположность локальному процессу, который использует <strong>-bs</strong> параметр командной строки) вы можете проверить значение <strong>sender_host_address</strong> который не NULL если применяется удаленный хост.</p>
+<p>Если SMTP TLS соединение установлено <strong>smtp_printf()</strong> использует функцию вывода TLS, таким образом это может использоваться для всех SMTP соединений.</p>
+<p>Строки которые написаны <em>smtp_printf()</em>, внутри <em>local_scan()</em> должны начинаться с правильного кода ответа: 550 если вы собираетесь возвратить LOCAL_SCAN_REJECT, 451 если вы собираетесь возвратить LOCAL_SCAN_TEMPREJECT и 250 в остальных случаях. Поскольку вы пишите начальные строки многострочного сообщения, код может сопровождаться дефисом, что бы показать что это не последняя строчка в коде отклика. Вы должны так же убедиться что строки, которые вы пишите заканчиваются CRLF. Например:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">smtp_printf</span><span class="p">(</span><span class="s">&quot;550-this is some extra info</span><span class="se">\r\n</span><span class="s">&quot;</span><span class="p">);</span>
+<span class="k">return</span> <span class="n">LOCAL_SCAN_REJECT</span><span class="p">;</span>
+</pre></div>
+</div>
+<p>Учтите, что вы можете создать многострочный отклик включая символы новой строки в данные возвращаемые через аргумент <strong>return_text</strong>.</p>
+<p>Добавляемое значение использует <em>smtp_printf()</em> для того, что бы вы могли ввести задержки между многократным выводом.</p>
+<p class="last">Функция <em>smtp_printf()</em> не использует никакого возвращаемого сообщения об ошибке, потому что она не стирает автоматически идущий вывод и поэтому не проверяет состояние потока. (в главном коде Exim стирание и проверка ошибок отрабатываются когда Exim готов для следующего SMTP соединения). Если вы хотите удалить вывод и проверить ошибки (например, сбрасывая TCP/IP соединение) вы все еще сможете вызвать <em>smtp_fflush()</em>, у которой нет аргументов. Она стирает вывод и возвращает ненулевое значение, при возникновении ошибки.</p>
+</dd>
+<dt><strong>void *store_get(int)</strong></dt>
+<dd>Эта функция получает доступ к управлению внутренней памятью Exim. Она получает новую область памяти, чей размер задан аргументом. Exim завершается, если память исчерпана. Смотрите следующий раздел, где обсуждается выделение памяти.</dd>
+<dt><strong>void *store_get_perm(int)</strong></dt>
+<dd>Функция наподобии <em>store_get()</em>, но всегда получает память из постоянного пула. Смотрите следующий раздел, где обсуждается выделение памяти.</dd>
+<dt><strong>uschar *string_copy(uschar *string)</strong></dt>
+<dd>смотрите ниже</dd>
+<dt><strong>uschar *string_copyn(uschar *string, int length)</strong></dt>
+<dd>смотрите ниже</dd>
+<dt><strong>uschar *string_sprintf(char *format, ...)</strong></dt>
+<dd>Эти три функции создают строки используя средства динамической памяти Exim&#8217;а. Первая делает копию всей строки. Вторая копирует максимальное число символов, переданных во втором аргументе. Третья использует формат и вставку новой строки. В каждом случае результатом является указатель на новую строку в данном пуле памяти. Смотрите следующий раздел, где обсуждается выделение памяти.</dd>
+</dl>
+</div></blockquote>
+</div>
+<div class="section" id="ch42-08">
+<span id="id2"></span><h2>Больше об обработке памяти Exim&#8217;ом<a class="headerlink" href="#ch42-08" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Нет никакой функции для освобождения памяти, поскольку она не нужна. Динамическая память, которую использует Exim автоматически передается другому сообщению полученному этим же процессом (распространяется только на SMTP подключения – другие методы могут только доставить одно сообщение за раз). После получения последнего сообщения, процесс получения завершается.</p>
+<p>Поскольку память повторно используется, нормальная динамическая память не может быть использована для хранения данных, которые должны быть сохранены более чем число входящих сообщений на том же SMTP соединении. Однако, Exim на самом деле использует два пула динамической памяти, второй не передается и может использоваться для этих целей.</p>
+<p>Если вы хотите выделить память, которая останется доступной для последующих сообщений в том же SMTP соединении, вы должны установить</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">store_pool</span> <span class="o">=</span> <span class="n">POOL_PERM</span>
+</pre></div>
+</div>
+<p>прежде, чем вызовите функцию выделения памяти. Не нужно восстанавливать значение без необходимости; однако если вы хотите вернуться к нормальному пулу, вы можете восстановить прежнее значение <strong>store_pool</strong> или установить явным образом POOL_MAIN.</p>
+<p>Установка пула, применяется ко всем функциям, которые получают динамическую память, включая <em>expand_string()</em>, <em>store_get()</em>, и <em>string_xxx()</em> функции. Есть так же, удобная функция называемая <em>store_get_perm()</em> которая получает блоки памяти из постоянного пула, сохраняя значения <strong>store_pool</strong>.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Содержание</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Добавляем функцию <em>local_scan()</em> в Exim</a><ul>
+<li><a class="reference internal" href="#exim-local-scan">Сборка Exim с использованием функции <em>local_scan()</em></a></li>
+<li><a class="reference internal" href="#api-local-scan">API для <em>local_scan()</em></a></li>
+<li><a class="reference internal" href="#local-scan">Параметры конфигурации для <em>local_scan()</em></a></li>
+<li><a class="reference internal" href="#exim">Доступные переменные Exim</a></li>
+<li><a class="reference internal" href="#header-line">Структура <strong>header_line</strong></a></li>
+<li><a class="reference internal" href="#recipient-item">Структура <strong>recipient_item</strong></a></li>
+<li><a class="reference internal" href="#ch42-07">Доступные функции Exim</a></li>
+<li><a class="reference internal" href="#ch42-08">Больше об обработке памяти Exim&#8217;ом</a></li>
+</ul>
+</li>
+</ul>
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="ch41.html" title="предыдущая глава">Проверка контента во время выполнения ACL</a></li>
+      <li>Next: <a href="ch43.html" title="следующая глава">Системная фильтрация сообщений</a></li>
+  </ul></li>
+</ul>
+  <h3>На этой странице</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/ch42.txt"
+           rel="nofollow">Показать исходный текст</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Быстрый поиск</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Искать" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Введите слова для поиска или имя модуля, класса или функции.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy; Copyright 2011, Exim Maintainers.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a>.
+    </div>
+  </body>
+</html>

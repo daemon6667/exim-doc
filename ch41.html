@@ -1,0 +1,466 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Проверка контента во время выполнения ACL &mdash; Specification of the Exim Mail Transfer Agent 4.70 documentation</title>
+    
+    <link rel="stylesheet" href="_static/flasky.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '4.70',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/translations.js"></script>
+    <link rel="top" title="Specification of the Exim Mail Transfer Agent 4.70 documentation" href="index.html" />
+    <link rel="next" title="Добавляем функцию local_scan() в Exim" href="ch42.html" />
+    <link rel="prev" title="Списки Контроля Доступа" href="ch40.html" />
+   
+  
+  <link media="only screen and (max-device-width: 480px)" href="_static/small_flask.css" type= "text/css" rel="stylesheet" />
+
+  </head>
+  <body>
+    <div class="related">
+      <h3>Просмотр</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="Словарь-указатель"
+             accesskey="I">словарь</a></li>
+        <li class="right" >
+          <a href="ch42.html" title="Добавляем функцию local_scan() в Exim"
+             accesskey="N">следующий</a> |</li>
+        <li class="right" >
+          <a href="ch40.html" title="Списки Контроля Доступа"
+             accesskey="P">предыдущий</a> |</li>
+        <li><a href="index.html">Specification of the Exim Mail Transfer Agent 4.70 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="acl">
+<span id="ch41-00"></span><h1>Проверка контента во время выполнения ACL<a class="headerlink" href="#acl" title="Ссылка на этот заголовок">¶</a></h1>
+<p>Расширение Exim&#8217;a для включения проверки контента во время выполнения ACL, раньше известное как <em>exiscan</em>, изначально было реализовано как патч, Tom`ом Kistner`ом. Код был интегрирован в главный исходный код для 4.50 версии Exim&#8217;a, и Том продолжает его поддерживать. Большинство этой части взято из спецификации Тома.</p>
+<p>Также возможно проверять контент сообщений в другой момент времени. Функция <em>local_scan()</em> (смотрите главу <a class="reference internal" href="ch42.html#ch42-00"><em>42</em></a>) позволяет проверять контент после выполнения всех ACL. Транспортный фильтр может использоваться для проверки контента во время доставки (смотрите параметр <strong>transport_filter</strong>, описанный в главе <a class="reference internal" href="ch24.html#ch24-00"><em>24</em></a>).</p>
+<p>Если вы хотите включить возможность проверки контента во время выполнения ACL при сборке Exim&#8217;a, вам необходимо добавить WITH_CONTENT_SCAN в <em>Local/Makefile</em>. Когда вы это сделаете, исполняемый файл Exim&#8217;a cобирается с:</p>
+<ul class="simple">
+<li>Двумя дополнительными ACL (<strong>acl_smtp_mime</strong> и <strong>acl_not_smtp_mime</strong>), которые работают для всех частей MIME для SMTP и не-SMTP сообщений, соответственно.</li>
+<li>Дополнительные условия и модификаторы ACL: <strong>decode</strong>, <strong>malware</strong>, <strong>mime_regex</strong>, <strong>regex</strong> и <strong>spam</strong>. Они могут использоваться в ACL, которые запускаются в конце приёма сообщения (ACL <strong>acl_smtp_data</strong>).</li>
+<li>Дополнительные возможности управления (<strong>no_mbox_unspool</strong>), которые сохраняют копии помещённых в очередь сообщений, или частей сообщений, в целях отладки.</li>
+<li>Дополнительные переменные раскрытия, которые устанавливаются в новых ACL с новыми условиями.</li>
+<li>Два новых параметра главной конфигурации: <strong>av_scanner</strong> и <strong>spamd_address</strong>.</li>
+</ul>
+<p>Есть другой параметр проверки контента для <em>Local/Makefile</em>, называемая WITH_OLD_DEMIME. Если он установлен, компилируется старое, не рекомендуемое условие ACL <strong>demime</strong>, в дополнение ко всем другим возможностям проверки контента.</p>
+<p>Проверка контента непрерывно развивается, и продолжают добавляться новые возможности. В то время, когда такие возможности остаются нестабильными, и склонны к несовместимым изменениям, они делаются доступными в Exim&#8217;e после установки параметров в <em>Local/Makefile</em>, чьи имена начинаются с !EXPERIMENTAL_. Такие возможности не документированы в этом руководстве. Вы можете узнать о них прочтя файл с именем <em>doc/experimental.txt</em>.</p>
+<p>Все средства проверки контента работают с MBOX копией сообщения, временно создаваемой в файле с именем:</p>
+<div class="highlight-python"><pre>&lt;spool_directory&gt;/scan/&lt;message_id&gt;/&lt;message_id&gt;.eml</pre>
+</div>
+<p>Расширение <em>.eml</em> - дружелюбная подсказка вирусным сканерам, что они могут ожидать внутри файла структуру подобную MBOX. Файл создаётся при первом вызове средств проверки контента. Последующие вызовы условий проверки контента снова открывают тот же самый файл. Директория рекурсивно удаляется когда ACL <strong>acl_smtp_data</strong> завершает работу, если не установлен параметр:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">control</span> <span class="o">=</span> <span class="n">no_mbox_unspool</span>
+</pre></div>
+</div>
+<p>Когда ACL MIME декодирует файлы, они, по умолчанию, кладутся в тот же самый каталог.</p>
+<div class="section" id="ch41-01">
+<span id="id1"></span><h2>Проверка на вирусы<a class="headerlink" href="#ch41-01" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Условие ACL <strong>malware</strong> позволяет вам подключить программу вирусного сканера к Exim&#8217;y. Оно поддерживает “общий” (“generic”) интерфейс к сканерам, вызываемым через shell, и специализированные интерфейсы для вирусных сканеров типа “daemon”, которые постоянно находятся в памяти и, поэтому, значительно быстрее.</p>
+<p>Вы можете установить параметр <strong>av_scanner</strong> в первой части файла конфигурации Exim, для задания используемого сканера, вместе с любыми необходимыми дополнительными параметрами. Базовый синтаксис - следующий:</p>
+<div class="highlight-python"><pre>av_scanner = &lt;scanner-type&gt;:&lt;option1&gt;:&lt;option2&gt;:[...]</pre>
+</div>
+<p>Если вы не установите <strong>av_scanner</strong>, по умолчанию он будет:</p>
+<div class="highlight-python"><pre>av_scanner = sophie:/var/run/sophie</pre>
+</div>
+<p>Если значение <strong>av_scanner</strong> начинается с символа доллара, оно раскрывается до использования. В этой версии Exim поддерживаются следующие типы сканеров:</p>
+<blockquote>
+<div><dl class="docutils">
+<dt><strong>aveserver</strong></dt>
+<dd><p class="first">Это даемон сканера Касперского, 5-й версии. Вы можете получить временную версию по адресу <a class="reference external" href="http://www.kaspersky.com">http://www.kaspersky.com</a>. Этот тип сканера обладает одним параметром , которая является путём к UNIX-сокету даемона. Значение по умолчанию показано в этом примере:</p>
+<div class="last highlight-python"><pre>av_scanner = aveserver:/var/run/aveserver</pre>
+</div>
+</dd>
+<dt><strong>clamd</strong></dt>
+<dd><p class="first">Этот сканер типа даемона, выпускается по лицензии GPL и является свободным приложением. Вы можете получить его по следующему адресу <a class="reference external" href="http://www.clamav.net">http://www.clamav.net</a>. Некоторые старые версии Clamd не просматривали запакованные контейнеры MIME, таким образом, для использовавших его было рекомендовано распаковывать вложения MIME в ACL MIME. Больше нет такой необходимости. Требуется один параметр: или путь с именем файла UNIX-сокета, или имя хоста (или его IP-адрес), и портом, отделённым пробелом, как во втором из этих примеров:</p>
+<div class="last highlight-python"><pre>av_scanner = clamd:/opt/clamd/socket
+av_scanner = clamd:192.168.2.100 1234</pre>
+</div>
+</dd>
+<dt><strong>cmdline</strong></dt>
+<dd><p class="first">Это ключевое слово - общий интерфейс командной строки сканера. Она может использоваться для для добавления вирусного сканера, который вызывается из shell. Этот тип сканера принимает три обязательных параметра:</p>
+<ol class="arabic simple">
+<li>Полное имя и путь к исполняемому файлу сканера, со всеми параметрами командной строки, и подстановку (“%s”) для директории которая сканируется.</li>
+<li>Регулярное выражение для сравнения с выводом STDOUT и STDERR вирусного сканера. Если выражение совпадает, найден вирус. Вы должны должны быть абсолютно уверены, что это выражение совпадает с “найден вирус”. Его называют “триггерным” (“trigger”) выражением.</li>
+<li>Иное регулярное выражение, содержащее точную пару круглых скобок, для соответствия имени найденного вируса в выводе сканера. Его называют “именным” (“name”) выражением.</li>
+</ol>
+<p>Например, Sophos Sweep сообщает о вирусе в строке типа такой:</p>
+<div class="highlight-python"><pre>Virus 'W32/Magistr-B' found in file ./those.bat</pre>
+</div>
+<p>Для триггерного выражения, мы можем использовать совпадение с фразой “found in file”. Для именного выражения, мы хотим извлечь строку “W32/Magistr-B”, таким образом, мы можем установить соответствие для одиночных кавычек - левой и правой. В целом, создаётся такая настройка конфигурации:</p>
+<div class="last highlight-python"><pre>av_scanner = cmdline:\
+             /path/to/sweep -ss -all -rec -archive %s:\
+             found in file:'(.+)'</pre>
+</div>
+</dd>
+<dt><strong>drweb</strong></dt>
+<dd><p class="first">Интерфейс даемона сканера DrWeb (<a class="reference external" href="http://www.sald.com">http://www.sald.com</a>), получает один параметр, или полный путь к UNIX-сокету, или IP-адрес и порт, разделённые пробелом, как в этом примере:</p>
+<div class="highlight-python"><pre>av_scanner = drweb:/var/run/drwebd.sock
+av_scanner = drweb:192.168.2.20 31337</pre>
+</div>
+<p class="last">Если вы опускаете этот параметр, используется путь по умолчанию - <em>/usr/local/drweb/run/drwebd.sock</em>. Спасибо Alex Miller, за внесение кода для этого сканера.</p>
+</dd>
+<dt><strong>fsecure</strong></dt>
+<dd><p class="first">Интерфейс даемона сканера F-Secure (<a class="reference external" href="http://www.f-secure.com">http://www.f-secure.com</a>) принимает один аргумент, который является путём к UNIX-сокету. Например:</p>
+<div class="highlight-python"><pre>av_scanner = fsecure:/path/to/.fsav</pre>
+</div>
+<p class="last">Если аргументов не задано, то значение по умолчанию - <em>/var/run/.fsav</em>. Спасибо Johan Thelmen, за внесение кода для этого сканера.</p>
+</dd>
+<dt><strong>kavdaemon</strong></dt>
+<dd><p class="first">Это - сканирующий даемон Касперского 4-й версии. Эта версия сканера Касперского является устаревшей. Пожалуйста, обновитесь (смотрите выше параметр <strong>aveserver</strong>). Этот тип сканера принимает один параметр, который является путём к UNIX-сокету даемона. Например:</p>
+<div class="highlight-python"><pre>av_scanner = kavdaemon:/opt/AVP/AvpCtl</pre>
+</div>
+<p class="last">Путь по умолчанию - <em>/var/run/AvpCtl</em>.</p>
+</dd>
+<dt><strong>mksd</strong></dt>
+<dd><p class="first">Этот сканер нацелен главным образом на польских пользователей, хотя, сейчас, некоторые части документации доступны на английском. Вы можете получить ее на <a class="reference external" href="http://linux.mks.com.pl">http://linux.mks.com.pl</a>. Единственный параметр этого сканера - максимальное число одновременно используемых процессов для сканирования вложений, при условии что используется средство demime, и при условии, что mksd был запущен с тем же самым числом дочерних процессов. Например:</p>
+<div class="highlight-python"><pre>av_scanner = mksd:2</pre>
+</div>
+<p class="last">Вы можете спокойно пропустить этот параметр (т.к. значение по умолчанию 1).</p>
+</dd>
+<dt><strong>sophie</strong></dt>
+<dd><p class="first">Sophie - даемон использующий библиотеку Sophos’ libsavi для сканирования на вирусы. Вы можете получить его по адресу <a class="reference external" href="http://www.clanfield.info/sophie/">http://www.clanfield.info/sophie/</a>. Для этого типа сканера есть лишь один параметр - путь к UNIX-сокету, который Sophie используется для связи с клиентом. Например:</p>
+<div class="highlight-python"><pre>av_scanner = sophie:/tmp/sophie</pre>
+</div>
+<p class="last">Путь по умолчанию - <em>/var/run/sophie</em>, так что если вы используете его, то можете опустить этот параметр.</p>
+</dd>
+</dl>
+</div></blockquote>
+<p>Когда <strong>av_scanner</strong> корректно установлен, вы можете использовать условие <strong>malware</strong> в DATA ACL.</p>
+<div class="admonition note">
+<p class="first admonition-title">Примечание</p>
+<p class="last">Вы не можете использовать условие <strong>malware</strong> в MIME ACL.</p>
+</div>
+<p>Параметр <strong>av_scanner</strong> раскрывается при каждом вызове <strong>malware</strong>. Это позволяет использовать различные сканеры. Смотрите ниже примеры использования. Условие <strong>malware</strong> кэширует свои результаты, таким образом, вы можете использовать его неоднократно для одного и того же сообщения, фактически, процесс сканирования выполняется лишь один раз. Однако, использование раскрываемых элементов в <strong>av_scanner</strong> отключает кэширование, и каждое использование условия <strong>malware</strong> вызывает новое сканирование сообщения.</p>
+<p>Условие <strong>malware</strong> берёт правый параметр, который раскрывается до использования. Он может быть одним из:</p>
+<ul class="simple">
+<li>“true”, “*”, или “1”, в случае чего сообщение сканируется на вирусы. Условие успешно, если найден вирус, или неудачно в ином случае. Это - рекомендуемое применение.</li>
+<li>“false” или “0” или пустая строка, в случае чего сканирования не происходит и условие немедленно неудачно.</li>
+<li>Регулярное выражение, в случае чего сообщение сканируется на вирусы. Условие успешно если найден вирус, и его имя совпадает с регулярным выражением. Это позволяет вам предпринимать специальные действия для определённых типов вирусов.</li>
+</ul>
+<p>Вы можете добавить <tt class="docutils literal"><span class="pre">/defer_ok</span></tt> к условию <strong>malware</strong> чтобы принимать сообщения даже если какие-то проблемы с вирусным сканером. В противном случае, такая проблема вызывает задержку ACL.</p>
+<p>Когда вирус найден, условие устанавливает переменную раскрытия с именем $malware_name, которая содержит имя вируса. Вы можете использовать её в модификаторе <strong>message</strong>, который определяет ошибку, возвращаемую отправителю, и/или записываемые в лог данные.</p>
+<p>Если ваш вирусный сканер не может самостоятельно распаковать MIME и TNEF контейнеры, вы должны использовать условие <strong>demime</strong> (смотрите раздел <a class="reference internal" href="#ch41-06"><em>41.6</em></a>) до условия <strong>malware</strong>.</p>
+<p>Вот - очень простой пример сканирования:</p>
+<div class="highlight-python"><pre>deny message = This message contains malware ($malware_name)
+     demime = *
+     malware = *</pre>
+</div>
+<p>Следующий пример принимает сообщения когда у сканера проблемы:</p>
+<div class="highlight-python"><pre>deny message = This message contains malware ($malware_name)
+     demime = *
+     malware = */defer_ok</pre>
+</div>
+<p>Следующий пример показывает как использовать переменную ACL для сканирования обоими - sophie и aveserver. Он предполагает, что вы установили:</p>
+<div class="highlight-python"><pre>av_scanner = $acl_m0</pre>
+</div>
+<p>в главной конфигурации Exim&#8217;a</p>
+<div class="highlight-python"><pre>deny message = This message contains malware ($malware_name)
+     set acl_m0 = sophie
+     malware = *
+
+
+deny message = This message contains malware ($malware_name)
+     set acl_m0 = aveserver
+     malware = *</pre>
+</div>
+</div>
+<div class="section" id="spamassassin">
+<span id="ch41-02"></span><h2>Проверка с помощью SpamAssassin<a class="headerlink" href="#spamassassin" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Условие ACL <strong>spam</strong> вызывает даемона <em>spamd</em> SpamAssassin’а для получения очков за спам и отчёта для сообщения. Вы можете получить SpamAssassin по адресу <a class="reference external" href="http://www.spamassassin.org">http://www.spamassassin.org</a>, или, если у вас есть рабочая инсталляция Perl, вы можете использовать CPAN, путём запуска:</p>
+<div class="highlight-python"><pre>perl -MCPAN -e 'install Mail::SpamAssassin'</pre>
+</div>
+<p>SpamAssassin обладает собственным набором конфигурационных файлов. Пожалуйста, посмотрите его документацию, чтобы узнать, как вы можете его настроить. Однако, и инсталляция по умолчанию работает хорошо.</p>
+<p>Установив и настроив SpamAssassin, запустите даемон <em>spamd</em>. По умолчанию, он слушает 127.0.0.1, TCP порт 783. Если вы используете иной хост или порт для <em>spamd</em>, вы должны установить параметр <strong>spamd_address</strong> в глобальной части конфигурации Exim&#8217;a, следующим образом (например):</p>
+<div class="highlight-python"><pre>spamd_address = 192.168.99.45 387</pre>
+</div>
+<p>Вам нет нужды устанавливать этот параметр, если вы используете значение по умолчанию. Для версии 2.60, <em>spamd</em> также поддерживает коммуникацию через UNIX-сокеты. Если вы хотите их использовать, установите <strong>spamd_address</strong> в абсолютный путь до сокета, вместо пары адрес/порт:</p>
+<div class="highlight-python"><pre>spamd_address = /var/run/spamd_socket</pre>
+</div>
+<p>У вас может быть несколько серверов <em>spamd</em>, для улучшения масштабируемости. Они могут находиться на других железках, доступных по сети. Для задания нескольких серверов <em>spamd</em>, установите в параметр <strong>spamd_address</strong> несколько пар адрес/порт, разделённых двоеточиями:</p>
+<div class="highlight-python"><pre>spamd_address = 192.168.2.10 783 : \
+                192.168.2.11 783 : \
+                192.168.2.12 783</pre>
+</div>
+<p>Поддерживается вплоть до 32 серверов <em>spamd</em>. Сервера запрашиваются случайным образом. Когда сервер не в состоянии ответить на попытку подключения, пробуются все другие сервера, пока какой-либо не будет успешным. Если ни один сервер не ответил, условие <em>spamd</em> задерживается.</p>
+<div class="admonition warning">
+<p class="first admonition-title">Предупреждение</p>
+<p class="last">Невозможно использовать соединение через UNIX-сокет с несколькими серверами <em>spamd</em>.</p>
+</div>
+<p>Переменная <strong>spamd_address</strong> раскрывается до её использования, если она начинается с символа доллара. В этом случае, раскрытие может вернуть строку которая используется как список, таким образом, результатом раскрытия может быть несколько серверов <em>spamd</em>.</p>
+</div>
+<div class="section" id="spamassassin-acl-exim-a">
+<span id="ch41-03"></span><h2>Вызов SpamAssassin из ACL Exim&#8217;a<a class="headerlink" href="#spamassassin-acl-exim-a" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Вот - простой пример использования условия <strong>spam</strong> в DATA ACL:</p>
+<div class="highlight-python"><pre>deny message = This message was classified as SPAM
+     spam = joe</pre>
+</div>
+<p>Правая сторона условия <strong>spam</strong> определяет имя пользователя. Актуально если у вас настроены несколько профилей SpamAssasin. Если вы не хотите проверять с использованием конкретного профиля, а хотите использовать профиль SpamAssassin как профиль системы по умолчанию, вы можете проверять для неизвестного пользователя, или просто использовать <strong>nobody</strong>. Однако, вы должны поместить что-то в правую строну.</p>
+<p>Имя позволяет вам использовать антиспамовый профили на домен, или на пользователя, но, на практике это не просто, поскольку сообщение может иметь нескольких получателей, не обязательно всех в одном домене. Поскольку условие <strong>spam</strong> должно быть вызвано из ACL DATA, чтобы оно могло прочесть содержимое сообщения, переменные $local_part и $domain не установлены.</p>
+<p>Правая сторона раскрывается до использования, таким образом, в неё вы можете поместить поиск или условие. Когда правая сторона вычисляется в “0” или “false”, проверка не происходит, и условие немедленно неуспешно.</p>
+<p>Проверка с помощью SpamAssassin использует много ресурсов. Если вы проверяете каждое сообщение, большие сообщения могут вызывать существенное ухудшение производительности. Поскольку, большинство спама - маленькие сообщения, рекомендуется, чтобы вы не просматривали большие сообщения. Например:</p>
+<div class="highlight-python"><pre>deny message = This message was classified as SPAM
+     condition = ${if &lt; {$message_size}{10K}}
+     spam = nobody</pre>
+</div>
+<p>Условие <strong>spam</strong> возвращает истину, если пороговое значение, указанное в SpamAssassin профиле пользователя, соответствует или превышает. Если вы хотите использовать условие <strong>spam</strong> для его сторонних эффектов (смотрите ниже, переменные), вы можете заставить его всегда возвращать “true”, путём добавления к имени пользователя <tt class="docutils literal"><span class="pre">:true</span></tt>.</p>
+<p>Когда выполняется условие <strong>spam</strong>, оно устанавливает множество переменных раскрытия. Они доступны лишь внутри ACL; их значения не сохраняются с сообщением, и, таким образом, не могут быть использованы во время доставки.</p>
+<blockquote>
+<div><dl class="docutils">
+<dt><strong>$spam_score</strong></dt>
+<dd>Счётчик очков за спам, например, “3.4” или “30.5”. Он полезен для включения в логи или сообщение о отклонении.</dd>
+<dt><strong>$spam_score_int</strong></dt>
+<dd>Счётчик очков за спам, умноженный на 10, как значение целого числа. Например, “34” или “305”. Он может неравен $spam_score, поскольку $spam_score - округлена, а $spam_score_int - усечена. Целое значение полезно для цифровых сравнений в условиях. Это - специальная переменная; её значение сохраняется с сообщением, и пишется в файл спула Exim&#8217;a. Это означает, что оно может быть использовано в течение всей жизни сообщения в вашей системе Exim&#8217;a, в частности, маршрутизаторах или транспортах, в последующую фазу доставки.</dd>
+<dt><strong>$spam_bar</strong></dt>
+<dd>Строка содержит несколько символов “+” или “-”, изображая числовую часть значения счётчика спама. Счётчик спама 4.4 имел бы значение $spam_bar равное “++++”. Это полезно для включения в предупреждающие заголовки, т.к. MUA могут сравнивать такие заголовки.</dd>
+<dt><strong>$spam_report</strong></dt>
+<dd>Многострочная текстовая таблица, содержащая полный отчёт SpamAssassin для сообщения. Полезна для включения в заголовки, или сообщение о отклонении.</dd>
+</dl>
+</div></blockquote>
+<p>Условие <strong>spam</strong> кэширует свои результаты за исключением использования раскрытия в <strong>spamd_address</strong>. Если вы вызываете его для того же самого имени пользователя, он не сканирует заново, а снова возвращает те же самые значения.</p>
+<p>Условие <strong>spam</strong> возвращает DEFER, если при обработке сообщения SpamAssassin&#8217;ом происходит какая-то ошибка, или неудачного раскрытия <strong>spamd_address</strong>. Если вы хотите обработать DEFER как FAIL (для перехода к следующему блоку утверждений ACL), добавьте <tt class="docutils literal"><span class="pre">/defer_ok</span></tt> к правой стороне условия <strong>spam</strong>, например так:</p>
+<div class="highlight-python"><pre>deny message = This message was classified as SPAM
+     spam    = joe/defer_ok</pre>
+</div>
+<p>Это вызывает приём сообщения, даже если существуют проблемы со <em>spamd</em>.</p>
+<p>Вот - более длинный, прокомментированный пример использования условия <strong>spam</strong>:</p>
+<div class="highlight-python"><pre># put headers in all messages (no matter if spam or not)
+warn  spam = nobody:true
+      add_header = X-Spam-Score: $spam_score ($spam_bar)
+      add_header = X-Spam-Report: $spam_report
+
+# add second subject line with *SPAM* marker when message
+# is over threshold
+warn  spam = nobody
+      add_header = Subject: *SPAM* $h_Subject:
+
+# reject spam at high scores (&gt; 12)
+deny  message = This message scored $spam_score spam points.
+      spam = nobody:true
+      condition = ${if &gt;{$spam_score_int}{120}{1}{0}}</pre>
+</div>
+</div>
+<div class="section" id="mime">
+<span id="ch41-04"></span><h2>Проверка частей MIME<a class="headerlink" href="#mime" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Глобальный параметр <strong>acl_smtp_mime</strong> определяет ACL которая вызывается для каждой MIME части SMTP сообщения, включая типы состоящие из нескольких частей (multipart), в последовательности их позиций в сообщении. Точно также, параметр <strong>acl_not_smtp_mime</strong> определяет ACL, которая используется для MIME частей не-SMTP сообщений. Эти параметры могут обе относиться к одной и той же ACL если вы хотите одну и ту же обработку в обоих случаях.</p>
+<p>Эти ACL вызываются (возможно, несколько раз) лишь до ACL <strong>acl_smtp_data</strong>, в случае сообщения SMTP, или лишь до приёма не-SMTP сообщений, или, просто до ACL <strong>acl_not_smtp</strong>, в случае не-SMTP сообщения. Однако, MIME ACL вызывается лишь если сообщение содержит строку заголовка “MIME-Version:”. Когда вызов MIME ACL не приводит к <strong>accept</strong>, обработка ACL прерывается, и клиенту посылается соответствующий код результата. В случае SMTP-сообщения, ACL <strong>acl_smtp_data</strong> не вызывается когда это происходит.</p>
+<p>Вы не можете использовать условия <strong>malware</strong> или <strong>spam</strong> в MIME ACL; они могут использоваться лишь в DATA или не-SMTP ACL. Однако, вы можете использовать условие <strong>mime_regex</strong> для сравнения с декодированной MIME-частью (смотрите раздел <a class="reference internal" href="#ch41-05"><em>41.5</em></a>).</p>
+<p>В начале MIME ACL, множество переменных устанавливаются из информации заголовков для релевантной части MIME. Это описано ниже. По умолчанию, содержимое части MIME не декодируется в файл на диске, исключая части MIME чей тип содержимого - <em>message/rfc822</em>. Если вы хотите декодировать часть MIME в файл на диске, вы можете использовать условие <strong>decode</strong>. Общий синтаксис таков:</p>
+<div class="highlight-python"><pre>decode = [/&lt;path&gt;/]&lt;filename&gt;</pre>
+</div>
+<p>Правая сторона раскрывается до использования. После раскрытия значение может быть:</p>
+<ol class="arabic simple">
+<li>“0” или “false”, в случае чего декодирования не происходит.</li>
+<li>Строка “default”. В этом случае, файл кладётся во временную “по умолчанию” директорию <em>&lt;spool_directory&gt;/scan/&lt;message_id&gt;/</em> с последующим именем файла, состоящим из идентификатора сообщения и последующего номера. Полный путь и имя доступны в $mime_decoded_filename после декодирования.</li>
+<li>Полный путь с именем начинается со слэша. Если полное имя - существующая директория, она используется как замена для директории по умолчанию. Имя файла добавляется последовательно. Если путь не существует; он используется как полный путь и имя файла.</li>
+<li>Если строка не начинается со слэша, она используется как имя файла, и используется путь по умолчанию.</li>
+</ol>
+<p>Условие <strong>decode</strong>, обычно, успешно. Оно ложно лишь для синтаксических ошибок или в необычных обстоятельствах, типа нехватки памяти. Вы можете легко расшифровать с его оригинальным, предполагаемым именем, используя</p>
+<div class="highlight-python"><pre>decode = $mime_filename</pre>
+</div>
+<p>Однако, вы должны иметь ввиду, что $mime_filename может содержать что угодно. Если вы помещаете файлы вне пути по умолчанию, они не удаляются автоматически.</p>
+<p>Для вложений <span class="target" id="index-0"></span><a class="rfc reference external" href="http://tools.ietf.org/html/rfc822.html"><strong>RFC 822</strong></a> (сообщений вложенных в сообщения, с типом содержимого <em>message/rfc822</em>), ACL вызывается снова, таким же самым образом как для первичного сообщения, лишь если установлена переменная раскрытия $mime_is_rfc822 (смотрите ниже). Приложенные сообщения всегда декодируются на диск до проверки, и файлы удаляются после завершения проверки.</p>
+<p>ACL MIME поддерживает условия <strong>regex</strong> и <strong>mime_regex</strong>. Они могут использоваться для сравнения регулярного выражения с сырыми и декодированными частями MIME, соответственно. Они описаны в разделе <a class="reference internal" href="#ch41-05"><em>41.5</em></a>.</p>
+<p>Следующий список описывает все переменные раскрытия, которые доступны в ACL MIME:</p>
+<blockquote>
+<div><dl class="docutils">
+<dt><strong>$mime_boundary</strong></dt>
+<dd>Если текущая часть - multipart (смотрите ниже, $mime_is_multipart), она должна иметь граничную строку, которая сохраняется, если доступна. Если текущая часть не имеет граничного параметра в заголовке “Content-Type:”, эта переменная содержит пустую строку.</dd>
+<dt><strong>$mime_charset</strong></dt>
+<dd><p class="first">Эта переменная содержит идентификатор набора символов (кодировки), если он найден в заголовке “Content-Type:”. Примеры идентификаторов наборов символов:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">us</span><span class="o">-</span><span class="n">ascii</span>
+<span class="n">gb2312</span> <span class="p">(</span><span class="n">Chinese</span><span class="p">)</span>
+<span class="n">iso</span><span class="o">-</span><span class="mi">8859</span><span class="o">-</span><span class="mi">1</span>
+</pre></div>
+</div>
+<p class="last">Пожалуйста, отметьте, что это значение не нормализовано, таким образом, вы должны его сравнивать регистронезависимо.</p>
+</dd>
+<dt><strong>$mime_content_description</strong></dt>
+<dd>Эта переменная содержит нормализованное содержимое заголовка “Content-Description:”. Он может содержать удобочитаемое описание части содержимого. Некоторые реализации повторяют тут имя вложенного файла, но, обычно они лишь используются для целей отображения.</dd>
+<dt><strong>$mime_content_disposition</strong></dt>
+<dd>Эта переменная содержит нормализованное содержимое заголовка “Content-Disposition:”. Тут вы можете ожидать строку типа “attachment” или “inline”.</dd>
+<dt><strong>$mime_content_id</strong></dt>
+<dd>Эта переменная содержит нормализованное содержимое заголовка “Content-ID:”. Это уникальный идентификатор который может использоваться для ссылки на часть от другой части.</dd>
+<dt><strong>$mime_content_size</strong></dt>
+<dd>Эта переменная устанавливается лишь после успешного выполнения модификатора <strong>decode</strong> (смотрите выше). Она содержит размер декодированной части в килобайтах, таким образом, лишь полностью пустые части имеют нулевой $mime_content_size.</dd>
+<dt><strong>$mime_content_transfer_encoding</strong></dt>
+<dd>Эта переменная содержит нормализованное содержимое заголовка “Content-transfer-encoding:”. Это - символическое имя для типа кодировки. Типичное значение - “base64” и “quoted-printable”.</dd>
+<dt><strong>$mime_content_type</strong></dt>
+<dd><p class="first">Если у части MIME есть заголовок “Content-Type:”, эта переменная содержит его значение, в нижнем регистре, и без любых аргументов (типа “name” и “charset”). Вот - некоторые примеры популярных типов MIME, как они могут появляться в этой переменной:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">text</span><span class="o">/</span><span class="n">plain</span>
+<span class="n">text</span><span class="o">/</span><span class="n">html</span>
+<span class="n">application</span><span class="o">/</span><span class="n">octet</span><span class="o">-</span><span class="n">stream</span>
+<span class="n">image</span><span class="o">/</span><span class="n">jpeg</span>
+<span class="n">audio</span><span class="o">/</span><span class="n">midi</span>
+</pre></div>
+</div>
+<p class="last">Если часть MIME не имеет заголовка “Content-Type:”, эта переменная содержит пустую строку.</p>
+</dd>
+<dt><strong>$mime_decoded_filename</strong></dt>
+<dd>Эта переменная устанавливается лишь после успешной работы модификатора <strong>decode</strong> (смотрите выше). Его содержимое содержит полный путь и имя файла содержащего декодированные данные.</dd>
+<dt><strong>$mime_filename</strong></dt>
+<dd>Это - возможно самая важная из переменных MIME. Она содержит предложенное имя файла вложения, если оно было найдено в одном из заголовков - “Content-Type:” или “Content-Disposition:”. Имя файла декодируется по <span class="target" id="index-1"></span><a class="rfc reference external" href="http://tools.ietf.org/html/rfc2047.html"><strong>RFC 2047</strong></a>, но никаких дополнительных проверок на адекватность не производится. Если имя файла не найдено, эта переменная содержит пустую строку.</dd>
+<dt><strong>$mime_is_coverletter</strong></dt>
+<dd><p class="first">Эта переменная пытается различить “конверт письма” (“cover letter”) от приложенных данных. Она может быть использована для пресечения кодированного содержимого в конверте письма, не ограничивая вложения вообще.[#]_</p>
+<p>Переменная содержит 1 (истина) для частей MIME, являющихся частями письма, и 0 (ложь) для вложений. В настоящее время алгоритм такой:</p>
+<ol class="arabic simple">
+<li>Самая дальняя часть MIME - всегда обёртка письма.</li>
+<li>Если обёртка письма multipart/alternative или multipart/related часть MIME, следовательно, все субчасти MIME внутри - multipart.</li>
+<li>Если любая другая multipart-часть - обёртка письма, первая часть - обёртка, и последующие - вложения.</li>
+<li>Все части содержащиеся в пределах multipart - вложения.</li>
+</ol>
+<p>Как пример, следующее правило запретит “HTML mail” (включая, что посылается с альтернативным чистым текстом), позволяя HTML-файлам быть прикрепленными. HTML обёртка письма, приложенная к не-HTML обёртке почты, также разрешена:</p>
+<div class="last highlight-python"><pre>deny message = HTML mail is not accepted here
+     !condition = $mime_is_rfc822
+     condition = $mime_is_coverletter
+     condition = ${if eq{$mime_content_type}{text/html}{1}{0}}</pre>
+</div>
+</dd>
+<dt><strong>$mime_is_multipart</strong></dt>
+<dd>Эта переменная имеет значение 1 (истина), когда текущая часть имеет главный тип “multipart”, например, “multipart/alternative” или “multipart/mixed”. Так как multipart объекты лишь служат контейнером для других частей, вы не можете захотеть предпринять для них специфические действия.</dd>
+<dt><strong>$mime_is_rfc822</strong></dt>
+<dd>Эта переменная имеет значение 1 (истина), если текущая часть - не непосредственно часть проверяемого сообщения, но часть прикрепленного сообщения. Прикрепленные сообщения декодируются полностью рекурсивно.</dd>
+<dt><strong>$mime_part_count</strong></dt>
+<dd>Эта переменная - счётчик, увеличивающийся для каждой обрабатываемой части MIME. Он начинается с нуля для самой первой части (которая, обычно, multipart). Счётчик - на сообщение, таким образом, он сбрасывается при обработке вложений <span class="target" id="index-2"></span><a class="rfc reference external" href="http://tools.ietf.org/html/rfc822.html"><strong>RFC 822</strong></a> (смотрите $mime_is_rfc822). Счётчик остаётся установленным после завершения <strong>acl_smtp_mime</strong>, таким образом, вы можете использовать его в DATA ACL для определения числа частей MIME в сообщении. Для не-MIME сообщений, эта переменная содержит “-1”.</dd>
+</dl>
+</div></blockquote>
+</div>
+<div class="section" id="ch41-05">
+<span id="id2"></span><h2>Проверка с помощью регулярных выражений<a class="headerlink" href="#ch41-05" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Вы можете задать ваши собственные регулярные сообщения, совпадающие с полным телом сообщения, или индивидуальными частями MIME.</p>
+<p>Условие <strong>regex</strong> получает одно или более регулярное выражение как аргумент, и сравнивает его с полным сообщением (при вызове в DATA ACL), или сырой частью MIME (при вызове в MIME ACL). Условие <strong>regex</strong> сравнивается построчно, с максимальной длинной строки в 32k символов. Это означает, что вы не можете получить многострочные сравнения с условием <strong>regex</strong>.</p>
+<p>Условие <strong>mime_regex</strong> может быть вызвано лишь в ACL MIME. Оно сравнивается вплоть до 32k декодированного содержимого (всё содержимое сразу, не построчно). Если часть не была декодирована с модификатором <strong>decode</strong> ранее в ACL, она автоматически декодируется при выполнении <strong>mime_regex</strong> (используя путь и имя файла по умолчанию). Если декодированные данные более 32k, проверяются лишь первые 32k.</p>
+<p>Регулярные выражения передаются как список разделённый двоеточиями. Для включения символа двоеточия, вы должны его удвоить. Так как правая строка раскрыватся до использования, вы, также, должны экранировать символ доллара и обратные слэши обратными слэшами, или используя средство <tt class="docutils literal"><span class="pre">\N</span></tt>, для отключения раскрытия. Вот - простой пример, который содержит два регулярных выражения:</p>
+<div class="highlight-python"><pre>deny message = contains blacklisted regex ($regex_match_string)
+     regex = [Mm]ortgage : URGENT BUSINESS PROPOSAL</pre>
+</div>
+<p>Условие возвращает истину, если совпадает любое регулярное выражение. Тогда устанавливается переменная раскрытия $regex_match_string, и содержит соответствующее регулярное выражение.</p>
+<div class="admonition warning">
+<p class="first admonition-title">Предупреждение</p>
+<p class="last">С большими сообщениями, это условие может быть довольно ресурсоёмким.</p>
+</div>
+</div>
+<div class="section" id="demime">
+<span id="ch41-06"></span><h2>Условие <strong>demime</strong><a class="headerlink" href="#demime" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Условие ACL <strong>demime</strong> предоставляет возможность декодировать MIME, проверяя корректность и блокируемые расширения файлов. Оно может использоваться лишь в DATA и не-SMTP ACL. Условие <strong>demime</strong> использует более простой интерфейс к декодированию MIME, чем функциональность MIME ACL, но не предоставляет никаких дополнительных средств. Пожалуйста, отметьте, что это условие устарело, и оставлено лишь для обратной совместимости. Вы должны установить параметр WITH_OLD_DEMIME в <em>Local/Makefile</em> во время сборки, для возможности использовать условие <strong>demime</strong>.</p>
+<p>Условие <strong>demime</strong> декодирует в сообщении контейнеры MIME. Оно находит ошибки в MIME контейнерах, и может сравнивать расширения файлов найденные в сообщении со списком. Использование этого средства приводит к файлам содержащим декодированные части MIME сообщения во временной директории сканирования. Если вы производите сканирование антивирусом, рекомендуется использовать условие <strong>demime</strong> до условия <strong>malware</strong>.</p>
+<p>В правой стороне условия <strong>demime</strong> вы можете поместить список, разделённый двоеточиями, расширений файлов, с которыми оно будет сравниваться. Например:</p>
+<div class="highlight-python"><pre>deny message = Found blacklisted file attachment
+     demime  = vbs:com:bat:pif:prf:lnk</pre>
+</div>
+<p>Если найдено одно из расширений файлов, условие истинно, иначе - ложно. Если при декодировании MIME происходит временная ошибка (например, “disk full”), условие задержано, и сообщение временно отклоняется (если только в условии не стоит команда <strong>warn</strong>).</p>
+<p>Правая сторона раскрывается до использования как списка, таким образом, вы можете использовать в ней поиск. Если раскрытие приводит к пустой строке, “false”, или нулю (“0”), декодирования MIME не происходит и условие неудачно.</p>
+<p>Условие <strong>demime</strong> устанавливает следующие переменные:</p>
+<blockquote>
+<div><dl class="docutils">
+<dt><strong>$demime_errorlevel</strong></dt>
+<dd>Когда в контейнере MIME находится ошибка, эта переменная содержит серьёзность ошибки, как целое число. Чем выше значение, тем более серьёзная ошибка (текущее максимальное значение - 3). Если эта переменная не задана, или нулевая, ошибок не было.</dd>
+<dt><strong>$demime_reason</strong></dt>
+<dd>Когда $demime_errorlevel более нуля, эта переменная содержит удобочитаемую текстовую строку описывающую встреченную ошибку MIME.</dd>
+<dt><strong>$found_extension</strong></dt>
+<dd>Когда условие <strong>demime</strong> истинно, эта переменная содержит найденное расширение файла.</dd>
+</dl>
+</div></blockquote>
+<p>Обе, $demime_errorlevel и $demime_reason устанавливаются при первом вызове условия <strong>demime</strong>, и не изменяются при последующих вызовах.</p>
+<p>Если вы не хотите проверять расширения файлов, а использовать условие <strong>demime</strong> для декодирования или с целью проверки ошибок, поместите “*” в правую строну. Вот - более сложный пример использования этого средства:</p>
+<div class="highlight-python"><pre># Reject messages with serious MIME container errors
+deny  message = Found MIME error ($demime_reason).
+      demime = *
+      condition = ${if &gt;{$demime_errorlevel}{2}{1}{0}}
+
+# Reject known virus spreading file extensions.
+# Accepting these is pretty much braindead.
+deny  message = contains $found_extension file (blacklisted).
+      demime  = com:vbs:bat:pif:scr
+
+# Freeze .exe and .doc files. Postmaster can
+# examine them and eventually thaw them.
+deny  log_message = Another $found_extension file.
+      demime = exe:doc
+      control = freeze</pre>
+</div>
+<table class="docutils footnote" frame="void" id="id3" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label">[1]</td><td>Вообще, тут несколько иная фраза, и советую обратиться к документации, ибо смысл написанного, да ещё и с ошибками, понял лишь прочтя главу, и то не до конца - прим. lissyara</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Содержание</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Проверка контента во время выполнения ACL</a><ul>
+<li><a class="reference internal" href="#ch41-01">Проверка на вирусы</a></li>
+<li><a class="reference internal" href="#spamassassin">Проверка с помощью SpamAssassin</a></li>
+<li><a class="reference internal" href="#spamassassin-acl-exim-a">Вызов SpamAssassin из ACL Exim&#8217;a</a></li>
+<li><a class="reference internal" href="#mime">Проверка частей MIME</a></li>
+<li><a class="reference internal" href="#ch41-05">Проверка с помощью регулярных выражений</a></li>
+<li><a class="reference internal" href="#demime">Условие <strong>demime</strong></a></li>
+</ul>
+</li>
+</ul>
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="ch40.html" title="предыдущая глава">Списки Контроля Доступа</a></li>
+      <li>Next: <a href="ch42.html" title="следующая глава">Добавляем функцию <em>local_scan()</em> в Exim</a></li>
+  </ul></li>
+</ul>
+  <h3>На этой странице</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/ch41.txt"
+           rel="nofollow">Показать исходный текст</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Быстрый поиск</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Искать" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Введите слова для поиска или имя модуля, класса или функции.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy; Copyright 2011, Exim Maintainers.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a>.
+    </div>
+  </body>
+</html>

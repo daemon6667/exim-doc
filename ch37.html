@@ -1,0 +1,132 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Аутентификатор dovecot &mdash; Specification of the Exim Mail Transfer Agent 4.70 documentation</title>
+    
+    <link rel="stylesheet" href="_static/flasky.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '4.70',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/translations.js"></script>
+    <link rel="top" title="Specification of the Exim Mail Transfer Agent 4.70 documentation" href="index.html" />
+    <link rel="next" title="Аутентификатор spa" href="ch38.html" />
+    <link rel="prev" title="Аутентификатор cyrus_sasl" href="ch36.html" />
+   
+  
+  <link media="only screen and (max-device-width: 480px)" href="_static/small_flask.css" type= "text/css" rel="stylesheet" />
+
+  </head>
+  <body>
+    <div class="related">
+      <h3>Просмотр</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="Словарь-указатель"
+             accesskey="I">словарь</a></li>
+        <li class="right" >
+          <a href="ch38.html" title="Аутентификатор spa"
+             accesskey="N">следующий</a> |</li>
+        <li class="right" >
+          <a href="ch36.html" title="Аутентификатор cyrus_sasl"
+             accesskey="P">предыдущий</a> |</li>
+        <li><a href="index.html">Specification of the Exim Mail Transfer Agent 4.70 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="dovecot">
+<span id="ch37-00"></span><h1>Аутентификатор <strong>dovecot</strong><a class="headerlink" href="#dovecot" title="Ссылка на этот заголовок">¶</a></h1>
+<p>Этот аутентификатор - интерфейс к аутентификационному средству Dovecot POP/IMAP сервера, который может поддерживать множество аутентификационных методов.</p>
+<p>Если вы используете Dovecot для аутентифкации POP/IMAP клиентов, он может быть полезен для использования того же самого механизма для SMTP аутентификации. Это только серверный аутентификатор. У него только один параметр:</p>
+<table border="1" class="docutils" id="index-0">
+<colgroup>
+<col width="31%" />
+<col width="22%" />
+<col width="22%" />
+<col width="25%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>server_socket</strong></td>
+<td>Use: dovecot</td>
+<td>Type: string</td>
+<td>Default: unset</td>
+</tr>
+</tbody>
+</table>
+<p>Этот параметр должен определять сокет, являющийся интерфейсом к аутентификации в Dovecot. Параметр <strong>public_name</strong> должна определять аутентификационный механизм, поддержка которого сконфигурирована в Dovecot. У вас может быть несколько разных аутентификаторов для различных механизмов. Например:</p>
+<div class="highlight-python"><pre>dovecot_plain:
+  driver = dovecot
+  public_name = PLAIN
+  server_socket = /var/run/dovecot/auth-client
+  server_set_id = $auth2
+
+dovecot_ntlm:
+  driver = dovecot
+  public_name = NTLM
+  server_socket = /var/run/dovecot/auth-client
+  server_set_id = $auth1</pre>
+</div>
+<p>Если SMTP соединение зашифровано, или если $sender_host_address эквивалентна $received_ip_address (т.е. соединение локальное), параметр <strong>secured</strong> передаётся в команду аутентификации Dovecot. Для TLS соединения, если клиентский сертификат проверен, передаётся параметр <strong>valid-client-cert</strong>. Когда аутентификация успешна, идентификатор аутентифицированного пользователя помещается в $auth1.</p>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper"><h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="ch36.html" title="предыдущая глава">Аутентификатор <strong>cyrus_sasl</strong></a></li>
+      <li>Next: <a href="ch38.html" title="следующая глава">Аутентификатор <strong>spa</strong></a></li>
+  </ul></li>
+</ul>
+  <h3>На этой странице</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/ch37.txt"
+           rel="nofollow">Показать исходный текст</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Быстрый поиск</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Искать" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Введите слова для поиска или имя модуля, класса или функции.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy; Copyright 2011, Exim Maintainers.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a>.
+    </div>
+  </body>
+</html>

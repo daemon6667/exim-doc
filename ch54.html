@@ -1,0 +1,346 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Поддержка DKIM (DOMAINKEYS IDENTIFIED MAIL (почты идентифицированной доменными ключами)) - RFC 4871 &mdash; Specification of the Exim Mail Transfer Agent 4.70 documentation</title>
+    
+    <link rel="stylesheet" href="_static/flasky.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '4.70',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/translations.js"></script>
+    <link rel="top" title="Specification of the Exim Mail Transfer Agent 4.70 documentation" href="index.html" />
+    <link rel="next" title="Добавление новых драйверов или типов поисков" href="ch55.html" />
+    <link rel="prev" title="Формат файлов спула" href="ch53.html" />
+   
+  
+  <link media="only screen and (max-device-width: 480px)" href="_static/small_flask.css" type= "text/css" rel="stylesheet" />
+
+  </head>
+  <body>
+    <div class="related">
+      <h3>Просмотр</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="Словарь-указатель"
+             accesskey="I">словарь</a></li>
+        <li class="right" >
+          <a href="ch55.html" title="Добавление новых драйверов или типов поисков"
+             accesskey="N">следующий</a> |</li>
+        <li class="right" >
+          <a href="ch53.html" title="Формат файлов спула"
+             accesskey="P">предыдущий</a> |</li>
+        <li><a href="index.html">Specification of the Exim Mail Transfer Agent 4.70 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="dkim-domainkeys-identified-mail-rfc-4871">
+<span id="ch54-00"></span><h1>Поддержка DKIM (DOMAINKEYS IDENTIFIED MAIL (почты идентифицированной доменными ключами)) - <span class="target" id="index-0"></span><a class="rfc reference external" href="http://tools.ietf.org/html/rfc4871.html"><strong>RFC 4871</strong></a><a class="headerlink" href="#dkim-domainkeys-identified-mail-rfc-4871" title="Ссылка на этот заголовок">¶</a></h1>
+<p>Начиная с версии 4.70, Exim по умолчанию собирается с поддержкой DKIM. Эта возможность может быть отключена параметром в <em>Local/Makefile</em>:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">DISABLE_DKIM</span><span class="o">=</span><span class="n">yes</span>
+</pre></div>
+</div>
+<p>Реализация DKIM в Exim&#8217;e позволяет:</p>
+<ol class="arabic simple">
+<li>Подписывать исходящую почту: эта функция реализована в SMTP транспорте. Она может сосуществовать с другими средствами Exim&#8217;a, включая транспортные фильтры.</li>
+<li>Проверять сигнатуры во входящей почте: это реализовано с помощью дополнительной ACL (<strong>acl_smtp_dkim</strong>), которая может быть вызвана несколько раз для одного сообщения; один раз для каждой из подписей.</li>
+</ol>
+<p>В обычном стиле Exim&#8217;a реализация проверки DKIM не содержит политики по умолчанию. Вместо этого Exim позволяет вам создать собственную политику из стандартных элементов настройки Exim&#8217;a.</p>
+<p>Пожалуйста учтите, что проверка DKIM подписей во входящей почте включена по умолчанию в целях записи в лог. Для каждой подписи во входящей почте, Exim пишет строку лога, в которую помещает наиболее важные детали сигнатуры, и ее статус. Например:</p>
+<div class="highlight-python"><pre>2009-09-09 10:22:28 1MlIRf-0003LU-U3 DKIM: d=facebookmail.com s=q1-2009b
+  c=relaxed/relaxed a=rsa-sha1 i=@facebookmail.com t=1252484542 [verification succeeded]</pre>
+</div>
+<p>Вы можете пожелать отключить проверку DKIM целиком на внутреннем источнике почты или почтовом релее. Для этого вы должны установить модификатор поведения ACL - <strong>dkim_disable_verify</strong>. Модификатор должен быть в RCPT ACL, а также в местах, где вы принимаете почту от почтовых релеев (внутренние узлы или аутентифицированные отправители).</p>
+<div class="section" id="ch54-01">
+<span id="id1"></span><h2>Подписывание исходящих сообщений<a class="headerlink" href="#ch54-01" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Подписывание реализовано с помощью установки особых параметров SMTP транспорта. Эти параметры принимают раскрываемые строки в качестве аргументов.</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="29%" />
+<col width="18%" />
+<col width="25%" />
+<col width="27%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>dkim_domain</strong></td>
+<td>Use: smtp</td>
+<td>Type: string†</td>
+<td>Default: unset</td>
+</tr>
+</tbody>
+</table>
+<p>ОБЯЗАТЕЛЬНЫЙ ПАРАМЕТР. Значение - домен, который нужно подписать. Результат раскрытия этой строки помещается в раскрываемую переменную $dkim_domain.</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="32%" />
+<col width="17%" />
+<col width="25%" />
+<col width="26%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>dkim_selector</strong></td>
+<td>Use: smtp</td>
+<td>Type: string†</td>
+<td>Default: unset</td>
+</tr>
+</tbody>
+</table>
+<p>ОБЯЗАТЕЛЬНЫЙ ПАРАМЕТР. Этот параметр содержит ключевую строку выбора. Вы можете использовать раскрываемую строку $dkim_domain для поиска соответствующего селектора. Результата помещается в раскрываемую переменную $dkim_selector, которая может использоваться в переменной $dkim_private_key вместе с $dkim_domain.</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="36%" />
+<col width="16%" />
+<col width="23%" />
+<col width="25%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>dkim_private_key</strong></td>
+<td>Use: smtp</td>
+<td>Type: string†</td>
+<td>Default: unset</td>
+</tr>
+</tbody>
+</table>
+<p>ОБЯЗАТЕЛЬНЫЙ ПАРАМЕТР. Он устанавливает используемый частный (private) ключ. Вы можете использовать раскрываемые переменные $dkim_domain и $dkim_selector для определения используемого частного ключа. Результат может быть любым из следующих:</p>
+<ul class="simple">
+<li>быть корректным частным ключом RSA в ASCII представлении, включая разрывы строк.</li>
+<li>начинаться с слэша, в этом случае он обрабатывается как файл содержащий частный ключ.</li>
+<li>быть “0”, “false” или пустой строкой, в этом случае сообщение не будет подписано. Этот случай не приводит к ошибке, даже если <strong>dkim_strict</strong> установлена.</li>
+</ul>
+<table border="1" class="docutils">
+<colgroup>
+<col width="28%" />
+<col width="18%" />
+<col width="26%" />
+<col width="28%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>dkim_canon</strong></td>
+<td>Use: smtp</td>
+<td>Type: string†</td>
+<td>Default: unset</td>
+</tr>
+</tbody>
+</table>
+<p>НЕОБЯЗАТЕЛЬНЫЙ ПАРАМЕТР. Параметр задаёт канонический метод при подписывании сообщения. DKIM RFC на текущий момент определяет два метода: “simple” и “relaxed”. Если параметр не задан, то метод по умолчанию - “relaxed”.</p>
+<div class="admonition note">
+<p class="first admonition-title">Примечание</p>
+<p class="last">текущая реализация поддерживает использование только одинакового канонического метода для заголовков и тела сообщения.</p>
+</div>
+<table border="1" class="docutils">
+<colgroup>
+<col width="29%" />
+<col width="18%" />
+<col width="25%" />
+<col width="27%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>dkim_strict</strong></td>
+<td>Use: smtp</td>
+<td>Type: string†</td>
+<td>Default: unset</td>
+</tr>
+</tbody>
+</table>
+<p>НЕОБЯЗАТЕЛЬНЫЙ ПАРАМЕТР. Этот параметр определяет как Exim ведёт себя в ситуациях, когда сообщение необходимо подписать, но подписывание неудачно по какой-либо причине. Если результат раскрытия значения: “1” или “true”, Exim отложит доставку. В противном случае Exim отправит письмо без подписи. Вы можете использовать раскрываемые переменные $dkim_domain и $dkim_selector тут.</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="37%" />
+<col width="16%" />
+<col width="23%" />
+<col width="25%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>dkim_sign_headers</strong></td>
+<td>Use: smtp</td>
+<td>Type: string†</td>
+<td>Default: unset</td>
+</tr>
+</tbody>
+</table>
+<p>НЕОБЯЗАТЕЛЬНЫЙ ПАРАМЕТР. Когда параметр задан, этот параметр должен быть раскрыт (или быть задан) как разделённый двоеточиями список имён заголовков. Заголовки с этим именем будут включены в подпись. Если не задан, то будут использоваться рекомендованные <span class="target" id="index-1"></span><a class="rfc reference external" href="http://tools.ietf.org/html/rfc4871.html"><strong>RFC 4871</strong></a> имена заголовков.</p>
+</div>
+<div class="section" id="dkim">
+<span id="ch54-02"></span><h2>Верификация DKIM сигнатур во входящей почте<a class="headerlink" href="#dkim" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Верификация DKIM сигнатур во входящей почте реализованная с помощью <strong>acl_smtp_dkim</strong> ACL. По умолчанию, эта ACL вызывается один раз для каждой синтаксически (!) правильной подписи во входящем значении.</p>
+<p>Для оценки подписи в ACL большое число раскрываемых переменных содержится в статусе подписи и его детали, устанавливаются во время выполнения ACL.</p>
+<p>Вызов ACL только для существующих подписей недостаточно, чтобы построить более продвинутую политику. По этой причине, глобальный параметр <strong>dkim_verify_signers</strong>, и глобальная раскрываемая переменная $dkim_signers существуют.</p>
+<p>Глобальный параметр <strong>dkim_verify_signers</strong> может быть задана разделённым двоеточиями списком DKIM доменов или тождеств для которых ACL <strong>acl_smtp_dkim</strong> вызывается. Эта ACL раскрывается, когда сообщение было получено. На этом этапе, раскрытие переменной $dkim_signers уже содержит разделённый двоеточиями список подписанных доменов и тождеств для сообщения. Когда <strong>dkim_verify_signers</strong> не задана в главной конфигурации, используется значение по умолчанию:</p>
+<div class="highlight-python"><pre>dkim_verify_signers = $dkim_signers</pre>
+</div>
+<p>Это проводит к поведению по умолчанию - вызову <strong>acl_smtp_dkim</strong> для каждой DKIM подписи в сообщении. Текущие DKIM верификаторы могут желать явного вызова ACL для известных доменов или тождеств. Это может быть достигнуто следующим образом:</p>
+<div class="highlight-python"><pre>dkim_verify_signers = paypal.com:ebay.com:$dkim_signers</pre>
+</div>
+<p>Это приведёт к тому, что <strong>acl_smtp_dkim</strong> всегда будет вызван для <em>paypal.com</em> и <em>ebay.com</em>, плюс для всех доменов и тождеств, которые  имеют подписи в сообщении. Вы также можете проявлять творчество в построении вашей политики. Например:</p>
+<div class="highlight-python"><pre>dkim_verify_signers = $sender_address_domain:$dkim_signers</pre>
+</div>
+<p>Если домен или его тождество указан несколько раз в раскрытом значении <strong>dkim_verify_signers</strong>, ACL вызывается только раз для домена или тождества.</p>
+<p>Внутри <strong>acl_smtp_dkim</strong>, следующие раскрываемые переменные доступны (с наиболее до наименее важной):</p>
+<blockquote>
+<div><dl class="docutils">
+<dt><strong>$dkim_cur_signer</strong></dt>
+<dd>Подписавшийся, значение вычисляется при запуска ACL. Может быть домен или его тождество. Один из элементов списка с раскрытием главного параметра <strong>dkim_verify_signers</strong> (см. выше).</dd>
+<dt><strong>$dkim_verify_status</strong></dt>
+<dd><p class="first">Строка описывающая общий статус подписи. Одно из:</p>
+<ul class="last simple">
+<li><strong>none</strong>: Сообщение не содержит подписи для текущего домена или его тождества (как это отображено $dkim_cur_signer)</li>
+<li><strong>invalid</strong>: Подпись не может быть проверена из-за ошибок при обработке. Дополнительные детали содержатся в $dkim_verify_reason.</li>
+<li><strong>fail</strong>: Проверка подписи завершилась ошибкой. Дополнительная информация содержится в $dkim_verify_reason.</li>
+<li><strong>pass</strong>: Подпись прошла проверку и является действующей.</li>
+</ul>
+</dd>
+<dt><strong>$dkim_verify_reason</strong></dt>
+<dd><p class="first">Строка даёт немного больше деталей, когда $dkim_verify_status “fail” или “invalid”. Одно из:</p>
+<ul class="last simple">
+<li><strong>pubkey_unavailable</strong> (когда $dkim_verify_status=“invalid”): Публичный ключ домена не может быть получен.  Это может быть временной проблемой.</li>
+<li><strong>pubkey_syntax</strong> (когда $dkim_verify_status=“invalid”): Публичный ключ домена синтаксически некорректен.</li>
+<li><strong>bodyhash_mismatch</strong> (когда $dkim_verify_status=“fail”): Вычисленный хэш тела не соответствует указанному в заголовке подписи. Это означает, что тело сообщения было модифицировано при передаче.</li>
+<li><strong>signature_incorrect</strong> (когда $dkim_verify_status=“fail”): Подпись не может быть проверена. Возможно, чтобы заголовки были модифицированы, перезаписаны или изменены путём, который несовместим с методикой проверки используемой для DKIM. Это, конечно, также может означать, что подпись была подделана.</li>
+</ul>
+</dd>
+<dt><strong>$dkim_domain</strong></dt>
+<dd><p class="first">Подписанный домен.</p>
+<div class="last admonition important">
+<p class="first admonition-title">Важно</p>
+<p class="last">Эта переменная заполняется только, если есть актуальная подпись в сообщении для текущего домена или удостоверения личности (как это отображено в $dkim_cur_signer).</p>
+</div>
+</dd>
+<dt><strong>$dkim_identity</strong></dt>
+<dd><p class="first">Подписанная личность, если таковая имеется.</p>
+<div class="last admonition important">
+<p class="first admonition-title">Важно</p>
+<p class="last">Эта переменная заполняется только, если есть актуальная подпись в сообщении для текущего домена или удостоверения личности (как это отображено $dkim_cur_signer).</p>
+</div>
+</dd>
+<dt><strong>$dkim_selector</strong></dt>
+<dd>Ключевая строка выбора.</dd>
+<dt><strong>$dkim_algo</strong></dt>
+<dd>Используемый алгоритм: “rsa-sha1” или “rsa-sha256”.</dd>
+<dt><strong>$dkim_canon_body</strong></dt>
+<dd>Метод канонизации тела: &#8216;relax&#8217; или &#8216;simple&#8217;.</dd>
+<dt><strong>$dkim_canon_headers</strong></dt>
+<dd>Метод канонизации заголовка: “relax” или “simple”.</dd>
+<dt><strong>$dkim_copiedheaders</strong></dt>
+<dd>Транскрипция заголовков и их значений, которые включены в подпись (скопировано с “z=” тэга подписи).</dd>
+<dt><strong>$dkim_bodylength</strong></dt>
+<dd>Количество подписанных байт тела. Если равно нулю - тело не подписано. Если подписавший не установил лимит, то возвращается “9999999999999”. Это гарантирует, что переменная всегда раскрывается в целое число.</dd>
+<dt><strong>$dkim_created</strong></dt>
+<dd>Штамп времени Unix отражающий дату и время, когда была создана подпись. “0” возвращается, если отправителем не задано другое значение.</dd>
+<dt><strong>$dkim_expires</strong></dt>
+<dd>Штамп времени Unix, который отображает дату и времени, после которой подписавший желает, чтобы подпись рассматривалась как “просроченная” (“expired”). Когда это не задано подписавшим, возвращается “9999999999999”. Что делает возможным сравнение целых чисел с значением этой переменной.</dd>
+<dt><strong>$dkim_headernames</strong></dt>
+<dd>Разделённый двоеточиями список имён заголовков включённых в подпись.</dd>
+<dt><strong>$dkim_key_testing</strong></dt>
+<dd>“1”, если ключ <a class="footnote-reference" href="#id3" id="id2">[1]</a> имеет установленный флаг &#8220;“testing”, “0” - в противном случае.</dd>
+<dt><strong>$dkim_key_nosubdomaining</strong></dt>
+<dd>“1”, если ключ запрещает поддоменны, “0” - если разрешает.</dd>
+<dt><strong>$dkim_key_srvtype</strong></dt>
+<dd>Значение тэга “тип сервиса” (тэг “s=”) ключа. По умолчанию “*”, если не указано в ключе.</dd>
+<dt><strong>$dkim_key_granularity</strong></dt>
+<dd>Степень детализации ключа (“key granularity”) (тэг “g=”) ключа. По умолчанию - “*”, если не указано в ключе.</dd>
+<dt><strong>$dkim_key_notes</strong></dt>
+<dd>Примечания из тела ключа (тэг “n=”)</dd>
+</dl>
+</div></blockquote>
+<p>Кроме того, предусмотрены два ACL условия:</p>
+<blockquote>
+<div><dl class="docutils">
+<dt><strong>dkim_signers</strong></dt>
+<dd><p class="first">Условие ACL, которое проверяет, список доменов или их тождеств (разделяются двоеточиями) на соответствие домену или его тождеству, который ACL проверяет сейчас (отражено в $dkim_cur_signer). Это обычно используется для ограничить действие ACL группой доменов или их тождеств, например:</p>
+<div class="last highlight-python"><pre># Warn when message apparently from GMail has no signature at all
+warn log_message = GMail sender without DKIM signature
+     sender_domains = gmail.com
+     dkim_signers = gmail.com
+     dkim_status = none</pre>
+</div>
+</dd>
+<dt><strong>dkim_status</strong></dt>
+<dd><p class="first">Условие ACL, которое проверяет, список разделённых двоеточиями результатов проверки DKIM с текущим результатом проверки. Обычно это используется для того чтобы ограничить действие ACL определённым списком результатов проверки, например:</p>
+<div class="highlight-python"><pre>deny message = Message from Paypal with invalid or missing signature
+     sender_domains = paypal.com:paypal.de
+     dkim_signers = paypal.com:paypal.de
+     dkim_status = none:invalid:fail</pre>
+</div>
+<p class="last">Возможные ключевые слова статуса: “none”, “invalid”, “fail” и “pass”. Пожалуйста, обратитесь к документации о раскрываемой переменной $dkim_verify_status выше, для более детальной информации о том, что они означают.</p>
+</dd>
+</dl>
+</div></blockquote>
+<table class="docutils footnote" frame="void" id="id3" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id2">[1]</a></td><td>доменный - прим. переводчика</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Содержание</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Поддержка DKIM (DOMAINKEYS IDENTIFIED MAIL (почты идентифицированной доменными ключами)) - <strong>RFC 4871</strong></a><ul>
+<li><a class="reference internal" href="#ch54-01">Подписывание исходящих сообщений</a></li>
+<li><a class="reference internal" href="#dkim">Верификация DKIM сигнатур во входящей почте</a></li>
+</ul>
+</li>
+</ul>
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="ch53.html" title="предыдущая глава">Формат файлов спула</a></li>
+      <li>Next: <a href="ch55.html" title="следующая глава">Добавление новых драйверов или типов поисков</a></li>
+  </ul></li>
+</ul>
+  <h3>На этой странице</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/ch54.txt"
+           rel="nofollow">Показать исходный текст</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Быстрый поиск</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Искать" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Введите слова для поиска или имя модуля, класса или функции.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy; Copyright 2011, Exim Maintainers.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a>.
+    </div>
+  </body>
+</html>

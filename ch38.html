@@ -1,0 +1,203 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Аутентификатор spa &mdash; Specification of the Exim Mail Transfer Agent 4.70 documentation</title>
+    
+    <link rel="stylesheet" href="_static/flasky.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '4.70',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/translations.js"></script>
+    <link rel="top" title="Specification of the Exim Mail Transfer Agent 4.70 documentation" href="index.html" />
+    <link rel="next" title="Шифрование соединений с использованием TLS/SSL" href="ch39.html" />
+    <link rel="prev" title="Аутентификатор dovecot" href="ch37.html" />
+   
+  
+  <link media="only screen and (max-device-width: 480px)" href="_static/small_flask.css" type= "text/css" rel="stylesheet" />
+
+  </head>
+  <body>
+    <div class="related">
+      <h3>Просмотр</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="Словарь-указатель"
+             accesskey="I">словарь</a></li>
+        <li class="right" >
+          <a href="ch39.html" title="Шифрование соединений с использованием TLS/SSL"
+             accesskey="N">следующий</a> |</li>
+        <li class="right" >
+          <a href="ch37.html" title="Аутентификатор dovecot"
+             accesskey="P">предыдущий</a> |</li>
+        <li><a href="index.html">Specification of the Exim Mail Transfer Agent 4.70 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="spa">
+<span id="ch38-00"></span><h1>Аутентификатор <strong>spa</strong><a class="headerlink" href="#spa" title="Ссылка на этот заголовок">¶</a></h1>
+<p>Аутентификатор <strong>spa</strong> предоставляет поддержку клиента для механизма Microsoft&#8217;s Secure Password Authentication, также известного как NTLM (NT LanMan). Код для клиентской стороны этого аутентификатора был внесён Marc Prud&#8217;hommeaux, и большая его часть взята из проекта Samba (<a class="reference external" href="http://www.samba.org">http://www.samba.org</a>). Впоследствии, Tom Kistner внёс код для сервера. Механизм работает следующим образом:</p>
+<ul class="simple">
+<li>После того, как была принята команда AUTH, клиент посылает аутентификационный запрос SPA, основанный  на имени пользователя и, не обязательно, домене.</li>
+<li>Сервер делает обратный вызов.</li>
+<li>Клиент строит ответный вызов использующий пользовательский пароль, и шлёт его на сервер, который принимает или отклоняет его.</li>
+</ul>
+<p>Для защиты пароля при передаче используется шифрование.</p>
+<div class="section" id="id1">
+<h2>Использование <strong>spa</strong> как сервера<a class="headerlink" href="#id1" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Аутентификатор <strong>spa</strong> обладает лишь одной серверным параметром:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="35%" />
+<col width="15%" />
+<col width="24%" />
+<col width="26%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>server_password</strong></td>
+<td>Use: spa</td>
+<td>Type: string†</td>
+<td>Default: unset</td>
+</tr>
+</tbody>
+</table>
+<p>Этот параметр раскрывается, и, результатом должен быть пароль в открытом виде для аутентификации пользователя, чьё имя, в данной точке, находиться в $auth1. Для совместимости с предыдущими релизами Exim`a, имя пользователя, также, помещается в $1. Однако, в настоящее время, использование этой переменной для этой цели - не приветствуется, поскольку может привести к недоразумениям в раскрытиях строк, также использующих числовые переменные для иных целей. Например:</p>
+<div class="highlight-python"><pre>spa:
+  driver = spa
+  public_name = NTLM
+  server_password = \
+      ${lookup{$auth1}lsearch{/etc/exim/spa_clearpass}{$value}fail}</pre>
+</div>
+<p>Если раскрытие - принудительно неудачно, аутнетификация неудачна. Любые другие ошибки раскрытия вызывают возврат кода временной ошибки.</p>
+</div>
+<div class="section" id="id2">
+<h2>Использование <strong>spa</strong> как клиента<a class="headerlink" href="#id2" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Аутентификатор <strong>spa</strong> обладает следующими клиентскими параметрами:</p>
+<table border="1" class="docutils" id="index-0">
+<colgroup>
+<col width="33%" />
+<col width="15%" />
+<col width="25%" />
+<col width="27%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>client_domain</strong></td>
+<td>Use: spa</td>
+<td>Type: string†</td>
+<td>Default: unset</td>
+</tr>
+</tbody>
+</table>
+<p>Этот параметр определяет необязательный домен для аутентификации.</p>
+<table border="1" class="docutils" id="index-1">
+<colgroup>
+<col width="35%" />
+<col width="15%" />
+<col width="24%" />
+<col width="26%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>client_password</strong></td>
+<td>Use: spa</td>
+<td>Type: string†</td>
+<td>Default: unset</td>
+</tr>
+</tbody>
+</table>
+<p>Этот параметр определяет пользовательский пароль, и должны быть задана.</p>
+<table border="1" class="docutils" id="index-2">
+<colgroup>
+<col width="35%" />
+<col width="15%" />
+<col width="24%" />
+<col width="26%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>client_username</strong></td>
+<td>Use: spa</td>
+<td>Type: string†</td>
+<td>Default: unset</td>
+</tr>
+</tbody>
+</table>
+<p>Этот параметр определяет имя пользователя, и должна быть задана. Вот - пример конфигурации этого аутентификатора для использования с почтовыми серверами <em>msn.com</em>:</p>
+<div class="highlight-python"><pre>msn:
+  driver = spa
+  public_name = MSN
+  client_username = msn/msn_username
+  client_password = msn_plaintext_password
+  client_domain = DOMAIN_OR_UNSET</pre>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Содержание</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Аутентификатор <strong>spa</strong></a><ul>
+<li><a class="reference internal" href="#id1">Использование <strong>spa</strong> как сервера</a></li>
+<li><a class="reference internal" href="#id2">Использование <strong>spa</strong> как клиента</a></li>
+</ul>
+</li>
+</ul>
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="ch37.html" title="предыдущая глава">Аутентификатор <strong>dovecot</strong></a></li>
+      <li>Next: <a href="ch39.html" title="следующая глава">Шифрование соединений с использованием TLS/SSL</a></li>
+  </ul></li>
+</ul>
+  <h3>На этой странице</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/ch38.txt"
+           rel="nofollow">Показать исходный текст</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Быстрый поиск</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Искать" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Введите слова для поиска или имя модуля, класса или функции.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy; Copyright 2011, Exim Maintainers.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a>.
+    </div>
+  </body>
+</html>

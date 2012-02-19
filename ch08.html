@@ -1,0 +1,115 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Регулярные выражения &mdash; Specification of the Exim Mail Transfer Agent 4.70 documentation</title>
+    
+    <link rel="stylesheet" href="_static/flasky.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '4.70',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/translations.js"></script>
+    <link rel="top" title="Specification of the Exim Mail Transfer Agent 4.70 documentation" href="index.html" />
+    <link rel="next" title="Поиски в файлах и базах данных" href="ch09.html" />
+    <link rel="prev" title="Файл конфигурации по умолчанию" href="ch07.html" />
+   
+  
+  <link media="only screen and (max-device-width: 480px)" href="_static/small_flask.css" type= "text/css" rel="stylesheet" />
+
+  </head>
+  <body>
+    <div class="related">
+      <h3>Просмотр</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="Словарь-указатель"
+             accesskey="I">словарь</a></li>
+        <li class="right" >
+          <a href="ch09.html" title="Поиски в файлах и базах данных"
+             accesskey="N">следующий</a> |</li>
+        <li class="right" >
+          <a href="ch07.html" title="Файл конфигурации по умолчанию"
+             accesskey="P">предыдущий</a> |</li>
+        <li><a href="index.html">Specification of the Exim Mail Transfer Agent 4.70 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="ch08-00">
+<span id="id1"></span><h1>Регулярные выражения<a class="headerlink" href="#ch08-00" title="Ссылка на этот заголовок">¶</a></h1>
+<p>Exim поддерживает использование регулярных выражений во многих своих параметрах. Используется библиотека регулярных выражений PCRE; это обеспечивает совместимость регулярных выражений с Perl5. Синтаксис и семантика регулярных выражений обсуждаются во многих книгах по perl, и также в Jeffrey Friedl’s Mastering Regular Expressions, изданной  O&#8217;Reilly (смотрите <a class="reference external" href="http://www.oreilly.com/catalog/regex2/">http://www.oreilly.com/catalog/regex2/</a>).</p>
+<p>Документация о синтаксисе и семантике регулярных выражений, поддерживаемых PCRE, находится в виде простого текста в файле <em>doc/pcrepattern.txt</em> из состава дистрибутива Exim&#8217;a. В нём подробно рассматриваются все возможности и особенности регулярных выражений, которые поддерживает PCRE, в этом документе эта информация отсутсвует. Функции PCRE, вызываемые из Exim&#8217;a, вызываемые из Exim&#8217;a, с использованием параметров по-умолчанию (т.е. без установленных параметров PCRE), за исключением случая, когда установлен параметр PCRE_CASELESS, регистрозависимы.</p>
+<p>В большинстве случаев, когда регулярные выражения требуются в конфигурации Exim`a, они должны начинаться с крышки (“^”), для того чтобы отличить их от простого текста, или заканчиваться “безразличным символом”. В этом примере конфигурационных настроек, второй элемент в списке разделённом двоеточиями, - регулярное выражение.</p>
+<div class="highlight-python"><pre>domains = a.b.c : ^\\d{3} : *.y.z : ...</pre>
+</div>
+<p>Удвоение обратного слэша требуется, поскольку раскрытие строки предшествует интерпретации - смотрите раздел <a class="reference internal" href="ch11.html#ch11-01"><em>11.1</em></a> для подробного рассмотрения этой темы, и способов не удваивать обратные слэши. Регулярное выражение, использующееся в этом примере, в конечном счёте содержит только один обратный слэш. Крышка включена в него, и её нормальный эффект - “постановка на якорь” выражения в начале строки.</p>
+<p>Однако, есть два случая, когда где крышка не требуется для распознания регулярного выражения: это условие <strong>match</strong> в строке раскрытия и условие <strong>matches</strong> в файле фильтра Exim. В этих случаях, уместная строка всегда обрабатывается как регулярное выражение; если выражение не начинается с крышки, то оно не поствлено на якорь и может соответствовать в любом месте строки объекта.</p>
+<p>Во всех случаях, если вы хотите, чтобы регулярное выражение совпадало с концом строки, вы можете использовать метасимвол $ для указания этого. Например:</p>
+<div class="highlight-python"><pre>domains = ^\\d{3}\\.example</pre>
+</div>
+<p>совпадает с доменом <em>123.example</em>, но также соответствует <em>123.example.com</em>. Вам нужно использовать:</p>
+<div class="highlight-python"><pre>domains = ^\\d{3}\\.example\$</pre>
+</div>
+<p>если вы хотите чтобы <em>example</em> был доменом высшего уровня. Обратный слэш перед $ необходим, поскольку раскрытие строки также интерпретирует символ доллара.</p>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper"><h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="ch07.html" title="предыдущая глава">Файл конфигурации по умолчанию</a></li>
+      <li>Next: <a href="ch09.html" title="следующая глава">Поиски в файлах и базах данных</a></li>
+  </ul></li>
+</ul>
+  <h3>На этой странице</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/ch08.txt"
+           rel="nofollow">Показать исходный текст</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Быстрый поиск</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Искать" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Введите слова для поиска или имя модуля, класса или функции.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy; Copyright 2011, Exim Maintainers.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a>.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,1508 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Списки Контроля Доступа &mdash; Specification of the Exim Mail Transfer Agent 4.70 documentation</title>
+    
+    <link rel="stylesheet" href="_static/flasky.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '4.70',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/translations.js"></script>
+    <link rel="top" title="Specification of the Exim Mail Transfer Agent 4.70 documentation" href="index.html" />
+    <link rel="next" title="Проверка контента во время выполнения ACL" href="ch41.html" />
+    <link rel="prev" title="Шифрование соединений с использованием TLS/SSL" href="ch39.html" />
+   
+  
+  <link media="only screen and (max-device-width: 480px)" href="_static/small_flask.css" type= "text/css" rel="stylesheet" />
+
+  </head>
+  <body>
+    <div class="related">
+      <h3>Просмотр</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="Словарь-указатель"
+             accesskey="I">словарь</a></li>
+        <li class="right" >
+          <a href="ch41.html" title="Проверка контента во время выполнения ACL"
+             accesskey="N">следующий</a> |</li>
+        <li class="right" >
+          <a href="ch39.html" title="Шифрование соединений с использованием TLS/SSL"
+             accesskey="P">предыдущий</a> |</li>
+        <li><a href="index.html">Specification of the Exim Mail Transfer Agent 4.70 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="ch40-00">
+<span id="id1"></span><h1>Списки Контроля Доступа<a class="headerlink" href="#ch40-00" title="Ссылка на этот заголовок">¶</a></h1>
+<p>Списки Контроля Доступа (Access Control Lists - ACL) заданы в отдельной секции рабочего конфигурационного файла, озаглавленной “begin acl”. Каждое определение ACL начинается с имени, завершённого двоеточием. Это - полная секция ACL, которая содержит лишь одну, очень маленькую ACL:</p>
+<div class="highlight-python"><pre>begin acl
+
+small_acl:
+  accept   hosts = one.host.only</pre>
+</div>
+<p>Вы можете иметь так много списков, как вы хотите в секции ACL, и порядок их появления не имеет значения. Списки заканчиваются автоматически.</p>
+<p>Большинство ACL используются для контроля поведения Exim&#8217;a, когда он получает определённые SMTP-команды. Это применяется к обоим - входящим TCP/IP соединениям, и, когда локальный процесс передаёт сообщения используя  SMTP через задание параметра командной строки <strong>-bs</strong>. Самое обычное использование - для контроля каких получателей принимать во входящих сообщениях. Кроме того, вы можете задать ACL которые используются для проверки не-SMTP сообщений. Конфигурационный файл по умолчанию содержит примеры реалистичных ACL для проверки команд RCPT. Это обсуждается в главе <a class="reference internal" href="ch07.html#ch07-00"><em>7</em></a>.</p>
+<div class="section" id="acl">
+<span id="ch40-01"></span><h2>Тестирование ACL<a class="headerlink" href="#acl" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Параметр командной строки <strong>-bh</strong> - предоставляет способ тестирования вашей конфигурации ACL локально, путём запуска поддельной сессии SMTP, с которой вы взаимодействуете. Хост <em>relay-test.mail-abuse.org</em> предоставляет сервис для проверки вашей релейной конфигурации (для получения дополнительных деталей, смотрите раздел <a class="reference internal" href="#ch40-49"><em>40.49</em></a>).</p>
+</div>
+<div class="section" id="ch40-02">
+<span id="id2"></span><h2>Определение, когда используются ACL<a class="headerlink" href="#ch40-02" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Для использования ACL, вы должны назвать их в одном из соответствующих параметров, в главной части конфигурации. Эти параметры:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="33%" />
+<col width="67%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td>acl_not_smtp</td>
+<td>ACL для не-SMTP сообщений</td>
+</tr>
+<tr class="row-even"><td>acl_not_smtp_mime</td>
+<td>ACL для MIME частей не-SMTP сообщений</td>
+</tr>
+<tr class="row-odd"><td>acl_not_smtp_start</td>
+<td>ACL в начале не-SMTP сообщения</td>
+</tr>
+<tr class="row-even"><td>acl_smtp_auth</td>
+<td>ACL для AUTH</td>
+</tr>
+<tr class="row-odd"><td>acl_smtp_connect</td>
+<td>ACL для начала SMTP соединения</td>
+</tr>
+<tr class="row-even"><td>acl_smtp_data</td>
+<td>ACL после завершения DATA</td>
+</tr>
+<tr class="row-odd"><td>acl_smtp_etrn</td>
+<td>ACL для ETRN</td>
+</tr>
+<tr class="row-even"><td>acl_smtp_expn</td>
+<td>ACL для EXPN</td>
+</tr>
+<tr class="row-odd"><td>acl_smtp_helo</td>
+<td>ACL для HELO или EHLO</td>
+</tr>
+<tr class="row-even"><td>acl_smtp_mail</td>
+<td>ACL для MAIL</td>
+</tr>
+<tr class="row-odd"><td>acl_smtp_mailauth</td>
+<td>ACL для параметра AUTH команды MAIL</td>
+</tr>
+<tr class="row-even"><td>acl_smtp_mime</td>
+<td>ACL для проверки контента MIME-частей</td>
+</tr>
+<tr class="row-odd"><td>acl_smtp_notquit</td>
+<td>ACL для не-QUIT завершений</td>
+</tr>
+<tr class="row-even"><td>acl_smtp_predata</td>
+<td>ACL в начале команды DATA</td>
+</tr>
+<tr class="row-odd"><td>acl_smtp_quit</td>
+<td>ACL для QUIT</td>
+</tr>
+<tr class="row-even"><td>acl_smtp_rcpt</td>
+<td>ACL для RCPT</td>
+</tr>
+<tr class="row-odd"><td>acl_smtp_starttls</td>
+<td>ACL для STARTTLS</td>
+</tr>
+<tr class="row-even"><td>acl_smtp_vrfy</td>
+<td>ACL для VRFY</td>
+</tr>
+</tbody>
+</table>
+<p>Например, если вы устанавливаете</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">acl_smtp_rcpt</span> <span class="o">=</span> <span class="n">small_acl</span>
+</pre></div>
+</div>
+<p>то небольшой ACL, определённый выше, используется каждый раз когда Exim получает команду RCPT в диалоге SMTP. Большинство тестов политик для входящих сообщений может быть сделано по прибытии команды RCPT. Отклонение RCPT должно вызвать ошибку адреса получателя содержащегося в команде RCPT, тогда как отклонение в другой момент времени может вызвать дальнейшие попытки MTA доставить сообщение. Поэтому, рекомендуется, чтобы вы делали как можно больше тестов во время RCPT.</p>
+</div>
+<div class="section" id="smtp-acl">
+<span id="ch40-03"></span><h2>Не-SMTP ACL&#8217;ы<a class="headerlink" href="#smtp-acl" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Не-SMTP ACL&#8217;ы применяются ко всем входящим неинтерактивным входящим сообщениям, т.е. к пакетному SMTP он применяется также как и к не-SMTP сообщениям. (Пакетный SMTP - ненастоящий SMTP) Многие условия ACL (например, проверки хостов, и проверки состояния SMTP-соединения - типа шифрования и аутентификации) неуместны и запрещены в этих ACL. Однако, отправитель и получатели известны, таким образом, могут быть использованы условия <strong>senders</strong> и <strong>sender_domains</strong>, и переменные $sender_address и $recipients. Переменные типа $authenticated_sender также доступны. Вы можете определить строки добавления заголовков в любой из этих ACL.</p>
+<p>ACL <strong>acl_not_smtp_start</strong> запускается в начале приёма не-SMTP сообщения, до прочтения сообщения. (это аналогично ACL <strong>acl_smtp_predata</strong> для ввода SMTP) В случае пакетного ввода SMTP, она запускается после прочтения команды DATA. Результат этой ACL игнорируется; он не может быть использован для отклонения сообщения. Если вам это действительно необходимо, вы можете в ней установить значение в переменной ACL, и отклонить сообщения основываясь на нём в ACL <strong>acl_not_smtp</strong>. Однако, эта ACL может быть использована для установки управления, и, в частности, она может использоваться для:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">control</span> <span class="o">=</span> <span class="n">suppress_local_fixups</span>
+</pre></div>
+</div>
+<p>Это не может быть использовано в других не-SMTP ACL, поскольку время когда они работают - слишком поздно.</p>
+<p>ACL <strong>acl_not_smtp_mime</strong> доступна лишь когда Exim собран с расширением сканирования содержания. Для деталей смотрите главу <a class="reference internal" href="ch41.html#ch41-00"><em>41</em></a>.</p>
+<p>ACL <strong>acl_not_smtp_mime</strong> работает лишь до функции <em>local_scan()</em>. Любые виды отклонения сообщений рассматриваются как постоянные, поскольку нет способа послать код временной ошибки для этих видов сообщений.</p>
+</div>
+<div class="section" id="acl-smtp">
+<span id="ch40-04"></span><h2>ACL подключения SMTP<a class="headerlink" href="#acl-smtp" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Проверка ACL заданная путём <strong>acl_smtp_connect</strong> происходит в начале сессии SMTP, после теста заданного <strong>host_reject_connection</strong> (который, теперь, является аномалией) и любых тестов TCP Wrappers (если сконфигурированны). Если соединение принимается условием <strong>accept</strong> имеющим модификатор <strong>message</strong>, содержимое <strong>message</strong> переопределяет баннер, заданный в параметре <strong>smtp_banner</strong>.</p>
+</div>
+<div class="section" id="ehlo-helo-acl">
+<span id="ch40-05"></span><h2>EHLO/HELO ACL<a class="headerlink" href="#ehlo-helo-acl" title="Ссылка на этот заголовок">¶</a></h2>
+<p>ACL заданная <strong>acl_smtp_connect</strong> происходит когда клиент выдаёт команду EHLO или HELO, после тестов определённых путём <strong>helo_accept_junk_hosts</strong>, <strong>helo_allow_chars</strong>, <strong>helo_verify_hosts</strong> и <strong>helo_try_verify_hosts</strong>. Отметьте, что клиент может выдать более одной команды EHLO или HELO в сессии SMTP, и действительно - требуется выдать новую EHLO или HELO после успешного установления шифрования, сопровождаемого командой STARTTLS.</p>
+<p>Если команда принимается путём условия <strong>accept</strong> имеющим модификатор <strong>message</strong>, сообщение не может содержать более одной строки (оно будет усечено по первому символу новой строки и в лог будет записана паника). Такое сообщение не может повлиять на параметры HELO которые перечислены на второй и последующей строках ответа HELO.</p>
+</div>
+<div class="section" id="acl-data">
+<span id="ch40-06"></span><h2>ACL&#8217;ы DATA<a class="headerlink" href="#acl-data" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Две ACL ассоциированны с командой DATA, поскольку это - двухэтапная команда, с двумя ответами посылаемыми клиенту. Когда получена команда DATA, обрабатывается ACL заданная путём <strong>acl_smtp_predata</strong>. Это даёт вам контроль после всех команд RCPT, но до получения самого сообщения. Этим даётся возможность дать отрицательный ответ на команду DATA до того, как переданы даные. Строки заголовков добавляемые путём MAIL или RCPT ACL невидимы в это время, но любые, которые тут заданы, видимы при работе ACL <strong>acl_smtp_data</strong>.</p>
+<p>Вы не можете проверить содержимое сообщения, например, для проверки адресов в заголовках во время RCPT, или когда получена команда DATA. Такие тесты должны быть в ACL которая работает после получения сообщения, до посылки финального ответа на DATA.</p>
+<p>Для обоих этих ACL, невозможно отклонить индивидуальных получателей. Ответ о ошибке отклоняет всё сообщение. К сожалению, известны MTA, которые некорректно обрабатывают жёсткий (5xx) ответ на команду DATA (до или после данных) - они пытаются оставить сообщение в своей очереди, и пробуют доставить его позже, но - это их проблема, хотя они впустую тратят ваши ресурсы.</p>
+</div>
+<div class="section" id="the-smtp-dkim-acl">
+<span id="ch40-07"></span><h2>The SMTP DKIM ACL<a class="headerlink" href="#the-smtp-dkim-acl" title="Ссылка на этот заголовок">¶</a></h2>
+<p>The acl_smtp_dkim ACL is available only when Exim is compiled with DKIM support enabled (which is the default).</p>
+<p>The ACL test specified by acl_smtp_dkim happens after a message has been received, and is executed for each DKIM signature found in a message. If not otherwise specified, the default action is to accept.</p>
+<p>For details on the operation of DKIM, see chapter <a class="reference internal" href="ch54.html#ch54-00"><em>54</em></a>.</p>
+</div>
+<div class="section" id="smtp-acl-mime">
+<span id="ch40-08"></span><h2>SMTP ACL MIME<a class="headerlink" href="#smtp-acl-mime" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Параметр <strong>acl_smtp_mime</strong> доступна лишь когда Exim собран с расширением сканирования содержания. Для деталей, обратитесь к главе <a class="reference internal" href="ch41.html#ch41-00"><em>41</em></a>.</p>
+</div>
+<div class="section" id="acl-quit">
+<span id="ch40-09"></span><h2>ACL QUIT<a class="headerlink" href="#acl-quit" title="Ссылка на этот заголовок">¶</a></h2>
+<p>ACL для SMTP-команды QUIT, является аномальной, результат ACL не затрагивает код ответа на QUIT, который всегда 221. Таким образом, фактически, ACL не управляет каким-либо доступом. Поэтому, разрешены лишь имена команд <strong>accept</strong> и <strong>warn</strong>.</p>
+<p>Эта ACL может быть использована для задач типа специального записи в лог конца SMTP-сессии. Например, вы можете использовать переменные ACL в другом ACL для подсчёта числа сообщений, получателей и т.п., и записывать в лог общее время QUIT используя один или более модификаторов <strong>logwrite</strong> в команде <strong>warn</strong>.</p>
+<div class="admonition warning">
+<p class="first admonition-title">Предупреждение</p>
+<p class="last">Для этого могут использоваться лишь переменные $acl_cx, поскольку переменные $acl_mx сбрасываются после каждого входящего сообщения.</p>
+</div>
+<p>Вам не нужно ставить в конце <strong>accept</strong>, но если вы так поступаете, вы можете использовать модификатор <strong>message</strong>, для задания собственного текста, который посылается как часть 221 ответа на QUIT.</p>
+<p>Эта ACL запускается лишь для “нормального” QUIT. Для определённых случаев катастрофических ошибок (например, ошибки открытия лог-файла, или когда Exim падает в результате катастрофической ошибки), все SMTP команды от клиента получают ответ о временной ошибке, пока не будет передана команда QUIT, или соединение не закроется. В этих специальных случаях, ACL QUIT не запускается.</p>
+</div>
+<div class="section" id="ch40-10">
+<span id="id3"></span><h2>ACL не-QUIT<a class="headerlink" href="#ch40-10" title="Ссылка на этот заголовок">¶</a></h2>
+<p>ACL не-QUIT определяется с помощью <strong>acl_smtp_notquit</strong>, она запускается, в большинстве случаев, когда SMTP сессия заканчивается без посылки QUIT. Однако, когда его самого Exim&#8217;a проблемы, типа - он не может записать в свои лог-файлы, эта ACL не запускается, поскольку она может попробовать начать что-то делать (например, записать в лог-файл), что лишь усугубит ситуацию.</p>
+<p>Как и ACL QUIT, эта ACL предоставлена для возможности персонализации записи в лог или сбора статистики, и её результат игнорируется. Модификатор <strong>delay</strong> запрещён для этой ACL, разрешены лишь условия <strong>accept</strong> и <strong>warn</strong>.</p>
+<p>При работе не-QUIT ACL, переменная $smtp_notquit_reason устанавливается в строку, указывающую причину завершения SMTP соединения. Возможные значения таковы:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="33%" />
+<col width="67%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td>acl-drop</td>
+<td>другая ACL выдаваемая командой drop</td>
+</tr>
+<tr class="row-even"><td>bad-commands</td>
+<td>слишком много неизвестных непочтовых команд</td>
+</tr>
+<tr class="row-odd"><td>command-timeout</td>
+<td>таймаут при чтении команд SMTP</td>
+</tr>
+<tr class="row-even"><td>connection-lost</td>
+<td>SMTP соединение было потеряно</td>
+</tr>
+<tr class="row-odd"><td>data-timeout</td>
+<td>таймаут при чтении данных сообщения</td>
+</tr>
+<tr class="row-even"><td>local-scan-error</td>
+<td>ошибка функции <em>local_scan()</em></td>
+</tr>
+<tr class="row-odd"><td>local-scan-timeout</td>
+<td>таймаут функции <em>local_scan()</em></td>
+</tr>
+<tr class="row-even"><td>signal-exit</td>
+<td>SIGTERM или SIGINT</td>
+</tr>
+<tr class="row-odd"><td>synchronization-error</td>
+<td>ошибка синхронизации SMTP</td>
+</tr>
+<tr class="row-even"><td>tls-failed</td>
+<td>ошибка запуска TLS</td>
+</tr>
+</tbody>
+</table>
+<p>В большинстве случаев, когда SMTP соединение закрывается без передачи команды QUIT, Exim посылает ответ SMTP до реального закрытия соединения. В случае исключения - acl-drop, сообщение по умолчанию может быть переопределено при помощи модификатора <strong>message</strong> в ACL not-QUIT. В случае условия <strong>drop</strong> в иной ACL, используется сообщение из неё.</p>
+</div>
+<div class="section" id="ch40-11">
+<span id="id4"></span><h2>Нахождение ACL для использования<a class="headerlink" href="#ch40-11" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Значение параметра <strong>acl_smtp_xxx</strong> раскрывается перед использованием, таким образом, вы можете использовать различные ACL для разных ситуаций. Например:</p>
+<div class="highlight-python"><pre>acl_smtp_rcpt = ${if ={25}{$interface_port} \
+                 {acl_check_rcpt} {acl_check_rcpt_submit} }</pre>
+</div>
+<p>В конфигурационном файле по-умолчанию есть примеры настроек для предоставления сервиса сообщений <span class="target" id="index-0"></span><a class="rfc reference external" href="http://tools.ietf.org/html/rfc4409.html"><strong>RFC 4409</strong></a> на порту 587 и нестандартного smtps сервиса на порту 465. Вы можете использовать раскрытие строк подобное этому для выбора ACL для MUA на этих портах, более соответствующего ситуации нежели ACL по-умолчанию на порту 25.</p>
+<p>Результирующая строка не должна быть именем ACL в конфигурационном файле; есть другие возможности. Раскрыв строку, Exim ищет ACL в следующим образом:</p>
+<ul>
+<li><p class="first">Если строка начинается со слэша, Exim использует её как имя файла, и читает его содержимое как ACL. Строки обрабатываются таким же образом, как строки в конфигурационном файле Exim&#8217;a. В частности, поддерживается продолжение строк, пустые строки игнорируются, как и строки, чей первый символ, не являющийся пробелом - “#”. Если файл не существует, или не может быть прочитан, происходит ошибка (типично - вызывается временная ошибка любой вызываемой для запуска ACL). Например:</p>
+<div class="highlight-python"><pre>acl_smtp_data = /etc/acls/\
+  ${lookup{$sender_host_address}lsearch\
+   {/etc/acllist}{$value}{default}}</pre>
+</div>
+<p>В примере ищется используемый файл ACL на основе IP-адреса хоста, в случае неудачи поиска, используется значение по умолчанию. Если ACL успешно прочитана из файла, она сохраняется в памяти при работе процесса Exim&#8217;a, таким образом, она может быть повторно использована, без необходимости перечитывать файл.</p>
+</li>
+<li><p class="first">Если строка не начинается со слэша, и не содержит каких-либо пробелов, Exim ищет секцию ACL в конфигурации ACL чьё имя совпадает со строкой.</p>
+</li>
+<li><p class="first">Если имя ACL не найдено, или строка содержит пробелы, Exim обрабатывает строку как ACL. Это может сэкономить ввод <a class="footnote-reference" href="#id41" id="id5">[1]</a> в случаях, когда вы хотите сделать что-то типа этого:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">acl_smtp_vrfy</span> <span class="o">=</span> <span class="n">accept</span>
+</pre></div>
+</div>
+<p>для разрешения свободного использования команды VRFY. Такая строка может содержать символы новой строки; она обрабатывается таким же способом, как и ACL читаемая из файла.</p>
+</li>
+</ul>
+</div>
+<div class="section" id="ch40-12">
+<span id="id6"></span><h2>Коды возврата ACL<a class="headerlink" href="#ch40-12" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Исключая ACL QUIT, которая не затрагивает код возврата SMTP (смотрите выше, раздел <a class="reference internal" href="#ch40-08"><em>40.8</em></a>), результат работы ACL - или <strong>accept</strong> или <strong>deny</strong>, или, если проверка не может быть завершена (например, упала БД) - <strong>defer</strong>. Эти результаты вызывают использование кодов ответа 2xx, 5xx, и 4xx в диалоге SMTP, соответственно. Четвёртое возвращаемое значение, <strong>error</strong>, происходит при ошибках, типа неправильного синтаксиса в ACL. Она также вызывает 4xx код возврата.</p>
+<p>Для не-SMTP ACL, <strong>defer</strong> и <strong>error</strong> - рассматриваются также как и <strong>deny</strong>, поскольку не существует механизма для передачи временных ошибок отправителям не-SMTP сообщений.</p>
+<p>ACL, которые имеют отношение к приёму сообщений, также могут вернуть <strong>discard</strong>. Это имеет тот же самый эффект что и <strong>accept</strong>, но, вызывает отбрасывание всего сообщения, или адреса отдельного отправителя. Другими словами - это, средство для организации чёрной дыры <a class="footnote-reference" href="#id42" id="id7">[2]</a>. Используйте это с осторожностью.</p>
+<p>Если ACL для MAIL возвращает <strong>discard</strong>, и все получатели отбрасываются, и для последующих команд RCPT не запускается никаких ACL. Эффект <strong>discard</strong> в ACL RCPT - отбрасывание лишь одного адреса получателя. Если не осталось получателей сообщения, когда получены данные сообщения, ACL DATA не запускается. Если “discard” возвращается из DATA, или не-SMTP ACL, - отбрасываются все получатели. Не разрешается возвращать <strong>discard</strong> для ACL <strong>acl_smtp_predata</strong>.</p>
+<p>Функция <em>local_scan()</em> запускается всегда, даже если не осталось получателей; она может создать новых получателей.</p>
+</div>
+<div class="section" id="ch40-13">
+<span id="id8"></span><h2>Не заданные параметры ACL<a class="headerlink" href="#ch40-13" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Действия по умолчанию, когда не задана любой из параметров <strong>acl_xxx</strong> - не одинаковы для всех.</p>
+<div class="admonition note">
+<p class="first admonition-title">Примечание</p>
+<p class="last">Эти умолчания применяются лишь когда соответствующая ACL вообще не определена. Для любых определённых ACL, действие по умолчанию, когда контроль достигает конца утверждения ACL - <strong>deny</strong>.</p>
+</div>
+<p>Для <strong>acl_smtp_quit</strong> и <strong>acl_not_smtp_start</strong> нет значения по умолчанию, поскольку эти две ACL используются только для их собственных эффектов. Они не могут использоваться для приёма или отклонения чего бы то ни было.</p>
+<p>Для <strong>acl_not_smtp</strong>, <strong>acl_smtp_auth</strong>, <strong>acl_smtp_connect</strong>, <strong>acl_smtp_data</strong>, <strong>acl_smtp_helo</strong>, <strong>acl_smtp_mail</strong>, <strong>acl_smtp_mailauth</strong>, <strong>acl_smtp_mime</strong>, <strong>acl_smtp_predata</strong> и <strong>acl_smtp_starttls</strong>, действие при не заданной ACL - <strong>accept</strong>.</p>
+<p>Для других (<strong>acl_smtp_etrn</strong>, <strong>acl_smtp_expn</strong>, <strong>acl_smtp_rcpt</strong> и <strong>acl_smtp_vrfy</strong>), действие, когда ACL не задана - <strong>deny</strong>. Это означает, что <strong>acl_smtp_rcpt</strong> должна быть определена, для получения любых сообщений через SMTP-соединение. Для примера, смотрите ACL в конфигурационном файле по умолчанию.</p>
+</div>
+<div class="section" id="ch40-14">
+<span id="id9"></span><h2>Данные для ACL сообщений<a class="headerlink" href="#ch40-14" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Когда работают MAIL или RCPT ACL, или любые из DATA ACL, установлены переменные, которые содержат информацию о хосте и отправителе сообщения (например, $sender_host_address и $sender_address), и могут использоваться в утверждения ACL. В случае RCPT (но не MAIL или DATA), $domain и $local_part установлены из аргументов адреса. Полная команда SMTP доступна в $smtp_command.</p>
+<p>Когда работает ACL для параметра AUTH команды MAIL, переменные, которые содержат информацию о хосте - установлены, но $sender_address ещё не установлена. Раздел <a class="reference internal" href="ch33.html#ch33-02"><em>33.2</em></a> содержит обсуждение этого параметра и как его использовать.</p>
+<p>Переменная $message_size установлена в значение параметра SIZE, команды MAIL, во время MAIL, RCPT и до данных, или в “-1”, если параметр не был задан. Значение обновляется до истинного размера сообщения во время работы финальной ACL DATA (после получения сообщения).</p>
+<p>Переменная $rcpt_count увеличивается на единицу для каждой полученной команды RCPT. Переменная $recipients_count увеличивается на единицу для каждой принятой команды RCPT, таким образом, когда обрабатывается RCPT ACL, она содержит число предыдущих принятых получателей. Во время DATA (для обоих DATA ACL), $rcpt_count содержит общее число команд RCPT, и $recipients_count содержит общее число принятых получателей. <a class="footnote-reference" href="#id43" id="id10">[3]</a></p>
+</div>
+<div class="section" id="ch40-15">
+<span id="id11"></span><h2>Данные для ACL не-сообщений<a class="headerlink" href="#ch40-15" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Когда ACL работает для AUTH, EHLO, ETRN, EXPN, HELO, STARTTLS, или VRFY, оставшаяся строка SMTP-команды помещается в $smtp_command_argument, и вся команда SMTP доступна в $smtp_command. Эти переменные могут быть протестированы используя условие <strong>condition</strong>. Например, вот - ACL для использования с AUTH, которая настаивает на том, чтобы сессия была или зашифрована, или использовался метод CRAM-MD5. Другими словами, она не разрешает методы аутентификации, которые используют пароль в открытом виде для соединений без шифрования.</p>
+<div class="highlight-python"><pre>acl_check_auth:
+  accept encrypted = *
+  accept condition = ${if eq{${uc:$smtp_command_argument}}\
+                     {CRAM-MD5}}
+  deny   message   = TLS encryption or CRAM-MD5 required</pre>
+</div>
+<p>(Иной способ применения этих ограничений - переделать аутентификаторы использующие пароли в открытом виде, чтобы о них не оповещалось, когда соединение не шифрованное. Для этого, вы можете использовать общую аутентификационный параметр <strong>server_advertise_condition</strong>.)</p>
+</div>
+<div class="section" id="ch40-16">
+<span id="id12"></span><h2>Формат ACL<a class="headerlink" href="#ch40-16" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Индивидуальная ACL содержит множество утверждений. Каждое утверждение начинается с команды, возможно сопровождаемой множеством условий и “модификаторов” (“modifiers”). Модификаторы могут изменять работу команд, задавать сообщения о ошибках и логи, устанавливать переменные, вставлять задержки, и изменять обработку принятых сообщений.</p>
+<p>Если выполняются все условия, выполняется команда. Одни и те же условия могут использоваться (с различными аргументами) более одного раза в одном и том же утверждении. Это предоставляет средство задания соединения “and” между условиями. Например:</p>
+<div class="highlight-python"><pre>deny  dnslists = list1.example
+      dnslists = list2.example</pre>
+</div>
+<p>Если нет условий, команда всегда выполняется. Exim останавливает оценку условий и модификаторов когда он достигает условия которое ложно. Что происходит потом, зависит от команды (и в одном случае, от специального модификатора). Не все условия имеют смысл в каждой тестируемой точке. Например, вы не можете проверить адрес отправителя в ACL, которая запускается для команды VRFY.</p>
+</div>
+<div class="section" id="ch40-17">
+<span id="id13"></span><h2>Команды ACL<a class="headerlink" href="#ch40-17" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Команды ACL таковы:</p>
+<ul>
+<li><p class="first"><strong>accept</strong>: Если все условия удовлетворяются, ACL возвращает <strong>accept</strong>. Если любое из условий не выполняется, происходящее зависит от того, есть ли среди условий <strong>endpass</strong> (синтаксис смотрите ниже). Если ложно условие до <strong>endpass</strong>, управление передаётся следующему утверждению ACL; если оно после <strong>endpass</strong>, ACL возвращает <strong>deny</strong>. Рассмотрим это утверждение, используемое для проверки команды RCPT:</p>
+<div class="highlight-python"><pre>accept domains = +local_domains
+endpass
+verify = recipient</pre>
+</div>
+<p>Если домен получателя не совпадает с условием <strong>domains</strong>, управление передаётся следующему утверждению. Если оно совпадает, проверяется получатель, и команда принимается в случае успешной проверки. Однако, если проверка неудачна, ACL приводит к <strong>deny</strong>, поскольку неудачное условие после <strong>endpass</strong>.</p>
+<p>Команда <strong>endpass</strong> ввела многих людей в заблуждение, поэтому, в настоящее время, её использование не рекомендуется. Всегда возможно переписать ACL без использования <strong>endpass</strong>, и она больше не используется в конфигурационном файле по умолчанию.</p>
+<p>Если в в утверждении <strong>accept</strong> появляется модификатор <strong>message</strong>, его действие зависит от наличия <strong>endpass</strong>. При остутствии <strong>endpass</strong> (когда <strong>accept</strong> принимает или передаёт управление следующему условию) <strong>message</strong> может использоваться для различных сообщений посылаемых когда принимается SMTP команда. Например, в RCPT ACL у вас може быть:</p>
+<div class="highlight-python"><pre>accept  &lt;some conditions&gt;
+message = OK, I will allow you through today</pre>
+</div>
+<p>Вы можете определить код ответа SMTP, необязательно сопровождаемый &#8220;расширенным кодом ответа&#8221; в начале сообщения, но, первая цифра должна быть такой же какая была бы послана по умолчанию, для <strong>accept</strong> это цифра “2”.</p>
+<p>Если в утверждении <strong>accept</strong> есть <strong>endpass</strong>, <strong>message</strong> определяет сообщение о ошибке используемое при отказе в доступе. Это поведение сохранено для обратной совместимости, но текущей хорошей практикой является избежание использования <strong>endpass</strong>.</p>
+</li>
+<li><p class="first"><strong>defer</strong>: Если все условия истинны, ACL возвращает <strong>defer</strong>, который вызывает в SMTP-сессии выдачу ответа 4xx. Для не-SMTP ACL, <strong>defer</strong> - то же самое, что и <strong>deny</strong>, поскольку в этом случае нет способа дать временную ошибку. Для команды RCPT, <strong>defer</strong> - почти также использует маршрутизатор <strong>redirect</strong> и :defer: при проверке, но команда <strong>defer</strong> может использоваться в любом ACL, и для получателя это может быть более простым подходом.</p>
+</li>
+<li><p class="first"><strong>deny</strong>: Если все условия удовлетворяются, ACL возвращает <strong>deny</strong>. Если любое из условий не выполняется, управление передаётся следующему утверждению ACL. Например:</p>
+<div class="highlight-python"><pre>deny dnslists = blackholes.mail-abuse.org</pre>
+</div>
+<p>отклоняет команды от хостов, которые в чёрных списках DNS (блэк-листах).</p>
+</li>
+<li><p class="first"><strong>discard</strong>: Эта команда ведёт себя также как и <strong>accept</strong>, исключая, что она возвращает из ACL <strong>discard</strong> вместо <strong>accept</strong>. Это разрешается только для ACL которые имеют отношение к получению сообщений, и они вызывают отказ от получателя. Когда все условия истинны, отправляющая сторона передаёт ответ &#8220;success&#8221;. Однако, отказ вынуждает отказаться от получателей. Если это используется в ACL для RCPT, будет произведён отказ лишь от одного получателя; при использовании в MAIL, DATA или в не-SMTP ACL будет отказ от всех получателей сообщения. Получатели которым отказано до DATA не фигурируют в логах, когда установлен селектор <strong>received_recipients</strong></p>
+<p>Если модификатор <strong>log_message</strong> установлен при работе <strong>discard</strong>, его содержимое добаляется к строке, автоматически записываемой в лог. Оперирование <strong>message</strong> происходит точно также как и для <strong>accept</strong>.</p>
+</li>
+<li><p class="first"><strong>drop</strong>: Эта команда ведёт себя также как и <strong>deny</strong>, исключая, что соединения SMTP принудительно закрываются после отсылки 5xx сообщения об ошибке. Например:</p>
+<div class="highlight-python"><pre>drop   message   = I don't take more than 20 RCPTs
+       condition = ${if &gt; {$rcpt_count}{20}}</pre>
+</div>
+<p>Нет никаких отличий между <strong>deny</strong> и <strong>drop</strong> во время выполнения ACL для соединения. Соединения всегда разрываются после посыла ответа 550.</p>
+</li>
+<li><p class="first"><strong>require</strong>: Если выполняются все условия, управление передаётся следующему утверждению ACL. Если любое из условий не выполняется, ACL возвращает <strong>deny</strong>. Например, при проверке команды RCPT</p>
+<div class="highlight-python"><pre>require message = Sender did not verify
+        verify  = sender</pre>
+</div>
+<p>управление передаётся следующему утверждению только, если отправитель сообщения может быть проверен. Иначе, оно отклонит команду.</p>
+</li>
+<li><p class="first"><strong>warn</strong>: Если все условия выполняются, строка заданная в модификаторе <strong>log_message</strong> пишется в главный лог Exim&#8217;a. Управление всегда передаётся следующему утверждению ACL. Если любое условие ложно, в лог ничего не пишется. Если одинаковые строки логов несколько раз фигурируют в одном сообщение, в лог пишется лишь одна копия. Если вы хотите чтобы дубликаты были принудительно записаны, используйте модификатор <strong>logwrite</strong>.</p>
+<p>Если отсутствует <strong>log_message</strong>, условие <strong>warn</strong> просто проверяет свои условия и слушается любых &#8220;немедленных&#8221; модификаторов (типа <strong>control</strong>, <strong>set</strong>, <strong>logwrite</strong>, и <strong>add_header</strong>) появляющихся до первого неудачного условия. Дополнительная информация о добавлении строк заголовков дана в разделе <a class="reference internal" href="#ch40-22"><em>40.22</em></a>.</p>
+<p>Если любое условие в утверждении <strong>warn</strong> не может быть завершено (т.е. своего рода отсрочка), строка заданная в <strong>log_message</strong> не записывается. Это не включает случай принудительной ложности условия поиска, который считается успешно завершённым. После задержки, дальнейшие условия и модификаторы из утверждения <strong>warn</strong> не обрабатываются. Инцидент записывается в лог, но ACL продолжает обрабатываться, со следующего утверждения.</p>
+<p>Когда одно из условий <strong>warn</strong> проверка адреса, завершившаяся неудачно, текст сообщения о неудаче проверки находится в $acl_verify_message. Если вы хотите его записать в лог, вы должны указать это явно. Например:</p>
+<div class="highlight-python"><pre>warn   !verify = sender
+       log_message = sender verify failed: $acl_verify_message</pre>
+</div>
+</li>
+</ul>
+<p>В конце каждой ACL присутствует неявное, безоговорочное, <strong>deny</strong>.</p>
+<p>Как вы видели из примеров выше, условия и модификаторы пишутся в одну линию, на первом месте, в той же строке - команда, и последующие на дальнейших строках. Если у вас очень длинное условие, вы можете продолжить его на нескольких строках, путём обычного механизма обратного слэша. Обычно, условия выравниваются вертикально.</p>
+</div>
+<div class="section" id="ch40-18">
+<span id="id14"></span><h2>Переменные ACL<a class="headerlink" href="#ch40-18" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Есть некоторые специальные переменные, которые могут быть установлены в течение обработки ACL. Они могут использоваться для передачи информации между различными ACL&#8217;ами, различными вызовами одной и той же ACL в одном и том же SMTP-соединении, и между ACL и маршрутизаторами, транспортами и фильтрами, которые используются для доставки сообщения. Имена этих переменных должны начинаться с $acl_c0 или $acl_m0, сопровождаемые цифрой или подчёркиванием, но, оставшаяся часть имени должна быть любой последовательностью цифробуквенных символов и подчёркиваний, на ваш выбор. Ограничения на число переменных остутствуют. Два набора переменных ведут себя следующим образом:</p>
+<ul class="simple">
+<li>Значения, чьи переменные начинаются с “$acl_c” сохраняются в течение SMTP-сессии. Они никогда не сбрасываются. Таким образом, значение которое установлено при получении одного сообщения, остаётся доступным при получении следующего сообщения в том же SMTP-соединении.</li>
+<li>Значения, чьи переменные начинаются с “$acl_m” сохраняются лишь когда сообщение получается. После этого они сбрасываются. Также, они сбрасываются MAIL, RSET, EHLO, HELO, и после начала сессии TLS.</li>
+</ul>
+<p>Когда сообщение принято, текущие значения всех переменных ACL сохраняются с сообщением, и впоследствии становятся доступными во время доставки. Переменные ACL устанавливаются путём модификатора называемого <strong>set</strong>. Например:</p>
+<div class="highlight-python"><pre>accept hosts = whatever
+       set acl_m4 = some value
+       accept authenticated = *
+       set acl_c_auth = yes</pre>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Примечание</p>
+<p class="last">Начальный символ доллара не используется при именовании устанавливаемой переменной. Если вы хотите установить переменную не предпринимая каких-либо действий, вы можете использовать команду <strong>warn</strong> без любых других модификаторов или условий.</p>
+</div>
+<p>Что происходит в случае, если синтаксически верная, но не заданная переменная ACL используется, зависит от настроек параметра <strong>stict_acl_vars</strong>. Если её значение “false” (по умолчанию), используется пуская строка; если “true”, выводится ошибка.</p>
+<p>Версия Exim до 4.64 поддерживает ограниченный набор нумерованных переменных, но их имена совместимы <a class="footnote-reference" href="#id44" id="id15">[4]</a>, т.ч. проблем с обновлением быть не должно.</p>
+</div>
+<div class="section" id="ch40-19">
+<span id="id16"></span><h2>Обработка условий и модификаторов<a class="headerlink" href="#ch40-19" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Восклицательный знак предшествующий условию - отрицает его результат. Например:</p>
+<div class="highlight-python"><pre>deny   domains = *.dom.example
+       !verify  = recipient</pre>
+</div>
+<p>заставляет ACL вернуть <strong>deny</strong>, если домен отправителя заканчивается на <em>dom.example</em> и адрес получателя  не может быть проверен. Иногда отрицание может может использоваться на правой стороне условия. Например, эти два утверждения эквивалентны:</p>
+<div class="highlight-python"><pre>deny  hosts = !192.168.3.4
+deny !hosts =  192.168.3.4</pre>
+</div>
+<p>Однако, для многих условий (<strong>verify</strong> был хорошим примером), допустимо лишь левостороннее отрицание всего условия.</p>
+<p>Аргументы условия и модификаторы раскрываются. Принудительный отказ раскрытия вызывает игнорирование условия, т.е. оно ведёт себя как будто условие истинно. Рассмотрите эти два утверждения:</p>
+<div class="highlight-python"><pre>accept  senders = ${lookup{$host_name}lsearch\
+                  {/some/file}{$value}fail}
+accept  senders = ${lookup{$host_name}lsearch\
+                  {/some/file}{$value}{}}</pre>
+</div>
+<p>Каждое пытается искать список приемлемых отправителей. Если поиск успешен, возвращённый список просматривается, но если поиск неудачен, поведение различается в этих двух случаях. В первом случае, <strong>fail</strong> вызывает игнорирование условия, не разрешая никаких дальнейших условий. Поэтому, команда <strong>accept</strong> успешна. Однако, второе утверждение, создает пустой список, когда поиск неудачен. Никакой отправитель не может совпасть с пустым списком, следовательно - условие ложно, и поэтому <strong>accept</strong> также неудачен.</p>
+<p>Модификаторы ACL кажутся смешанными с условиями в утверждениях ACL. Некоторые из них определяют действия, которые берутся как условия для проверки утверждений; другие определяют текст для сообщений, который используется при отказе в доступе, или при создании предупреждения. Модификатор <strong>control</strong> затрагивает способ обработки входящих сообщений.</p>
+<p>Позиционирование модификаторов в утверждении ACL - важно, поскольку обработка команды прекращается, как только известен её результат. В силу вступят лишь те модификаторы, которые успели встретится. Например, рассмотрите использование модификатора <strong>message</strong>:</p>
+<div class="highlight-python"><pre>require message = Can't verify sender
+        verify  = sender
+        message = Can't verify recipient
+        verify  = recipient
+        message = This message cannot be used</pre>
+</div>
+<p>Если проверка отправителя неудачна, Exim знает, что результат утверждения - <strong>deny</strong>, следовательно, он не движется дальше. Был просмотрен первый модификатор, таким образом, его текст используется как сообщение о ошибке. Если проверка отправителя успешна, но проверка получателя - неудачна, используется второе сообщение. Если проверка получателя успешна, “текущим” становиться третье сообщение, но оно никогда не используется, поскольку больше нет условий способных вызвать отказ.</p>
+<p>Для команды <strong>deny</strong>, с другой стороны, всегда используется последний модификатор <strong>message</strong>, поскольку все условия должны быть истины, для того, чтобы случилось отклонение получателя. Задание более чем одного модификатора <strong>message</strong> не имеет смысла, и сообщение может быть определено даже после всех условий. Например:</p>
+<div class="highlight-python"><pre>deny   hosts = ...
+       !senders = *@my.domain.example
+       message = Invalid sender from client host</pre>
+</div>
+<p>Результат <strong>deny</strong> не происходит, пока не будет достигнут конец утверждения, по достижении которого, Exim установит сообщение.</p>
+</div>
+<div class="section" id="ch40-20">
+<span id="id17"></span><h2>Модификаторы ACL<a class="headerlink" href="#ch40-20" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Модификаторы ACL таковы:</p>
+<blockquote>
+<div><dl class="docutils">
+<dt><strong>add_header = &lt;text&gt;</strong></dt>
+<dd>Этот модификатор задаёт одну или более строк заголовков которые должны быть добавлены во входящее сообщение, предполагая, разумеется, что сообщение в конечном счёте принято. Для деталей, смотрите раздел <a class="reference internal" href="#ch40-22"><em>40.22</em></a>.</dd>
+<dt><strong>continue = &lt;text&gt;</strong></dt>
+<dd><p class="first">Этот модификатор сам по себе ничего не делает, и обработка ACL всегда переходит к следующему условию или модификатору. Значение <strong>continue</strong> - побочный эффект раскрытия его аргументов. Обычно, оно используется для обновления базы данных. Это очень простое условие, и постарайтесь избежать уродливых строк типа:</p>
+<div class="highlight-python"><pre>condition = ${if eq{0}{&lt;some expansion&gt;}{true}{true}}</pre>
+</div>
+<p>Вместо этого, всё что вам необходимо:</p>
+<div class="last highlight-python"><pre>continue = &lt;some expansion&gt;</pre>
+</div>
+</dd>
+<dt><strong>control = &lt;text&gt;</strong></dt>
+<dd><p class="first">Этот модификатор затрагивает последующую обработку SMTP-соединения, или входящего сообщения, которое принято. Эффект первого типа управления длится для всей продолжительности соединения, тогда как эффект второго типа длится лишь пока не получено текущее соединение. Специфические для сообщения средства управления всегда применяются ко всему сообщению, не к индивидуальным получателям, даже если модификатор <strong>control</strong> появляется в RCPT ACL.</p>
+<p>Eсть довольно много средств управления которые могут быть применены, они описываются отдельно, в разделе <a class="reference internal" href="#ch40-20"><em>40.20</em></a>. Модификатор <strong>control</strong> может использоваться несколькими различными способами. Например:</p>
+<blockquote class="last">
+<div><ul>
+<li><p class="first">Он может быть в конце утверждения <strong>accept</strong>:</p>
+<div class="highlight-python"><pre>accept  ...some conditions
+        control = queue_only</pre>
+</div>
+<p>В этом случае, управление применяется когда это условие приводит к <strong>accept</strong>, другими словами, когда все условия верны.</p>
+</li>
+<li><p class="first">Он может быть в середине утверждения <strong>accept</strong>:</p>
+<div class="highlight-python"><pre>accept  ...some conditions...
+        control = queue_only
+        ...some more conditions...</pre>
+</div>
+<p>Если первый набор условий истина, управление применяется, даже если утверждение не принимается поскольку одна из вторых установок условия - ложна. В этом случае, некоторое последующее утверждение должно уступить <strong>accept</strong> для релевантного управления.</p>
+</li>
+<li><p class="first">Он может использоваться с <strong>warn</strong>, для применения управления, оставляя решение о приёме или отказе следующей команде. Например:</p>
+<div class="highlight-python"><pre>warn    ...some conditions...
+        control = freeze
+        accept  ...</pre>
+</div>
+<p>Этот пример <strong>warn</strong> не содержит <strong>message</strong>, <strong>log_message</strong> или <strong>logwrite</strong>, таким образом, он ничего не добавляет к сообщению и не пишет логов.</p>
+</li>
+<li><p class="first">Если вы хотите безоговорочно применить <strong>control</strong>, вы можете использовать его с командой <strong>require</strong>. Например:</p>
+<div class="highlight-python"><pre>require  control = no_multiline_responses</pre>
+</div>
+</li>
+</ul>
+</div></blockquote>
+</dd>
+<dt><strong>delay = &lt;time&gt;</strong></dt>
+<dd><p class="first">Этот модификатор может находиться в любой ACL. Он заставляет Exim ждать интервал времени до процедуры. Однако, при тестировании Exim&#8217;a с использованием параметра командной строки <strong>-bh</strong>, задержка не применяется (вместо этого выводится соответствующее сообщение). Временной интервал даётся в обычной нотации Exim&#8217;a, а задержка происходит как только обработан модификатор. В сессии SMTP, задержанный вывод сбрасывается до осуществления задержки.</p>
+<p>Как и <strong>control</strong>, <strong>delay</strong> может использоваться с <strong>accept</strong> или <strong>deny</strong>, например:</p>
+<div class="highlight-python"><pre>deny    ...some conditions...
+        delay = 30s</pre>
+</div>
+<p>Задержка происходит если все условия истинны, до возвращения <strong>deny</strong>. Сравните с:</p>
+<div class="highlight-python"><pre>deny    delay = 30s
+        ...some conditions...</pre>
+</div>
+<p>которое ждёт 30s до обработки условия. Модификатор <strong>delay</strong> также может быть использован с <strong>warn</strong> и вместе с <strong>control</strong>:</p>
+<div class="highlight-python"><pre>warn    ...some conditions...
+        delay = 2m
+        control = freeze
+accept  ...</pre>
+</div>
+<p class="last">Если <strong>delay</strong> встречается при использовании расширения SMTP PIPELINING, ответы на некоторые команды не буферизуются и посылаются в одном пакете (как обычно оно и происходит), поскольку весь вывод сбрасывается до осуществления задержки. Эта оптимизация - отключена, таким образом, ряд небольших задержек не выходит для клиента одной большой суммарной задержкой, которая могла бы привести к нежелательным таймаутам. Однако, вы можете отключить сброс вывода для задержки используя модификатор <strong>control</strong> для установки <strong>no_delay_flush</strong>.</p>
+</dd>
+<dt><strong>endpass</strong></dt>
+<dd>Этот модификатор, у которого нет аргументов, распознаётся лишь в утверждениях <strong>accept</strong> и <strong>discard</strong>. Он отмечает границу между условием чья неудача вызывает передачу управления следующему утверждению, и условием, чья неудача заставляет ACL вернуть <strong>deny</strong>. Это ввело в заблуждение некоторых людей, таким образом, хорошей практикой является не использовать <strong>endpass</strong>. Для дополнительных деталей, смотрите описание <strong>accept</strong>, выше.</dd>
+<dt><strong>log_message = &lt;text&gt;</strong></dt>
+<dd><p class="first">Этот модификатор устанавливает сообщение, которое используется как часть сообщения лога, если ACL запрещает доступ, или утверждение <strong>warn</strong> истинно. Например:</p>
+<div class="highlight-python"><pre>require log_message = wrong cipher suite $tls_cipher
+        encrypted   = DES-CBC3-SHA</pre>
+</div>
+<p>Также, <strong>log_message</strong> используется когда получатели отвергаются через <strong>discard</strong>. Например:</p>
+<div class="highlight-python"><pre>discard &lt;some conditions&gt;
+log_message = Discarded $local_part@$domain because...</pre>
+</div>
+<p>Когда в доступе отказано, <strong>log_message</strong> добавляется к любому основному сообщению о ошибке, которое может существовать, поскольку условие - неудачно. Например, когда проверяется адрес получателя, перенаправление :fail: могло уже установить сообщение.</p>
+<p>Сообщение может быть задано до условия к которому оно применяется, поскольку раскрытие не происходит, пока Exim не решает, что в доступе надо отказать. Это означает, что любые переменные, которые установлены путём условия, доступны для включения в сообщение. Например, переменные $dnslist_&lt;xxx&gt;, установлены после того, как был успешный поиск в чёрных списках DNS. Если раскрытие <strong>log_message</strong> - неудачно, или если результат - пустая строка, модификатор игнорируется.</p>
+<p>Если вы хотите использовать утверждение <strong>warn</strong> для записи в лог результата проверки адреса, вы можете использовать $acl_verify_message для включения сообщения о ошибке проверки.</p>
+<p>Если <strong>log_message</strong> используется с утверждением <strong>warn</strong>, в начало записываемого в лог сообщения добавляется “Warning:”. Если тоже самое предупреждающее сообщение запрашивается более одного раза при получении одного почтового сообщения, лишь одна копия записывается в лог. Если вы хотите записывать в лог все копии, используйте <strong>logwrite</strong> вместо <strong>log_message</strong>. При отсутствии обоих, <strong>log_message</strong> и <strong>message</strong>, ничего не записывается в лог для успешного утверждения <strong>warn</strong>.</p>
+<p class="last">Если отсутствует <strong>log_message</strong> и нет основного сообщения о ошибке (например, из неудачи проверки адреса), но присутствует <strong>message</strong>, текст <strong>message</strong> используется для записи в лог отказа. Однако, если какой-либо текст для записи в лог содержит символы новой строки, лишь первая строка записывается в лог. При отсутствии обоих, <strong>log_message</strong> и <strong>message</strong>, для записи в лог отклонения используется встроенное сообщение по умолчанию.</p>
+</dd>
+<dt><strong>log_reject_target = &lt;log name list&gt;</strong></dt>
+<dd><p class="first">Этот модификатор делает возможным задать какой лог используется для сообщения о отклонении ACL. Его аргументы - список слов разделённый двоеточиями, которые могут быть main”, “reject”, or “panic”. По умолчанию - “main:reject”. Список может быть пустым, в этом случае отклонение не записывается в никакой лог. Например, этот фрагмент ACL не записывает информацию в лог когда отказано в доступе:</p>
+<div class="highlight-python"><pre>deny &lt;some conditions&gt;
+     log_reject_target =</pre>
+</div>
+<p class="last">Этот модификатор может использоваться в SMTP и не-SMTP ACL&#8217;ах. Он применяется и к постоянным и к временным отказам. Это действие - последнее в текущей ACL.</p>
+</dd>
+<dt><strong>logwrite = &lt;text&gt;</strong></dt>
+<dd><p class="first">Этот модификатор пишет сообщение в лог-файл, как только с ним сталкиваются при обработке ACL. (Сравните с <strong>log_message</strong>, который, исключая случай <strong>warn</strong> и <strong>discard</strong>, используется лишь если утверждение ACL отказывает в доступе.) Модификатор <strong>logwrite</strong> может использоваться для записи в лог особых инцидентов в ACL. Например:</p>
+<div class="highlight-python"><pre>accept &lt;some special conditions&gt;
+       control  = freeze
+       logwrite = froze message because ...</pre>
+</div>
+<p>По умолчанию, сообщение пишется в главный лог. Однако, оно может начинаться с двоеточия, сопровождаемого списком имён логов, разделённых двоеточиями, и, затем, иным двоеточием, точно определяющим, который лог будет записан. Например:</p>
+<div class="last highlight-python"><pre>logwrite = :main,reject: text for main and reject logs
+logwrite = :panic: text for panic log only</pre>
+</div>
+</dd>
+<dt><strong>message = &lt;text&gt;</strong></dt>
+<dd><p class="first">Этот модификатор устанавливает текстовую строку, которая раскрывается, и используется как ответное сообщение, если текущее утверждение ACL завершает ACL c ответом <strong>accept</strong>, <strong>deny</strong>, или <strong>defer</strong>. (В случае условий <strong>accept</strong> и <strong>discard</strong> есть некоторые проблемы при использовании <strong>endpass</strong>; для дополнительных деталей смотрите описание <strong>accept</strong>.)</p>
+<p>Раскрытие происходит в то время, когда Exim принимает решение об отказе в доступе, не во время обработки <strong>message</strong>. Если раскрытие неудачно, или создает пустую строку, модификатор игнорируется. Вот пример, когда сообщение должно быть определено первым, поскольку ACL завершается с отказом, если условие <strong>hosts</strong> неудачно:</p>
+<div class="highlight-python"><pre>require  message = Host not recognized
+         hosts = 10.0.0.0/8</pre>
+</div>
+<p>(Как только условие ложно, никакие последующие условия или модификаторы не обрабатываются)</p>
+<p>Для ACL, которые вызываются путём SMTP-команд, сообщение возвращается как часть SMTP ответа об ошибке. Использование <strong>message</strong> с <strong>accept</strong> (или <strong>discard</strong>) - это действует только для SMTP, так как нет возвратного сообщения при приёме не-SMTP сообщения. В случае ACL <strong>connect</strong>, приём с модификатором <strong>message</strong> замещает значение <strong>smtp_banner</strong>. Для ACL EHLO/HELO персональные сообщения о приёме не должны содержать более одной строки (иначе они будут усечены по первому символу новой строки, и в лог записана паника), и это не может действовать на параметры EHLO.</p>
+<p>При использовании SMPT, сообщение может начинаться с замещения кода ответа, состоящего из трёх цифр, возможно сопровождаемых &#8220;расширенным кодом ответа&#8221;, в форме “n.n.n”, каждый код за которым следует пробелом. Например:</p>
+<div class="highlight-python"><pre>deny  message = 599 1.2.3 Host not welcome
+      hosts = 192.168.34.0/24</pre>
+</div>
+<p>Первая цифра предоставленного кода ответа должна быть такой же как посылаемая по умолчанию. Если это не так - происходит паника. Exim использует код 550 при отказе в доступе, но заметьте, для ACL <strong>predata</strong>, по умолчанию, успешный код 354, а не 2xx.</p>
+<p>Несмотря на предыдущий параграф, для QUIT ACL, в отличие от остальных, модификатор <strong>message</strong> не может замещать код ответа 221.</p>
+<p>Текст в модификаторе <strong>message</strong> является буквальным; любые кавычки берутся как опечатки, но, поскольку строка раскрывается, экранирование обратным слэшом так или иначе обрабатывается. Если сообщение содержит символы новой строки, оно увеличивается до многострочного SMTP-ответа.</p>
+<p>Если <strong>message</strong> используется в утверждении которое проверяет адрес, заданное сообщение замещает любое сообщение, которое создано путём процесса проверки. Однако, оригинальное сообщение доступно в переменной $acl_verify_message, таким образом, вы можете включить его в ваше сообщение, если вы этого желаете. В частности, если вы хотите текст из элемента <strong>:fail:</strong> в маршрутизаторе <strong>redirect</strong>, для возвращения обратно как части ответа SMTP, вы не должны использовать модификатор <strong>message</strong>, или использовать $acl_verify_message.</p>
+<p class="last">Для совместимости с предыдущими версиями Exim&#8217;a, модификатор <strong>message</strong>, который используется с командой <strong>warn</strong>, ведёт себя подобно модификатору <strong>add_header</strong>, но это применение сейчас устарело. Однако, <strong>message</strong> действует лишь когда все условия истинны, везде где он появляется в команде ACL, тогда как <strong>add_header</strong> действует как только с ним сталкиваются. Если <strong>message</strong> используется с <strong>warn</strong> в ACL которая не имеет отношения к получению сообщения, он не имеет эффекта.</p>
+</dd>
+<dt><strong>message &lt;acl_name&gt; = &lt;value&gt;</strong></dt>
+<dd>Этот модификатор помещает значение в одну из переменных ACL (смотрите раздел <a class="reference internal" href="#ch40-17"><em>40.17</em></a>).</dd>
+</dl>
+</div></blockquote>
+</div>
+<div class="section" id="control">
+<span id="ch40-21"></span><h2>Использование модификатора <strong>control</strong><a class="headerlink" href="#control" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Модификатор <strong>control</strong> поддерживает следующие установки:</p>
+<blockquote>
+<div><dl class="docutils">
+<dt><strong>control = allow_auth_unadvertised</strong></dt>
+<dd><p class="first">Этот модификатор позволяет клиентскому хосту использовать команду SMTP AUTH, даже когда о ней не оповещалось в ответе на HELO. Кроме того, поскольку есть некоторые очень кривые клиенты, Exim принимает AUTH после HELO (а не EHLO), когда этот контроль установлен. Это должно использоваться лишь если вам это действительно необходимо, и вы должны ограничить его использование теми кривыми клиентами, которые без этого не работают. Например:</p>
+<div class="highlight-python"><pre>warn hosts   = 192.168.34.25
+control = allow_auth_unadvertised</pre>
+</div>
+<p class="last">Обычно, когда сервер Exim&#8217;a получает команду AUTH, он проверяет имя аутентификационного механизма который дан в команде на совпадение с механизмом о котором оповещалось. Когда эта установка установлена, проверка на оповещение о механизме обходится. Любые сконфигурированные механизмы могут быть использованы клиентом. Это управление разрешено лишь в соединениях и ACL`ах HELO.</p>
+</dd>
+<dt><strong>control = caseful_local_part</strong>, <strong>control = caselower_local_part</strong></dt>
+<dd><p class="first">Эти два средства управления разрешены лишь в ACL определённых путём <strong>acl_smtp_rcpt</strong> (т.е. в течение обработки RCPT). По умолчанию, содержимое $local_part приводится к нижнему регистру, до обработки ACL. Если задана <strong>caseful_local_part</strong>, любые заглавные буквы в оригинальной локальной части, восстановлены в $local_part для остальной ACL, или пока не столкнётся с управлением установленным в <strong>caselower_local_part</strong>.</p>
+<p>Эти средства управления применяются лишь к текущему получателю. Кроме того, они применяются лишь к обработке локальной части, которая имеет место непосредственно в ACL (например, как ключ в поисках). Если присутствует проверка получателя, регистрозависмая обработка локальной части, в процессе проверки, контролируется конфигурацией маршрутизатора (смотрите параметр маршрутизаторов <strong>caseful_local_part</strong>).</p>
+<p>Это средство могло бы использоваться, например, для добавления спамерских очков к локальной части содержащей бувы верхнего регистра. Например, используя $acl_m4 для накопления спамерских очков:</p>
+<div class="highlight-python"><pre>warn  control = caseful_local_part
+                set acl_m4 = ${eval:\
+                              $acl_m4 + \
+                              ${if match{$local_part}{[A-Z]}{1}{0}}\
+                             }
+                control = caselower_local_part</pre>
+</div>
+<p class="last">Заметьте, что мы возвращаем назад версию в нижнем регистре, предполагая, что это потребуется для последующих тестов.</p>
+</dd>
+<dt><strong>control = debug/&lt;options&gt;</strong></dt>
+<dd><p class="first">This control turns on debug logging, almost as though Exim had been invoked with -d, with the output going to a new logfile, by default called debuglog. The filename can be adjusted with the tag option, which may access any variables already defined. The logging may be adjusted with the opts option, which takes the same values as the -d command-line option. Some examples (which depend on variables that don’t exist in all contexts):</p>
+<div class="last highlight-python"><pre>control = debug
+control = debug/tag=.$sender_host_address
+control = debug/opts=+expand+acl
+control = debug/tag=.$message_exim_id/opts=+expand</pre>
+</div>
+</dd>
+<dt><strong>control = enforce_sync</strong>, <strong>control = no_enforce_sync</strong></dt>
+<dd><p class="first">Эти средства управления дают возможность селективной SMTP синхронизации. Глобальный параметр <strong>smtp_enforce_sync</strong> задаёт начальное состояние переключателя (оно истинно по умолчанию). Смотрите описание этого параметра в главе <a class="reference internal" href="ch14.html#ch14-00"><em>14</em></a>, для дополнительной информации о проверке SMTP синхронизации.</p>
+<p class="last">Эффект этих двух средств управления длится до конца SMTP соединения. Они могут появиться в любой ACL, кроме одной для не-SMTP сообщений. Самое верное место их размещения - в ACL заданной путём <strong>acl_smtp_connect</strong>, которая запускается после входящего SMTP соединения, до первой проверки синхронизации. Ожидаемое использование - для отключения проверок синхронизации для плохо себя ведущих хостов, с которыми вам надо работать.</p>
+</dd>
+<dt><strong>control = fakedefer/&lt;message&gt;</strong></dt>
+<dd>Это средство управления работает точно также как и <strong>fakereject</strong> (описано  ниже), исключая, что оно вызывает 450 SMTP ответ после получения данных, вместо 550 ответа. При использовании <strong>fakedefer</strong> вы должны учесть, что она вызывает повтор сообщений, при наступлении времени повтора у отправителя. Поэтому, вы не должны использовать <strong>fakedefer</strong>, если сообщение нужно доставить обычным образом.</dd>
+<dt><strong>control = fakereject/&lt;message&gt;</strong></dt>
+<dd><p class="first">Это средство управления разрешено лишь для ACL MAIL, RCPT, и DATA, другими словами, лишь когда получается SMTP сообщение. Если Exim принимает сообщение, вместо финального ответа 250, посылается 550 отклонение сообщения. Однако, Exim продолжает нормальную доставку сообщения. Средство управления применяется лишь к текущему сообщению, но не к любым последующим, которые могут быть получены в том же самом SMTP-соединении.</p>
+<p>Текст для 550 ответа берётся из модификатора <strong>control</strong>. Если сообщения не предоставлено, используется следующее:</p>
+<div class="highlight-python"><pre>550-Your message has been rejected but is being
+550-kept for evaluation.
+550-If it was a legitimate message, it may still be
+550 delivered to the target recipient(s).</pre>
+</div>
+<p class="last">Это средство должно использоваться с чрезвычайной осторожностью.</p>
+</dd>
+<dt><strong>control = freeze</strong></dt>
+<dd><p class="first">Это средство управления разрешено лишь для ACL MAIL, RCPT, DATA, и не-SMTP ACL, другими словами, лишь когда получается сообщение. Если сообщение принято, оно помещается очередь Exim&#8217;a и замораживается. Средство управления применяется лишь к текущему сообщению, а не к любым последующим, которые могут быть получены в том же самом SMTP соединении.</p>
+<p class="last">Этот модификатор может, возможно сопровождаться “/no_tell”. Если установлена глобальный параметр <strong>freeze_tell</strong>, она игнорируется для текущего сообщения (т.е. никому не сообщается о заморозке), при условии, что все модификаторы “control=freeze” для текущего сообщения имеют параметр <tt class="docutils literal"><span class="pre">/no_tell</span></tt>.</p>
+</dd>
+<dt><strong>control = no_mbox_unspool</strong></dt>
+<dd>Это средство управления доступно когда Exim собран с поддержкой расширения контекстного сканирования. Контекстное сканирование может требовать копию текущего сообщения, или частей его, для записи в формате “mbox format” в файл спула, для передачи к сканеру на вирусы или спам. Обычно, такие копии удаляются, когда они более не нужны. Если это средство управления установлено, копии не удаляются. Средство управления применяется лишь к текущему сообщению, а не к любым последующим, которые могут быть получены в том же самом SMTP соединении. Оно предоставляет средство отладки и вряд ли будет полезно в производстве.</dd>
+<dt><strong>control = no_delay_flush</strong></dt>
+<dd>Обычно, Exim сбрасывает SMTP вывод до осуществления задержки в ACL, для предотвращения неожиданных таймаутов у клиентов при использовании расширения SMTP PIPELINING. Это средство управления, когда оно встречается до модификатора <strong>delay</strong>, отключает сброс вывода.</dd>
+<dt><strong>control = no_callout_flush</strong></dt>
+<dd>Обычно, Exim сбрасывает SMTP вывод до осуществления задержки в ACL, для предотвращения неожиданных таймаутов у клиентов при использовании расширения SMTP PIPELINING. Это средство управления, когда оно встречается до условия <strong>verify</strong>, отключает сброс вывода.</dd>
+<dt><strong>control = no_multiline_responses</strong></dt>
+<dd><p class="first">Это средство управления разрешено для любых ACL, кроме одной для не-SMTP сообщений. Кажется, что существуют кривые клиенты, которые при использовании не могут обрабатывать многострочные SMTP-ответы, несмотря на то, что фактически, <span class="target" id="index-1"></span><a class="rfc reference external" href="http://tools.ietf.org/html/rfc821.html"><strong>RFC 821</strong></a> определил их более 20 лет назад.</p>
+<p>Когда эта установка установлена, подавляются многострочные SMTP ответы, о отклонении, из ACL. Один способ сделать это, состоял бы в том, чтобы сделать эти ответы одной длинной строкой. Однако, <span class="target" id="index-2"></span><a class="rfc reference external" href="http://tools.ietf.org/html/rfc2821.html"><strong>RFC 2821</strong></a> определяет максимум - 512 байт на ответ (там сказано - “use multiline responses for more” - ха!), и некоторые из ответов могли бы перекрыть это. Так, это средство, в конечном счёте являющееся лишь подачкой для кривых клиентов, осуществляется путём дву простых вещей:</p>
+<p>Дополнительная информация, которая обычно выводится как часть отклонения вызванного ошибкой проверки отправителя, опускается. Посылается лишь финальная строка (обычно, “sender verification failed”).</p>
+<p>Если модификатор <strong>message</strong> предоставляет многострочный ответ, выводится лишь первая строка.</p>
+<p class="last">Установка переключателя может, разумеется, быть сделанной зависимой от вызывающего хоста. Его эффект длится до конца SMTP подключения.</p>
+</dd>
+<dt><strong>control = no_pipelining</strong></dt>
+<dd>Это средство управления выключает оповещение о расширении SMTP PIPELINING в текущей сессии. Чтобы оно было полезным, оно должно появиться до того как Exim посылает свой ответ в команде EHLO. Поэтому, обычно оно появляется в ACL управляемой <strong>acl_smtp_connect</strong> или <strong>acl_smtp_helo</strong>. Также смотрите <strong>pipelining_advertise_hosts</strong>.</dd>
+<dt><strong>control = queue_only</strong></dt>
+<dd>Это средство управления разрешено лишь для ACL MAIL, RCPT, DATA, и не-SMTP ACL, другими словами, лишь когда получается сообщение. Если сообщение принято, оно помещается очередь Exim&#8217;a и остается там для доставки обработчиком очереди. Немедленный процесс доставки не запускается. Другими словами, оно имеет эффект глобального параметра <strong>queue_only</strong>. Однако, средство управления применяется лишь к текущему сообщению, а не к любым последующим, которые могут быть получены в том же самом SMTP соединении.</dd>
+<dt><strong>control = submission/&lt;options&gt;</strong></dt>
+<dd><p class="first">Это средство управления разрешено лишь для ACL MAIL, RCPT, и начального DATA ACL (последний - заданный путём <strong>acl_smtp_predata</strong>). Его установка говорит Exim&#8217;y, что текущее сообщение передано от локального MUA. В этом случае, Exim работает в “режиме передачи” (“submission mode”), и, при необходимости, применяет определённые исправления к сообщению. Например, он добавляет строку заголовков “Date:”, если её нет. Это средство управления не разрешено в ACL <strong>acl_smtp_data</strong>, поскольку она слишком поздно (сообщение уже создано).</p>
+<p class="last">Глава <a class="reference internal" href="ch44.html#ch44-00"><em>44</em></a> описывает обработку, которую Exim применяет к сообщениям. Раздел <a class="reference internal" href="ch44.html#ch44-01"><em>44.1</em></a> охватывает обработку, которая происходит в режиме передачи; доступные для этого средства управления параметры, описаны там. Средство управления применяется лишь для текущего сообщения, а не к любым последующим, которые могут быть получены в том же самом SMTP соединении.</p>
+</dd>
+<dt><strong>control = suppress_local_fixups</strong></dt>
+<dd><p class="first">Это средство управления применяется к локально переданным (не TCP/IP) сообщениям, и это - дополнение к <strong>control = submission</strong>. Оно отменяет исправления, которые обычно применяются к локально переданным сообщениям. Конкретно:</p>
+<ul class="simple">
+<li>Любые заголовки “Sender:” оставляются как есть (в этом отношении, это - динамическая версия <strong>local_sender_retain</strong>).</li>
+<li>Не добавляются заголовки “Message-ID:”, “From:” и “Date:”.</li>
+<li>Нет проверки, что “From:” соответствует фактическому отправителю.</li>
+</ul>
+<p class="last">Эта особенность может быть полезной когда принято удалённо порождённое сообщение, передано какой-то сканирующей программе, и затем повторно передано для доставки.</p>
+</dd>
+</dl>
+</div></blockquote>
+</div>
+<div class="section" id="ch40-22">
+<span id="id18"></span><h2>Кратко о управлении исправлениями сообщений<a class="headerlink" href="#ch40-22" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Все четыре возможные исправления для сообщений могут быть заданы:</p>
+<ul class="simple">
+<li>Локально переданное, применяются исправления: по умолчанию.</li>
+<li>Локально переданное, не применяются исправления: использование control = suppress_local_fixups</li>
+<li>Удалённо переданное, не применяются исправления: по умолчанию.</li>
+<li>Удалённо переданное, применяются исправления: control = submission.</li>
+</ul>
+</div>
+<div class="section" id="ch40-23">
+<span id="id19"></span><h2>Добавление строк заголовков в ACL&#8217;ах<a class="headerlink" href="#ch40-23" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Модификатор <strong>add_header</strong> может быть использован для добавления одного или более дополнительных строк заголовков во входящее сообщение, как в этом примере:</p>
+<div class="highlight-python"><pre>warn dnslists = sbl.spamhaus.org : \
+                dialup.mail-abuse.org
+     add_header = X-blacklisted-at: $dnslist_domain</pre>
+</div>
+<p>Модификатор <strong>add_header</strong> разрешается в MAIL, RCPT, PREDATA, DATA, MIME, и не-SMTP ACL (лругими словами, тех, которые имеют отношение к получению сообщения). Сообщение должно быть, в конечном счёте, принято, чтобы <strong>add_header</strong> имел какой-то существенный эффект. Вы можете использовать <strong>add_header</strong> с любыми ACL-командами, включая <strong>deny</strong> (хотя, потенциально, это полезно лишь в ACL RCPT).</p>
+<p>Если данные для модификатора <strong>add_header</strong> содержат одну или более символов новой строки, которые  не сопровождаются пустым местом или табами, предполагается, что это - несколько строк заголовков. Каждый из них проверена на правильность синтаксиса; в начале каждой строки не являющейся правильной строкой заголовка добавляется “X-ACL-Warn:”.</p>
+<p>Добавленные строки накапливаются в течение ACL MAIL, RCPT и преданных. Они добавляются в сообщение до обработки ACL DATA и MIME. Однако, если идентичные строки запрошены более одного раза, фактически, в сообщение добавляется лишь одна копия. Последующие строки заголовков мгут быть накоплены в течение ACL DATA и MIME, после которых они добавляются в сообщение, с таким же подавлением дубликатов. Таким образом, возможно добавить две идентичные строки в SMTP сообщение, но лишь если одна добавлена до DATA и одна - после. В случае не-SMTP сообщений, новые заголовки аккумулируются в течение не-SMTP ACL, и добавляются в сообщение после работы всех ACL. Если сообщение отклоняется после DATA, или путём не-SMTP ACL, все добавленные строки заголовков включаются в запись производимую в лог отклонённых.</p>
+<p>Строки заголовков невидимы в раскрытии строк пока они не добавлены в сообщение. Из этого следует, что строки заголовков заданные в ACL MAIL, RCPT и преданных не видимы до запуска DATA ACL и MIME ACL. Таким же образом, строки заголовков которые добавлены путём DATA или MIME ACL не видимы в  этих ACL. Bp-pf этого ограничения, вы не можете использовать строки заголовков как способ передачи данных между (например) ACL MAIL и ACL RCPT. Если вы хотите это сделать, вы можете использовать переменные ACL, оно описано в разделе <a class="reference internal" href="#ch40-17"><em>40.17</em></a>.</p>
+<p>Модификатор <strong>add_header</strong> действует немедленно, как тока с ним столкнулись в процессе обработки ACL. Заметьте различие между этими двумя случаями:</p>
+<div class="highlight-python"><pre>accept add_header = ADDED: some text
+       &lt;some condition&gt;
+
+accept &lt;some condition&gt;
+       add_header = ADDED: some text</pre>
+</div>
+<p>В первом случае, строки заголовков всегда добавляются, вне зависимости от того, истинно условие или нет. Во втором случае, строки заголовков добавляется лишь если условие истинно. Несколько <strong>add_header</strong> могут быть в одном утверждении ACL. Все встречающиеся до неудачного условия - выполняются.</p>
+<p>Для совместимости с предыдущими версиями Exim&#8217;a, модификатор <strong>message</strong> для команды <strong>warn</strong> действует таким же образом как и <strong>add_header</strong>, исключая что он вступает в силу лишь если все условия истинны, даже если он появляется до некоторых из них. Кроме того, выполняется лишь последнее появление <strong>message</strong>. Это использование <strong>message</strong>, теперь осуждается. Если в команде <strong>warn</strong> представлены оба - <strong>add_header</strong> и <strong>message</strong>, оба обработаны согласно их спецификациям.</p>
+<p>По умолчанию, новая строка заголовка добавляется в конце существующих строк. Однако, вы можете задать что любая особенная строка заголовка должна быть добавлена в начале (до всех строк “Received:”), немедленно после первого блока строк “Received:”, или немедленно до любой строки, которая не “Received:” или “Resent-something:”.</p>
+<p>Это сделано путём определения “:at_start:”, “:after_received:”, или “:at_start_rfc:” (или, для завершения, “:at_end:”) до текста строки заголовка, соответственно. (Текст заголовка не может начинаться с двоеточия, поскольку вначале должно быть имя заголовка.) Например:</p>
+<div class="highlight-python"><pre>warn add_header = \
+       :after_received:X-My-Header: something or other...</pre>
+</div>
+<p>Если более в одном модификаторе <strong>add_header</strong> предоставляется более одной строки заголовка, каждая рассматривается независимо, и может быть помещена по другому. Если вы добавляете более одной строки в начале, или после блока “Received:”, они завершаются в обратном порядке.</p>
+<div class="admonition warning">
+<p class="first admonition-title">Предупреждение</p>
+<p class="last">Это средство, сейчас, применяется лишь к строкам заголовков которые добавлены в ACL. Оно НЕ работает для строк заголовков которые добавлены в системном фильте, или в маршрутизаторе, или в транспорте.</p>
+</div>
+</div>
+<div class="section" id="ch40-24">
+<span id="id20"></span><h2>Условия ACL<a class="headerlink" href="#ch40-24" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Некоторые условия, перечисленные в этой секции, доступны лишь если Exim собран с поддержкой расширения сканирования содержимого. Они кратко включены здесь, для завершённости. Более детальное описание может быть найдено в обсуждении сканирования содержания в главе <a class="reference internal" href="ch41.html#ch41-00"><em>41</em></a>.</p>
+<p>Не все условия уместны во всех обстоятельствах. Например, проверка отправителей и получателей не имеет смысла в ACL, которая запускается как результат прихода команды ETRN, и проверки заголовков сообщения могут быть сделаны лишь в ACL заданной путём <strong>acl_smtp_data</strong> или <strong>acl_not_smtp</strong>. Вы можете использовать некоторые условия (с иными параметрами) более чем в одном утверждении ACL. Этим предоставляется способ определения соединения “and” (“и”). Условия таковы:</p>
+<blockquote>
+<div><dl class="docutils">
+<dt><strong>acl = &lt;name of acl or ACL string or file name&gt;</strong></dt>
+<dd><p class="first">Возможные значения аргумента - такие же как и для параметра <strong>acl_smtp_xxx</strong>. Запускается именованная или встроенная ACL. Если она возвращает “accept”, условие истинно; если она возвращает “deny”, условие ложно. Если она возвращает “defer”, текущая ACL возвращает “defer”, исключая условия в команде “warn”. В этом случае, возврат “defer” делает условие ложным. Это означает, что дальнейшая обработка команды <strong>warn</strong> прекращается, но обработка ACL продолжается.</p>
+<p>Если вложенные <strong>acl</strong> возвращают “drop”, и внешнее условие отказывает в доступе, соединение рвётся. Если они возвращают “discard”, команда должна быть <strong>accept</strong> или <strong>discard</strong>, и действие предпринимается немедленно - никакие дальнейшие условия не проверяются.</p>
+<p class="last">ACL могут быть вложены до 20 уровней; предел существует лишь для поимки петель. Это условие разрешает вам использовать различные ACL в различных условиях. Например, различные ACL могут быть использованы для обработки команд RCPT для различных локальных пользователей, или различных локальных доменов.</p>
+</dd>
+<dt><strong>authenticated = &lt;string list&gt;</strong></dt>
+<dd><p class="first">Если SMTP соединение не аутентифицировано, условие ложно. Иначе, имя аутентификатора сверяется со списком. Для тестирования аутентификации путём любого аутентификатора, вы можете задать</p>
+<div class="last highlight-python"><pre>authenticated = *</pre>
+</div>
+</dd>
+<dt><strong>condition = &lt;string&gt;</strong></dt>
+<dd>Эта возможность позволяет вам создавать нестандартные условия. Если результат раскрытия - пустая строка, число ноль, или одна из строка - “no” или “false”, условие ложно. Если результат - ненулевое число, или одна из строк - “yes” или “true”, условие истинно. Для любого другого значения, предполагается что произошла какая-то ошибка, и ACL возвращает “defer”. Однако, если раскрытие принудительно неудачно, условие игнорируется. Эффект рассматривается как истина, вне зависимости от того позивный он или негативный.</dd>
+<dt><strong>decode = &lt;location&gt;</strong></dt>
+<dd><p class="first">Это условие доступно лишь если Exim собран с расширением сканирования содержания, и он разрешён лишь в ACL заданной путём <strong>acl_smtp_mime</strong>. Оно вызывает декодирование текущей части MIME в файл.</p>
+<p class="last">Если всё проходит успешно - условие истинно. Оно ложно лишь в случае проблем типа синтаксических ошибок или нехватки памяти. Для дополнительных деталей, смотрите главу <a class="reference internal" href="ch41.html#ch41-00"><em>41</em></a>.</p>
+</dd>
+<dt><strong>demime = &lt;extension list&gt;</strong></dt>
+<dd>Это условие доступно лишь если Exim собран с расширением сканирования содержания. Его использование описано в разделе <a class="reference internal" href="ch41.html#ch41-06"><em>41.6</em></a>.</dd>
+<dt><strong>dnslists = &lt;list of domain names and other data&gt;</strong></dt>
+<dd>Это условие проверяет записи в чёрных списках DNS. Они также известны как “RBL lists”, после оригинального Realtime Blackhole List, но отметьте, что это использование списков в <em>mail-abuse.org</em> сейчас приносит большую нагрузку. Есть очень много различных вариантов этого условия, для краткого описания. Для деталей, смотрите разделы <a class="reference internal" href="#ch40-24"><em>40.24</em></a>-<a class="reference internal" href="#ch40-34"><em>40.34</em></a>.</dd>
+<dt><strong>domains = &lt;domain list&gt;</strong></dt>
+<dd><p class="first">Это условие уместно лишь после команды RCPT. Оно проверяет, что домен получателя - в списке доменов. Если включена обработка символа процента, она производится до этого теста. Если проверка поиском удачна, результат поиска помещается в $domain_data, до следующего теста <strong>domains</strong>.</p>
+<p class="last">Будьте внимательны (поскольку много людей ошибалось на этом): вы не можете использовать <strong>domains</strong> в ACL DATA.</p>
+</dd>
+<dt><strong>encrypted = &lt;string list&gt;</strong></dt>
+<dd><p class="first">Если SMTP соединение не шифруется, условие ложно. Иначе, имя метода шифрования используется для проверки по списку. Для тестирования на шифрование без тестирования на определённый метод шифрования, установите</p>
+<div class="last highlight-python"><pre>encrypted = *</pre>
+</div>
+</dd>
+<dt><strong>hosts = &lt;host list&gt;</strong></dt>
+<dd><p class="first">Это условие проверяет, что вызывающий хост совпадает со списком хостов. Если вы производите поиски имени, или шаблонов имён хостов и IP адресов в одном и том же списке хостов, обычно, вы должны вначале поместить IP адрес. Например, у вас могло бы быть:</p>
+<div class="highlight-python"><pre>accept hosts = 10.9.8.7 : dbm;/etc/friendly/hosts</pre>
+</div>
+<p>Причина этого - в обработке Exim&#8217;ом списков хостов слева направо. Он может тестировать IP адреса без поиска в DNS, но, когда он достигает пункта требующего имени хоста, он завершается с неудачей если не может найти имя хоста для сравнения с шаблоном. Если вышеупомянутый список даётся в обратном порядке, утверждение <strong>accept</strong> неудачно для хоста, чьё имя не может быть найдено, даже если его IP - 10.9.8.7.</p>
+<p>Если вам действительно нужно вначале проверять имена, и всё ещё распознавать IP адреса, даже если поиск неудачен, вы можете переписать ACL так:</p>
+<div class="highlight-python"><pre>accept hosts = dbm;/etc/friendly/hosts
+accept hosts = 10.9.8.7</pre>
+</div>
+<p>Действие по умолчанию при провале попытки найти имя хоста - предположение, что хост не в списке, таким образом, первое утверждение <strong>accept</strong> - неудачно. Тогда, второе утверждение может проверить IP адрес.</p>
+<p>Если условие <strong>hosts</strong> удовлетворяется путём поиска, результат поиска становится доступен в переменной $host_data. Это позволяет вам, например, установить утверждение типа такого:</p>
+<div class="highlight-python"><pre>deny  hosts = net-lsearch;/some/file
+      message = $host_data</pre>
+</div>
+<p class="last">которое позволяет вам сделать персональное сообщение о ошибке для каждого отказанного хоста.</p>
+</dd>
+<dt><strong>local_parts = &lt;local part list&gt;</strong></dt>
+<dd>Это условие доступно лишь после команды RCPT. Оно проверяет что локальная часть адреса получателя находится в списке. Если включена обработка символа процента, она завершается до этого теста. Если проверка успешна путём поиска, результат поиска помещается в $local_part_data, которая остаётся установленной до следующего теста <strong>local_parts</strong>.</dd>
+<dt><strong>malware = &lt;option&gt;</strong></dt>
+<dd>Это условие доступно лишь когда Exim собран с поддержкой расширения сканирования содержания. Оно вызывает сканирование входящего сообщения на вирусы. Для дополнительных деталей, смотрите главу <a class="reference internal" href="ch41.html#ch41-00"><em>41</em></a>.</dd>
+<dt><strong>mime_regex = &lt;list of regular expressions&gt;</strong></dt>
+<dd>Это условие доступно лишь когда Exim собран с поддержкой расширения сканирования содержания, и оно разрешено лишь для ACL заданной путём <strong>acl_smtp_mime</strong>. Она вызывает сканирование текущей MIME части на совпадение с любым регулярным выражением. Для дополнительных деталей, смотрите главу <a class="reference internal" href="ch41.html#ch41-00"><em>41</em></a>.</dd>
+<dt><strong>ratelimit = &lt;parameters&gt;</strong></dt>
+<dd>Это условие может быть использовано для ограничения частоты, с которой пользователь или хост посылают сообщения. Детали даны в разделе <a class="reference internal" href="#ch40-35"><em>40.35</em></a>.</dd>
+<dt><strong>recipients = &lt;address list&gt;</strong></dt>
+<dd>Это условие уместно лишь после команды RCPT. Она проверяет входящий адрес получателя по списку получателей.</dd>
+<dt><strong>regex = &lt;list of regular expressions&gt;</strong></dt>
+<dd>Это условие доступно лишь когда Exim собран с поддержкой расширения сканирования содержания, и оно доступно лишь в DATA, MIME, и не-SMTP ACL. Оно вызывает сканирование входящего сообщения на совпадение с любым регулярным выражением. Для дополнительных деталей, смотрите главу <a class="reference internal" href="ch41.html#ch41-00"><em>41</em></a>.</dd>
+<dt><strong>sender_domains = &lt;domain list&gt;</strong></dt>
+<dd><p class="first">Это условие тестирует домен отправителя сообщения с заданным списком доменов.</p>
+<div class="admonition note">
+<p class="first admonition-title">Примечание</p>
+<p class="last">домен адреса отправителя - $sender_address_domain. Он не помещается в $domain в процессе тестирования этого условия. Это - исключение из общего правила тестирования списков доменов. Так сделано для того, чтобы если это условие используется в ACL для команды RCPT, домен получателя (который находится в $domain), мог влиять на проверку отправителя.</p>
+</div>
+<div class="last admonition warning">
+<p class="first admonition-title">Предупреждение</p>
+<p class="last">Плохая идея, использовать это условие как контроль пересылки, поскольку адреса отправителя легко, и обычно, подделываются.</p>
+</div>
+</dd>
+<dt><strong>senders = &lt;address list&gt;</strong></dt>
+<dd><p class="first">Это условие тестирует отправителя сообщения по данному списку. Для тестирования рикошетов, у которых пустой отправитель, установите:</p>
+<div class="highlight-python"><pre>senders = :</pre>
+</div>
+<div class="last admonition warning">
+<p class="first admonition-title">Предупреждение</p>
+<p class="last">Плохая идея, использовать это условие как контроль пересылки, поскольку адреса отправителя легко, и обычно, подделываются.</p>
+</div>
+</dd>
+<dt><strong>spam = &lt;username&gt;</strong></dt>
+<dd>Это условие доступно лишь когда Exim собран с поддержкой расширения сканирования содержания. Оно вызывает сканирование входящего сообщения с помощью SpamAssassin. Для дополнительных деталей, смотрите главу <a class="reference internal" href="ch41.html#ch41-00"><em>41</em></a>.</dd>
+<dt><strong>verify = certificate</strong></dt>
+<dd>Это условие истинно если SMTP-сессия шифрована, и клиент передал сертификат, и сертификат был проверен. Сервер запрашивает сертификат лишь если клиент совпадает с <strong>tls_verify_hosts</strong> или <strong>tls_try_verify_hosts</strong> (смотрите главу <a class="reference internal" href="ch38.html#ch38-00"><em>38</em></a>).</dd>
+<dt><strong>verify = csa</strong></dt>
+<dd>Это условие проверяет, авторизован ли хост (клиент) посылать почту. Детали, как это работает, даны в разделе <a class="reference internal" href="#ch40-46"><em>40.46</em></a>.</dd>
+<dt><strong>verify = header_sender/&lt;options&gt;</strong></dt>
+<dd><p class="first">Это условие уместно лишь в ACL, которая запускается после получения сообщения, т.е. в ACL заданной путём <strong>acl_smtp_data</strong> или <strong>acl_not_smtp</strong>. Оно проверяет наличие адреса поддающегося проверке по крайней мере в одном из заголовков “Sender:”, “Reply-To:” или “From:”. Каждый адрес предполагается адресом отправителя (следовательно, именем теста). Однако, адрес появляющийся в одном из этих заголовков, не должен быть адресом, принимающим рикошеты; лишь адрес отправителя в конверте должен принимать рикошеты. Поэтому, если вы используете параметр обратного вызова в этой проверке, вы могли бы хотеть переделать её для не пустого адреса в команде MAIL.</p>
+<p>Детали проверки адреса и параметров даны позднее, начиная с раздела <a class="reference internal" href="#ch40-40"><em>40.40</em></a> (обратные вызовы описаны в разделе <a class="reference internal" href="#ch40-41"><em>40.41</em></a>). Вы можете комбинировать эти условия с условием <strong>senders</strong>, для ограничения его лишь рикошетами:</p>
+<div class="last highlight-python"><pre>deny    senders = :
+        message = A valid sender header is required for bounces
+        !verify  = header_sender</pre>
+</div>
+</dd>
+<dt><strong>verify = header_syntax</strong></dt>
+<dd><p class="first">Это условие уместно лишь в ACL, которая запускается после приёма сообщения, т.е., в ACL заданных путём <strong>acl_smtp_data</strong> или <strong>acl_not_smtp</strong>. Она проверяет синтаксис всех строк заголовков, которые могут содержать адреса (“(Sender:”, “From:”, “Reply-To:”, “To:”, “Cc:” и “Bcc:”). Неквалифицированные адреса (локальные части без домена) разрешены лишь в локально-созданных сообщениях и от хостов, которые совпадают с <strong>sender_unqualified_hosts</strong> или <strong>recipient_unqualified_hosts</strong>, соответственно.</p>
+<div class="last admonition note">
+<p class="first admonition-title">Примечание</p>
+<p>Это условие - лишь проверка синтаксиса. Однако, обычная уловка спамеров - использовать для отправки синтаксически неверные заголовки, типа</p>
+<div class="highlight-python"><pre>To: @</pre>
+</div>
+<p class="last">и это условие может использоваться для отклонения таких сообщений, хотя они не очень часто используются.</p>
+</div>
+</dd>
+<dt><strong>verify = helo</strong></dt>
+<dd><p class="first">Это условие истинно, если команда HELO или EHLO была передана с клиентского хоста, и её содержимое было проверено. До него не было никаких попыток проверить содержимое HELO/EHLO, и оно выполняется как только встречаются с этим условием. Смотрите описание параметров <strong>helo_verify_hosts</strong> и <strong>helo_try_verify_hosts</strong>, для деталей о том, как запросить проверку незавсисмо от этого условия.</p>
+<p class="last">Для SMTP ввода, не приходящего через TCP/IP (параметр <strong>-bs</strong> командной строки) - это условие всегда истинно.</p>
+</dd>
+<dt><strong>verify = not_blind</strong></dt>
+<dd><p class="first">Это условие проверяет, что в сообщении нет получателей скрытой копии (bcc). Каждый получатель конверта должен быть в строке заголовка “To:” или в “Cc:”, чтобы это условие было истинным. Локальная часть проверяется регистрозавсисмо; домен проверяется регистронезависимо. Если существуют строки “Resent-To:” или “Resent-Cc:”, они также проверяются. Это условие может использоваться лишь в DATA или не-SMTP ACL.</p>
+<p class="last">Конечно, есть множество законных сообщений, использующих скрытых получателей. Эта проверка не должна самостоятельно использоваться для блокировки сообщений.</p>
+</dd>
+<dt><strong>verify = recipient/&lt;options&gt;</strong></dt>
+<dd>Это условие уместно лишь после команды RCPT. Оно проверяет текущего получателя. Детали проверки адреса даны позднее, начиная с разделе <a class="reference internal" href="#ch40-40"><em>40.40</em></a>. После проверки получателя, значение $address_data - последнее значение установленное при маршрутизации адреса. Оно применяется даже если проверка была ложной. Когда проверенный адрес переадресован на один адрес, проверка продолжается с новым адресом, и в этом случае, последующее значение для $address_data - значение дочернего адреса.</dd>
+<dt><strong>verify = reverse_host_lookup</strong></dt>
+<dd><p class="first">Это условие обеспечивает, что проверенное имя хоста было найдено из IP-адреса клиентского хоста. (Это, возможно уже случилось, если имя хоста необходимо для проверки списка хостов, или, если хост совпадает с <strong>host_lookup</strong>.) Проверка обеспечивает, что имя хоста, полученное из обратного поиска DNS, или один из его синонимов, когда он самостоятельно ищется в DNS, действительно приводит к оригинальному IP-адресу.</p>
+<p class="last">Если это условие используется для локально созданных сообщений (т.е. когда нет клиентского хоста), оно всегда успешно.</p>
+</dd>
+<dt><strong>verify = sender/&lt;options&gt;</strong></dt>
+<dd><p class="first">Это условие уместно лишь после команды MAIL или RCPT, или после того, как сообщение было получено (ACL <strong>acl_smtp_data</strong> или <strong>acl_not_smtp</strong>). Если отправитель сообщения пустой (т.е. - это рикошет), условие истинно. Иначе, проверяется адрес отправителя.</p>
+<p>Если есть данные в переменной конца маршрутизации $address_data, её значение помещается в $sender_address_data в конце проверки. Это значение может использовано в последующих условиях и модификаторах в том же самом утверждении ACL. Оно не сохраняется после окончания текущего утверждения. Если вы хотите сохранить значение надолго, вы можете сохранить его в переменной ACL.</p>
+<p class="last">Детали проверки адреса даны позднее, начиная с раздела <a class="reference internal" href="#ch40-40"><em>40.40</em></a>. Exim кэширует результат проверки отправителя, чтобы не делать его более одного раза на сообщение.</p>
+</dd>
+<dt><strong>verify = sender = &lt;address&gt;/&lt;options&gt;</strong></dt>
+<dd>Это - вариант предыдущего параметра, в котором модифицированный адрес проверен как отправитель.</dd>
+</dl>
+</div></blockquote>
+</div>
+<div class="section" id="dns">
+<span id="ch40-25"></span><h2>Использование списков DNS<a class="headerlink" href="#dns" title="Ссылка на этот заголовок">¶</a></h2>
+<p>В самой его простой форме, условие <strong>dnslists</strong> проверяет, находится ли вызывающий хост в по крайней мере одном из DNS списков, путём поиска инвертированного IP-адреса в одном или более DNS-домене. (отметьте, что списки доменов DNS - не почтовые домены, таким образом, синтаксис “+” для/ именованных списков не работает - вместо этого он используется для специальных параметров) Например, если IP-адрес вызывающего хоста - 192.168.62.43, и утверждение ACL</p>
+<div class="highlight-python"><pre>deny dnslists = blackholes.mail-abuse.org : \
+                dialups.mail-abuse.org</pre>
+</div>
+<p>ищется следующие записи:</p>
+<div class="highlight-python"><pre>43.62.168.192.blackholes.mail-abuse.org
+43.62.168.192.dialups.mail-abuse.org</pre>
+</div>
+<p>Как только Exim находит существующую запись DNS, обработка списка останавливается. таким образом, многочисленные записи в списке связаны союзом “or”. Если вы хотите тестировать хост более чем одним списком (и союзом “and”), вы можете использовать два раздельных условия:</p>
+<div class="highlight-python"><pre>deny dnslists = blackholes.mail-abuse.org
+dnslists = dialups.mail-abuse.org</pre>
+</div>
+<p>Если происходит таймаут поиска в DNS, или иным образом невозможно дать окончательный ответ, Exim ведёт себя, как будто хост не совпал с элементом списка, т.е., как будто запись DNS не существует. Если в списке DNS есть дальнейшие элементы, они обрабатываются.</p>
+<p>Это - обычное необходимое действие, когда <strong>dnslists</strong> используется с <strong>deny</strong> (что является самым частым использованием), поскольку это препятствует ошибке DNS блокировать почту. Однако, вы можете изменить это поведение путём помещения одного из следующих специальных элементов в список:</p>
+<div class="highlight-python"><pre>+include_unknown    behave as if the item is on the list
++exclude_unknown    behave as if the item is not on the list (default)
++defer_unknown      give a temporary error</pre>
+</div>
+<p>Каждый из них применяется к любым последующим элементам списка. Например:</p>
+<div class="highlight-python"><pre>deny dnslists = +defer_unknown : foo.bar.example</pre>
+</div>
+<p>Тестирование списка доменов останавливается как только найдено соответствие.Если вы хотите предупреждать для одного списка и блокировать для другого, вы можете задать два различных утверждения:</p>
+<div class="highlight-python"><pre>deny  dnslists = blackholes.mail-abuse.org
+warn  message  = X-Warn: sending host is on dialups list
+      dnslists = dialups.mail-abuse.org</pre>
+</div>
+<p>Поиски в списках DNS кэшируются Exim&#8217;ом на продолжительность сессии SMTP, таким образом, поиск основанный на IP адресе производится максимум один раз для любого входящего SMTP-соединения. Exim не разделяет информацию между несколькими входящими соединениями (но, ваш локальный кэширующий сервер имён должен быть активен).</p>
+</div>
+<div class="section" id="ip-dns">
+<span id="ch40-26"></span><h2>Задание IP-адреса для поиска в списках DNS<a class="headerlink" href="#ip-dns" title="Ссылка на этот заголовок">¶</a></h2>
+<p>По умолчанию, IP адрес, который используется в поиске по списку DNS - это IP-адрес вызывающего хоста. Однако, вы можете задать иной IP-адрес, путём перечисления его после доменного имени, отделённого слэшем. Например:</p>
+<div class="highlight-python"><pre>deny dnslists = black.list.tld/192.168.1.2</pre>
+</div>
+<p>Эта особенность не очень полезна с явными IP-адресами; она предназначена для использования с искомыми IP-адресами, например, IP-адресами MX-хостов, или серверов имён почтового адреса отправителя. Для примеров, смотрите ниже, раздел <a class="reference internal" href="#ch40-28"><em>40.27</em></a>.</p>
+</div>
+<div class="section" id="ch40-27">
+<span id="id21"></span><h2>DNS-списки основанные на именах доменов<a class="headerlink" href="#ch40-27" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Есть некоторые списки, которые основаны на доменных именах, вместо инвертированных IP-адресов (например, смотрите ссылку domain based zones на <a class="reference external" href="http://www.rfc-ignorant.org/">http://www.rfc-ignorant.org/</a>). С этими листами реверсирования компонентов не используется. Вы можете изменить имя, которое ищется в списках DNS, путём внесения его после имени домена, отделённое слэшем. Например:</p>
+<div class="highlight-python"><pre>deny  message  = Sender's domain is listed at $dnslist_domain
+      dnslists = dsn.rfc-ignorant.org/$sender_address_domain</pre>
+</div>
+<p>Этот специфический пример полезен лишь в ACL которые обрабатываются после команд RCPT или DATA, если доступен адрес отправителя. Если (например) отправитель сообщения - <em>user&#64;tld.example</em>, имя искомое этим примером:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">tld</span><span class="o">.</span><span class="n">example</span><span class="o">.</span><span class="n">dsn</span><span class="o">.</span><span class="n">rfc</span><span class="o">-</span><span class="n">ignorant</span><span class="o">.</span><span class="n">org</span>
+</pre></div>
+</div>
+<p>Одиночное условие <strong>dnslists</strong> может содержать в себе оба вхождения - для имён и для IP-адресов. Например:</p>
+<div class="highlight-python"><pre>deny dnslists = sbl.spamhaus.org : \
+                dsn.rfc-ignorant.org/$sender_address_domain</pre>
+</div>
+<p>Первый элемент проверяет адрес отправляющего хоста; второй проверяет доменное имя. Всё условие верно, если успешен любой из поисков DNS.</p>
+</div>
+<div class="section" id="ch40-28">
+<span id="id22"></span><h2>Поиски в DNS основанные на нескольких ключах<a class="headerlink" href="#ch40-28" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Синтаксис описанный выше, для поиска в чёрных списках DNS по явно заданным значениям (или имени, или IP-адреса) - упрощение. В DNS-списке, после доменного имени сопровождаемого слэшом, фактически, может быть список элементов. Как и во всех списках Exim&#8217;a, разделитель по умолчанию - двоеточие. Однако, поскольку это - подсписок в списке доменов чёрных списков DNS, необходимо удвоить разделители:</p>
+<div class="highlight-python"><pre>dnslists = black.list.tld/name.1::name.2</pre>
+</div>
+<p>или изменить символ разделителя, например так:</p>
+<div class="highlight-python"><pre>dnslists = black.list.tld/&lt;;name.1;name.2</pre>
+</div>
+<p>Если элемент в списке - IP-адрес, он инвертируется до добавления области чёрного списка DNS. Если он - не IP-адрес, инверсии не происходит.Рассмотрите это условие:</p>
+<div class="highlight-python"><pre>dnslists = black.list.tld/&lt;;192.168.1.2;a.domain</pre>
+</div>
+<p>Происходящие поиски в DNS:</p>
+<div class="highlight-python"><pre>2.1.168.192.black.list.tld
+a.domain.black.list.tld</pre>
+</div>
+<p>Как только найдена запись в DNS (которая совпадает с заданным возвращаемым IP-адресом, если задано - смотрите раздел <a class="reference internal" href="#ch40-31"><em>Дополнительные совпадения условий для списков DNS</em></a>), дальнейший поиск не производится. Если происходит временная ошибка поиска в DNS, пробуется остальная часть списка доменов/IP-адресов. Временная ошибка для всего элемента списка DNS происходит лишь если безуспешны поиски по остальным DNS подспискам. Другими словами, успешный поиск для любого элемента подсписка отменяет временную ошибку для предыдущего элемента.</p>
+<p>Способность подставлять список элементов после слэша, в некотором смысле - лишь синтаксическое удобство. Следующие два примера, имеют один и тот же эффект:</p>
+<div class="highlight-python"><pre>dnslists = black.list.tld/a.domain : black.list.tld/b.domain
+dnslists = black.list.tld/a.domain::b.domain</pre>
+</div>
+<p>Однако, когда данные для списка получаются путём поиска, вторая форма, обычно, намного более удобна. Рассмотрите этот пример:</p>
+<div class="highlight-python"><pre>deny message  = The mail servers for the domain \
+                $sender_address_domain \
+                are listed at $dnslist_domain ($dnslist_value); \
+                see $dnslist_text.
+     dnslists = sbl.spamhaus.org/&lt;|${lookup dnsdb {&gt;|a=&lt;|\
+                                   ${lookup dnsdb {&gt;|mxh=\
+                                   $sender_address_domain} }} }</pre>
+</div>
+<p>Отметьте использование “&gt;|” в поиске dnsdb, для задания сепаратора в нескольких DNS-записях. Внутренний поиск dnsdb производит список хостов MX, и внешний dnsdb поиск находит IP-адреса этих хостов. Результат раскрытия условия мог бы быть чем-то вроде этого:</p>
+<div class="highlight-python"><pre>dnslists = sbl.spahmaus.org/&lt;|192.168.2.3|192.168.5.6|...</pre>
+</div>
+<p>Таким образом, этот пример проверяет, действительно ли IP-адрес почтового сервера отправителя находится в чёрном списке Spamhaus.</p>
+<p>Ключ который использовался для успешного поиска в списке DNS кладётся в переменную $dnslist_matched (смотрите раздел <a class="reference internal" href="#ch40-30"><em>40.30</em></a>).</p>
+</div>
+<div class="section" id="ch40-29">
+<span id="id23"></span><h2>Данные возвращаемые списками DNS<a class="headerlink" href="#ch40-29" title="Ссылка на этот заголовок">¶</a></h2>
+<p>DNS списки построены с использованием записей в DNS. Оригинальный RBL использовал лишь адрес 127.0.0.1 на правой стороне каждой записи, но списки RBL+ и некоторые другие списки используют несколько значений с различными значениями. Значения используемые списками RBL+ таковы:</p>
+<div class="highlight-python"><pre>127.1.0.1  RBL
+127.1.0.2  DUL
+127.1.0.3  DUL and RBL
+127.1.0.4  RSS
+127.1.0.5  RSS and RBL
+127.1.0.6  RSS and DUL
+127.1.0.7  RSS and DUL and RBL</pre>
+</div>
+<p>Раздел <a class="reference internal" href="#ch40-31"><em>40.31</em></a>, ниже, описывает как вы можете различить различные значения.</p>
+<p>Некоторые списки DNS могут возвращать более одной адресной записи; смотрите раздел <a class="reference internal" href="#ch40-33"><em>40.33</em></a> для деталей того как они проверяются.</p>
+</div>
+<div class="section" id="ch40-30">
+<span id="id24"></span><h2>Переменные устанавливаемые из списков DNS<a class="headerlink" href="#ch40-30" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Когда в списке DNS найдено вхождение, переменная $dnslist_domain содержит полное имя совпавшего домена (например, <em>spamhaus.example</em>), $dnslist_matched - содержит ключ домена (например, “192.168.5.3”), и, $dnslist_text - содержимое записи DNS. Когда ключ - IP адрес, он не превращается в $dnslist_matched (хотя он в реально ищщется). В простом случае, например:</p>
+<div class="highlight-python"><pre>deny dnslists = spamhaus.example</pre>
+</div>
+<p>ключ, также, доступен в другой перемнной (в этом случае - $sender_host_address). В более сложных случаях, это не так. Например, используя поиск данных (как описано в разделе <a class="reference internal" href="#ch40-28"><em>40.28</em></a>) можно производить поиск в <strong>dnslists</strong> следующим образом:</p>
+<div class="highlight-python"><pre>deny dnslists = spamhaus.example/&lt;|192.168.1.2|192.168.6.7|...</pre>
+</div>
+<p>В случае успешности этого условия, значение $dnslist_matched должно быть, например, “192.168.6.7”.</p>
+<p>Если поиском в DNS возвращается более одной адресной записи, все IP адреса включаются в $dnslist_value, разделённые запятыми и пробелами. В переменная $dnslist_text находиться содержимое любой ассоциированной TXT записи. Для список типа RBL+ запись TXT для включенной записи - часто бессмысленна. Сморите раздел <a class="reference internal" href="#ch40-34"><em>40.34</em></a> для получения дополнительной информации.</p>
+<p>Вы можете использовать эти переменные в модификаторах <strong>message</strong> и <strong>log_message</strong> - хотя они появляются до условия в ACL, они не раскрываются пока не произойдёт неудача. Например:</p>
+<div class="highlight-python"><pre>deny    hosts = !+local_networks
+        message = $sender_host_address is listed \
+          at $dnslist_domain
+          dnslists = rbl-plus.mail-abuse.example</pre>
+</div>
+</div>
+<div class="section" id="ch40-31">
+<span id="id25"></span><h2>Дополнительные совпадения условий для списков DNS<a class="headerlink" href="#ch40-31" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Вы можете добавить символ равно и IP-адрес после доменного имени <strong>dnslists</strong>, для ограничения его действия DNS-записями с соответствующей правой стороной. Например,</p>
+<div class="highlight-python"><pre>deny dnslists = rblplus.mail-abuse.org=127.0.0.2</pre>
+</div>
+<p>отклоняет лишь те хосты, которые приводят к 127.0.0.2. Без этих дополнительных данных, любая адресная запись предполагается совпадающей. На данный момент, мы предполагаем что поиск в DNS возвращает лишь одну запись. Раздел <a class="reference internal" href="#ch40-32"><em>40.32</em></a> описывает то, как обрабатываются несколько записей.</p>
+<p>Для проверки можно задать более чем один IP-адрес, используя двоеточие как разделитель. Они - альтернативы, если совпадает любой из них, условие <strong>dnslists</strong> - истинно. Например:</p>
+<div class="highlight-python"><pre>deny  dnslists = a.b.c=127.0.0.2,127.0.0.3</pre>
+</div>
+<p>Если вы хотите задать ограниченный список адресов, и, также, определить имена или IP-адреса для поиска, ограниченный список адресов должен быть задан первым. Например:</p>
+<div class="highlight-python"><pre>deny dnslists = dsn.rfc-ignorant.org\
+                =127.0.0.2/$sender_address_domain</pre>
+</div>
+<p>Если символ “&amp;” используется вместо “=”, сравнение для каждого перечисленного IP-адреса завершается путём поразрядного “and” вместо теста равенства. Другими словами, перечисленные адреса используются как битовые маски. Сравнение истинно, если все биты в маске представлены в тестируемом адресе. Например:</p>
+<div class="highlight-python"><pre>dnslists = a.b.c&amp;0.0.0.3</pre>
+</div>
+<p>совпадает с адресом “x.x.x.3”, “x.x.x.7”, “x.x.x.11”, и т.д. Если вы хотите проверить, что представлен тот или иной бит (в противоположность представленным обоим), вы должны использовать несколько значений. Например:</p>
+<div class="highlight-python"><pre>dnslists = a.b.c&amp;0.0.0.1,0.0.0.2</pre>
+</div>
+<p>совпадает, если последний компонент адреса - нечётное число, или удвоенное нечетное число.</p>
+</div>
+<div class="section" id="ch40-32">
+<span id="id26"></span><h2>Отрицательные условия сравнения DNS<a class="headerlink" href="#ch40-32" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Вы можете предоставлять отрицательный список IP-адресов, как часть условия <strong>dnslists</strong>. Тогда как</p>
+<div class="highlight-python"><pre>deny  dnslists = a.b.c=127.0.0.2,127.0.0.3</pre>
+</div>
+<p>значит “запрет, если хост в чёрном списке домена a.b.c и IP-адрес приводит к списку в котором 127.0.0.2 или 127.0.0.3”,</p>
+<div class="highlight-python"><pre>deny  dnslists = a.b.c!=127.0.0.2,127.0.0.3</pre>
+</div>
+<p>средство “запрет, если хост в чёрном списке домена a.b.c и IP-адрес не приводит к списку в котором 127.0.0.2 и 127.0.0.3”. Другими словами, результат тестирования - инвертирован, если восклицательный знак появляется перед символом “=” ( или “&amp;”).</p>
+<div class="admonition note">
+<p class="first admonition-title">Примечание</p>
+<p class="last">Этот вид отрицания - не то же самое, что и отрицание домена, хостов, или списков адресов (почему и синтаксис различается).</p>
+</div>
+<p>Если вы используете только один список, синтаксис отрицания немного вам даст. Предыдущий пример эквивалентен:</p>
+<div class="highlight-python"><pre>deny  dnslists = a.b.c
+      !dnslists = a.b.c=127.0.0.2,127.0.0.3</pre>
+</div>
+<p>Однако, если вы используете составные списки, синтаксис отрицания более ясен. Рассмотрите этот пример:</p>
+<div class="highlight-python"><pre>deny  dnslists = sbl.spamhaus.org : \
+                 list.dsbl.org : \
+                 dnsbl.njabl.org!=127.0.0.3 : \
+                 relays.ordb.org</pre>
+</div>
+<p>Используя только позитивные списки, это было бы так:</p>
+<div class="highlight-python"><pre>deny  dnslists = sbl.spamhaus.org : \
+                 list.dsbl.org
+deny  dnslists = dnsbl.njabl.org
+      !dnslists = dnsbl.njabl.org=127.0.0.3
+deny  dnslists = relays.ordb.org</pre>
+</div>
+<p>который менее ясен, и тяжелее поддерживать.</p>
+</div>
+<div class="section" id="dns-dns">
+<span id="ch40-33"></span><h2>Обработка нескольких записей DNS из списка DNS<a class="headerlink" href="#dns-dns" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Поиск в DNS для условия <strong>dnslists</strong> может вернуть более чем одну запись DNS, в связи с чем, предоставляется более одного IP адреса. Когда элемент в списке <strong>dnslists</strong> сопровождается “=” или “&amp;” и списком IP адресов, в порядке ограничения совпадения со специфическим результатом из поиска DNS, есть два пути для обработки проверки. Например, рассмотрим условие:</p>
+<div class="highlight-python"><pre>dnslists = a.b.c=127.0.0.1</pre>
+</div>
+<p>Что происходит если поиск в DNS входящего IP адреса приносит 127.0.0.1 и 127.0.0.2 посредством двух различных записей DNS. Условие истинно, поскольку одно из заданных значений найдено, или оно ложно, поскольку одно из найденных значений не в списке? И как это применяется к отрицательным условиям? Обе возможности предоставляются с помощью дополнительных разделителей - “==” и “=&amp;”.</p>
+<p>Если используется “=” или “&amp;”, условие истинно если один любой искомый IP адрес совпадает с одним из перечисленных адресов. Для примера выше, условие истинно, поскольку совпал 127.0.0.1.</p>
+<p>Если используется “==” или “=&amp;”, условие истинно лишь когда один из искомых IP адресов совпадает с одним из перечисленных доменов. Если условие изменить на:</p>
+<div class="highlight-python"><pre>dnslists = a.b.c==127.0.0.1</pre>
+</div>
+<p>и поиск в DNS приносит 127.0.0.1 и 127.0.0.2, условие ложно, поскольку 127.0.0.2 не в списке. Вам необходимо иметь</p>
+<div class="highlight-python"><pre>dnslists = a.b.c==127.0.0.1,127.0.0.2</pre>
+</div>
+<p>чтобы условие было истинным.</p>
+<p>Когда для отрицания совпадения IP адресов используется “!”, он инвертирует результат, давая точную противоположность приведённому выше. Таким образом:</p>
+<ul>
+<li><p class="first">Если используется “!=” или “!&amp;”, условие истинно если ничего не нашлось ни для одного из адресов. Рассмотрим:</p>
+<div class="highlight-python"><pre>dnslists = a.b.c!&amp;0.0.0.1</pre>
+</div>
+</li>
+<li><p class="first">Если поиск в DNS принёс оба - 127.0.0.1 и 127.0.0.2, условие ложно, поскольку совпал 127.0.0.1.</p>
+</li>
+<li><p class="first">Если используется “!==” или “!=&amp;”, условие истинно, поскольку один найденный IP адрес не совпадает. Вам необходимо иметь:</p>
+<div class="highlight-python"><pre>dnslists = a.b.c!=&amp;0.0.0.1,0.0.0.2</pre>
+</div>
+<p>для того чтобы условие было ложным.</p>
+</li>
+<li><p class="first">Когда поиск в DNS приносит только один IP адрес, нет различия между “=” и “==”, и между “&amp;” и “=&amp;”.</p>
+</li>
+</ul>
+</div>
+<div class="section" id="ch40-34">
+<span id="id27"></span><h2>Дополнительная информация из объединённых списков DNS<a class="headerlink" href="#ch40-34" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Когда используется средство для ограничения совпадающих значений IP в списках DNS, текст из записи TXT, который устанавливается в переменную $dnslist_text может не отражать истинную причину отказа. Это происходит когда списки объединяются и IP адрес в A записи используется для их идентификации; к несчастью, тут только одна TXT запись. Один из путей обхода этого - не использовать объединённые списик, но это может быть неэффективным, поскольку это потребует многочисленных поисков в DNS, тогда как в большинстве случаев хост не находиться ни в одном списке.</p>
+<p>Доступен менее эффективный способ решения этой проблемы. Если даны два доменных имени, разделённые запятыми, второе использует первое для начальной проверки, ограничивая любые значения IP этим набором. Если происходит совпадение, первый домен используется без каких-либо ограничений значений IP для получения TXT записи. Как побочный продукт этого, также тестируется что IP адрес действительно первый в списке. Первый домен - тот что помещается в $dnslist_domain. Например:</p>
+<div class="highlight-python"><pre>reject message  = \
+         rejected because $sender_host_address is blacklisted \
+         at $dnslist_domain\n$dnslist_text
+       dnslists = \
+         sbl.spamhaus.org,sbl-xbl.spamhaus.org=127.0.0.2 : \
+         dul.dnsbl.sorbs.net,dnsbl.sorbs.net=127.0.0.10</pre>
+</div>
+<p>Для первого элемента чёрного списка, всё начинается с поиска в <em>sbl-xbl.spamhaus.org</em> и тестирования на возвращение 127.0.0.2. Если происходит совпадение, затем проверяется <em>sbl.spamhaus.org</em> без проверки возвращённого значения и как только что-то нашлось, ищется соответствующая TXT запись. Если нет совпадений для <em>sbl-xbl.spamhaus.org</em> - больше ничего не происходит. Второй элемент чёрного списка обрабатывается подобным образом.</p>
+<p>Если вас интересует более чем один объединённый список, тот же список может быть задан несколько раз, но, поскольку результаты поиска в DNS кэшируются, вызовы DNS не повторяются. Например:</p>
+<div class="highlight-python"><pre>reject dnslists = \
+         http.dnsbl.sorbs.net,dnsbl.sorbs.net=127.0.0.2 : \
+         socks.dnsbl.sorbs.net,dnsbl.sorbs.net=127.0.0.3 : \
+         misc.dnsbl.sorbs.net,dnsbl.sorbs.net=127.0.0.4 : \
+         dul.dnsbl.sorbs.net,dnsbl.sorbs.net=127.0.0.10</pre>
+</div>
+<p>В этом случае происходит один поиск в <em>dnsbl.sorbs.net</em>, и, если никакое из IP значений не совпало (или если записей не найдено), - только этот поиск осуществляется. Только в случае совпадения, происходит консультация с одним или несколькими специфическими списками.</p>
+</div>
+<div class="section" id="dns-ipv6">
+<span id="ch40-35"></span><h2>Списки DNS и IPv6<a class="headerlink" href="#dns-ipv6" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Если Exim&#8217;a просят сделать поиск по списку DNS для адреса IPv6, он его инвертирует, и откусывает по кусочкам. Например, если адрес вызывающего хоста - 3ffe:ffff:836f:0a00:000a:0800:200a:c031, Exim мог бы искать</p>
+<div class="highlight-python"><pre>1.3.0.c.a.0.0.2.0.0.8.0.a.0.0.0.0.0.a.0.f.6.3.8.
+  f.f.f.f.e.f.f.3.blackholes.mail-abuse.org</pre>
+</div>
+<p>(разбито на две строки, чтобы вписать в страницу). К сожалению, некоторые списки DNS содержат групповые записи, подразумевающие IPv4, плохо взаимодействующие с IPv6. Например, DNS-запись</p>
+<div class="highlight-python"><pre>*.3.some.list.example.    A    127.0.0.1</pre>
+</div>
+<p>вероятно, предназначен для помещения записи 3.0.0.0/8 сети IPv4 в список. К сожалению, это также соответствует всем сетям 3::/4, для IPv6.</p>
+<p>Вы можете исключить адреса IPv6 из DNS-поисков используя подходящее условие <strong>condition</strong>, как в этом примере:</p>
+<div class="highlight-python"><pre>deny   condition = ${if isip4{$sender_host_address}}
+       dnslists  = some.list.example</pre>
+</div>
+</div>
+<div class="section" id="ch40-36">
+<span id="id28"></span><h2>Ограничение частоты входящих сообщений<a class="headerlink" href="#ch40-36" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Условие ACL <strong>ratelimit</strong> может быть использовано для измерения и контроля частоты с которой клиенты могут посылать электронную почту. Это более мощное средство, чем параметр <strong>smtp_ratelimit_*</strong>, поскольку этот параметр управляет частотой команд лишь в одной SMTP-сессии, тогда как условие <strong>ratelimit</strong> работает для всех соединений (параллельных и последовательных) от того же самого хоста. Синтаксис условия <strong>ratelimit</strong>, таков:</p>
+<div class="highlight-python"><pre>ratelimit = &lt;m&gt; / &lt;p&gt; / &lt;options&gt; / &lt;key&gt;</pre>
+</div>
+<p>Если средний клиент, посылающий с частотой меньше <em>m</em> сообщений за период времени <em>p</em>, условие - ложно; иначе, оно истинно.</p>
+<p>Как побочный эффект, условие <strong>ratelimit</strong> устанавливает переменную раскрытия $sender_rate в вычисленную частоту клиента, $sender_rate_limit в сконфигурированное значение <em>m</em>, и $sender_rate_period в настроеное значение <em>p</em>.</p>
+<p>Параметр <em>p</em> - постоянная временная константа, в форме интервалов времени Exim&#8217;a, например, 8h - для восьми часов. Большее постоянное время, означает, что Exim&#8217;y требуется большее время, чтобы забыть прошлое поведение клиента. Параметр <em>m</em> - максимальное число сообщений, которые клиенту разрешено посылать в каждый интервал времени. Также, он определяет число сообщений разрешённых в быстром пакетном режиме. Путём увеличения обоих <em>m</em> и <em>p</em>, но оставляя неизменной константу <em>m/p</em>, вы позволяете клиенту посылать больше сообщений в пакетном режиме без изменения его долговременного предела посылки. Наоборот, если малы оба <em>m</em> и <em>p</em>, сообщения должны посылаться в пределах лимита.</p>
+<p>Есть скрипт <em>util/ratelimit.pl</em>, который извлекает частоту частоту отсылки из лог-файлов, помогая выбрать соответствующие значения для <em>m</em> и <em>p</em>, при развёртывании условия ACL <strong>ratelimit</strong>. Скрипт выводит инструкцию по использованию, когда он запускается без аргументов.</p>
+<p>Для поиска данных, для вычисления средней частоты клиента посылки клиентом, используется ключ. Эти данные сохраняются в директории спула Exim&#8217;a, наряду с данными повторов и другими базами подсказок. Ключ по умолчанию - $sender_host_address, который применяет ограничения к каждому IP-адресу клиентского хоста. Путём изменения ключа, вы можете изменить то, как Exim идентифицирует клиентов для ограничения частоты. Например, для ограничения частоты отправлений для каждого аутентифицированного пользователя, независимо от компьютера с которого отсылается, установите ключ в $authenticated_id. Вы должны гарантировать, что ключ является значимым; например, $authenticated_id - является значимым лишь если клиент аутентифицировался. (Который вы можете проверить с условием ACL <strong>authenticated</strong>)</p>
+<p>Ключи поиска не должны идентифицировать клиентов: если вы хотите ограничить частоту с которой получатель принимает сообщения, вы можете использовать ключ <em>$local_part&#64;$domain</em> с параметром <strong>per_rcpt</strong> (см. ниже) в ACL RCPT.</p>
+<p>Внутренне, Exim добавляет сглаживание константы <em>p</em>, и параметров ключей поиска, поскольку они изменяют значение сохранённых данных. Это не истинно, для лимита <em>m</em>, таким образом, вы можете изменять сконфигурированную максимальную частоту, и Exim продолжает помнить предыдущее поведение клиента, но, если вы изменяете другие параметры частоты, Exim забывает прошлое поведение.</p>
+<p>Каждое условие <strong>ratelimit</strong> может иметь до трёх параметров. Первый параметр задаёт что Exim считает мерой частоты, и второй определяет как Exim обрабатывает чрезмерно быстрых клиентов. Третий параметр, может быть <strong>noupdate</strong>, для отключения обновления базы данных частоты отправок (смотрите раздел <a class="reference internal" href="#ch40-40"><em>40.40</em></a>). Параметры разделены слэшами, как и другие параметры. Они могут появляться в любом порядке.</p>
+</div>
+<div class="section" id="ratelimit">
+<span id="ch40-37"></span><h2>Параметры измерения для <strong>ratelimit</strong><a class="headerlink" href="#ratelimit" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Параметр <strong>per_conn</strong> ограничивает частоту подключения клиента.</p>
+<p>Параметр <strong>per_mail</strong> ограничивает частоту посылки сообщений клиентом. Это - значение по умолчанию, если на заданы параметры <strong>per_</strong>.</p>
+<p>Параметр <strong>per_byte</strong> ограничивает полосу пропускания электронной почты отправителя. Отметьте, что её лучше использовать в DATA ACL; если это используется в более ранней ACL, она полагается на параметр SIZE определённый клиентом в команде MAIL, которая может быть неточной, или вообще отсутствовать. Вы можете сопровождать лимит “m” в конфигурации K, M, или G - для задания, соответственно, килобайт, мегабайт, или гигабайт.</p>
+<p>Параметр <strong>per_rcpt</strong> заставляет Exim ограничить частоту с которой принимаются получатели. Для эффективности, её необходимо использовать в <strong>acl_smtp_rcpt</strong> или <strong>acl_not_smtp</strong> ACL. В ACL <strong>acl_smtp_rcpt</strong> число получателей увеличивается по одному. В случае локально переданного сообщения, в ACL <strong>acl_not_smtp</strong> число получателей увеличивается путём $recipients_count для всего сообщения. Отметьте, что в этом случае движок ограничения частоты будет видеть сообщения с несколькими получателями, как большой, высокоскоростной пакетный режим.</p>
+<p>Параметр <strong>per_cmd</strong> заставляет Exim пересчитывать частоту при каждой обработке условия. Это может быть использовано для ограничения частоты команд SMTP. Эта команда, по существу, - синоним <strong>per_rcpt</strong> для очищения его от эффекта ограничения частоты индивидуальными командами, а не получателями.</p>
+</div>
+<div class="section" id="ch40-38">
+<span id="id29"></span><h2>Параметры <strong>ratelimit</strong> для обработки быстрых клиентов<a class="headerlink" href="#ch40-38" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Если средняя частота клиента больше чем максимум, движок ограничения частоты может воздействовать двумя возможными способами, зависящими от наличия параметров <strong>strict</strong> или <strong>leaky</strong>. Это не зависит от других контрмер (типа отклонения сообщения), которые могут быть заданы путём остальной части ACL. Режим по умолчанию - <strong>leaky</strong>, который избегает сверх-агрессивной частоты повтора клиента, препятствуя отправке им любой почты.</p>
+<p>Параметр <strong>strict</strong> означает, что клиентские записи частоты всегда обновляются. Эффект этого - что Exim измеряет среднюю частоту клиента пытаться послать электронную почту, которая может быть значительно выше максимума. Если клиент превысит предел - он будет подвергнут контрмерам путём ACL, пока он не замедлится ниже максимальной частоты. Если клиент прекращает попытки послать почту на время определённое параметром <em>p</em>, то определяется время, которое требуется для экспоненциального снижения частоты до 37% её пикового значения. Вы можете не работать время (число периодов сглаживания), которые клиент подвергается контрмерам после резкого превышения лимита, по этой формуле:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">ln</span><span class="p">(</span><span class="n">peakrate</span><span class="o">/</span><span class="n">maxrate</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Параметр <strong>leaky</strong> (по умолчанию) означает, что записи клиентской частоты не обновляются, если он превысил лимит. Эффект этого - что Exim измеряет среднюю частоту успешной отправки почты клиентом, которая не может быть больше максимума. Если клиент превышает лимит, он подвергнется контрмерам, но он всё ещё будет способен посылать почту с сконфигурированной максимальной частотой, вне зависимости от частоты его попыток. Это, в общем случае, - лучший выбор, если у вас есть клиенты с автоматическими повторами.</p>
+</div>
+<div class="section" id="ch40-39">
+<span id="id30"></span><h2>Использование ограничения частоты<a class="headerlink" href="#ch40-39" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Другие средства ACL Exim&#8217;a используются чтобы задать, какие контрмеры предпринимаются, когда превышен лимит частоты. Это может быть что-то из записи в лог предупреждений (например, когда измеряется существующая частота отсылки для задания политики), через временные задержки, для замедления быстрых отправителей, до отклонения сообщений. Например:</p>
+<div class="highlight-python"><pre># Log all senders' rates
+
+warn ratelimit = 0 / 1h / strict
+     log_message = Sender rate $sender_rate / $sender_rate_period
+
+# Slow down fast senders; note the need to truncate $sender_rate
+# at the decimal point.
+warn ratelimit = 100 / 1h / per_rcpt / strict
+     delay     = ${eval: ${sg{$sender_rate}{[.].*}{}} - \
+                   $sender_rate_limit }s
+
+# Keep authenticated users under control
+deny authenticated = *
+     ratelimit = 100 / 1d / strict / $authenticated_id
+
+# System-wide rate limit
+defer message = Sorry, too busy. Try again later.
+      ratelimit = 10 / 1s / $primary_hostname
+
+# Restrict incoming rate from each host, with a default
+# set using a macro and special cases looked up in a table.
+defer message = Sender rate exceeds $sender_rate_limit \
+      messages per $sender_rate_period
+      ratelimit = ${lookup {$sender_host_address} \
+                    cdb {DB/ratelimits.cdb} \
+                    {$value} {RATELIMIT} }</pre>
+</div>
+<div class="admonition warning">
+<p class="first admonition-title">Предупреждение</p>
+<p class="last">Если у вас нагруженный сервер, с большим количеством тестов <strong>ratelimit</strong>, особенно с параметром <strong>per_rcpt</strong>, вы можете пострадать от узкого места производительности, вызванного путём блокировок в БД подсказок ограничений частоты. Кроме создания мере сложных ACL, вы можете уменьшить проблему, путём использования RAM диска для директории подсказок Exim&#8217;a (обычно, <em>/var/spool/exim/db/</em>). Однако, это означает, что Exim потеряет все свои подсказки после перезагрузки (включая подсказки повторов, кэш обратного вызова, и данные ограничения частоты).</p>
+</div>
+</div>
+<div class="section" id="ch40-40">
+<span id="id31"></span><h2>Чтение данных <strong>ratelimit</strong> без обновления<a class="headerlink" href="#ch40-40" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Если в условии ACL <strong>ratelimit</strong> присутствует параметр <strong>noupdate</strong>, Exim вычисляет частоту и проверяет что лимит - нормальный, но не обновляет сохранённые данные. Это означает, что в соответствующих ACL возможно производить поиск по специфическому (или автоматически созданному) ключу без увеличения счётчика частоты отправления для этого ключа. Для того чтобы это было полезно, иные ACL должны установить частоту для того же самого ключа (иначе, она всегда будет ноль). Например:</p>
+<div class="highlight-python"><pre>acl_check_connect:
+  deny ratelimit = 100 / 5m / strict / per_cmd / noupdate
+  log_message = RATE: $sender_rate/$sender_rate_period \
+                (max $sender_rate_limit)
+
+
+... some other logic and tests...
+
+
+acl_check_mail:
+  warn ratelimit = 100 / 5m / strict / per_cmd
+  condition = ${if le{$sender_rate}{$sender_rate_limit}}
+  logwrite  = RATE UPDATE: $sender_rate/$sender_rate_period \
+              (max $sender_rate_limit)</pre>
+</div>
+<p>В этом примере, частота проверяется и используется для отказа в доступе (когда она слишком большая) в ACL “connect”, но реальный подсчёт запомненной частоты происходит позднее, базируясь на командах, в иной ACL.</p>
+</div>
+<div class="section" id="ch40-41">
+<span id="id32"></span><h2>Проверка адресов<a class="headerlink" href="#ch40-41" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Несколько условий <strong>verify</strong>, описанных в разделе <a class="reference internal" href="#ch40-24"><em>40.24</em></a>, вызывают проверку адреса. В разделе <a class="reference internal" href="#ch40-45"><em>40.45</em></a> обсуждаются отчёты о ошибках проверки адреса отправителя. Условия проверки могут сопровождаться параметрами модифицирующими процесс проверки. Параметры отделяются от ключевых слов и друг от друга слэшами, и, некоторые из них, содержат параметры. Например:</p>
+<div class="highlight-python"><pre>verify = sender/callout
+verify = recipient/defer_ok/callout=10s,defer_ok</pre>
+</div>
+<p>Первая стадия проверки адреса, которая всегда происходит, - это запуск адреса через маршрутизатор, в “режиме проверки” (“verify mode”). Маршрутизаторы могут определить различие между проверкой и маршрутизацией для доставки, и их действия могут быть множеством различных общих параметров, типа <strong>verify</strong> и <strong>verify_only</strong> (смотрите раздел <a class="reference internal" href="ch15.html#ch15-00"><em>15</em></a>). Если маршрутизация неудачна, проверка неудачна. Доступные параметры таковы:</p>
+<ul class="simple">
+<li>Если задан параметр <strong>callout</strong>, успешная маршрутизация к одному или более удалённых хостов сопровождается “обратным вызовом” (“callout”) к тем же хостам, как дополнительная проверка. Обратные вызовы и их аргументы обсуждаются в следующей секции.</li>
+<li>Если при проверке маршрутизации происходит ошибка отсрочки, ACL, обычно, возвращает “defer”. Однако, если вы включаете <strong>defer_ok</strong> в параметр, вместо этого условие становится принудительно верным. Отметьте, что это - главная проверочный параметр, также как и аргументы для обратных вызовов.</li>
+<li>Параметр <strong>no_details</strong> описан в разделе <a class="reference internal" href="#ch40-45"><em>40.45</em></a>, в которой обсуждаются отчёты о неудаче проверки адреса отправителя.</li>
+<li>Параметр <strong>success_on_redirect</strong> приводит к тому, что проверка всегда успешна, немедленно после успешного редиректа. По умолчанию, если редирект создает лишь один адрес, этот адрес также проверяется. Дальнейшее обсуждение смотрите в разделе <a class="reference internal" href="#ch40-46"><em>40.46</em></a>.</li>
+</ul>
+<p>После неудачи проверки адреса, $acl_verify_message содержит сообщение о ошибке, которое ассоциировано с ошибкой. Оно может быть сохранено, путём такого кодирования:</p>
+<div class="highlight-python"><pre>warn  !verify = sender
+      set acl_m0 = $acl_verify_message</pre>
+</div>
+<p>Если вы пишете ваше собственное сообщение о отклонении, или сообщение в логи, когда отказано в доступе, вы можете использовать эту переменную для включения информации о ошибке проверки.</p>
+<p>В дополнение, $sender_verify_failure или $recipient_verify_failure (соответственно), содержат одно из следующих слов:</p>
+<ul class="simple">
+<li><strong>qualify</strong>: Адрес был неквалифицированный (без домена), и сообщение не являлось локальным или прибывшим со свободного хоста.</li>
+<li><strong>route</strong>: Ошибка маршрутизации.</li>
+<li><strong>mail</strong>: Маршрутизация успешна, и была предпринята попытка обратного вызова; отклонение произошло до команды MAIL (т.е. в начале соединения, HELO или MAIL).</li>
+<li><strong>recipient</strong>: В обратном вызове была отклонена команда RCPT.</li>
+<li><strong>postmaster</strong>: В обратном вызове была выполнена проверка постмастера.</li>
+</ul>
+<p>Как ожидается, основным использованием этих переменных будет различение между отклонением MAIL и RCPT в обратных вызовах.</p>
+</div>
+<div class="section" id="ch40-42">
+<span id="id33"></span><h2>Проверка обратным вызовом<a class="headerlink" href="#ch40-42" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Для нелокальных адресов маршрутизация проверяет домен, но он неспособна сделать какую-либо проверку локальной части адреса. Есть ситуации, когда желательно какое-то средство проверки локальной части. Одним из способов это сделать, может быть создание SMTP <em>callback</em>, к хосту доставки для адреса отправителя, или <em>callforward</em> к последующему хосту для адреса получателя, чтобы увидеть, принимает ли хост адрес. Мы используем термин <em>callback</em> для охвата обоих случаев. Отметьте, что для адреса отправителя, обратный вызов - не к хосту клиента, который пытается доставить сообщение, а к одному из хостов, которые принимают входящую почту для домена отправителя.</p>
+<p>Exim, по умолчанию, не производит обратных вызовов. Если вы хотите чтобы они происходили, вы должны запросить их, путём установки соответствующих параметров, в условии <strong>verify</strong>, как описано ниже. Это средство должно использоваться с осторожностью, поскольку оно может добавить много затрат ресурсов на проверку адреса. Однако, Exim кэширует результаты обратных вызовов, что помогает уменьшить их стоимость. Детали о кэшировании даны в разделе <a class="reference internal" href="#ch40-44"><em>40.44</em></a>.</p>
+<p>Обратные вызовы для получателей, обычно используются лишь между хостами, которыми управляет один и тот же администратор. Например, корпоративный шлюз может использовать обратные вызовы для проверки допустимости получателей на внутреннем почтовом сервере. Успешный обратный вызов не гарантирует, что реальная доставка на адрес была бы успешной; с другой стороны, неудачный обратный вызов гарантирует, что доставка была бы неудачной.</p>
+<p>Если параметр <strong>callout</strong> представлен в условии проверяющем адрес, вторая стадия проверки происходит если адрес успешно перенаправлен к одному или более удалённым хостам. Обычный случай - маршрутизация путём маршрутизатора <strong>dnslookup</strong> или <strong>manualroute</strong>, где маршрутизатор определяет хосты. Однако, если маршрутизатор который не устанавливал маршруты хостов в транспорте <strong>smtp</strong> с установкой <strong>hosts</strong>, используются хосты транспорта. Если в транспорте <strong>smtp</strong> установлена <strong>hosts_override</strong>, всегда используются её хосты, вне зависимости, предоставлен или нет, маршрутизатором, список хостов.</p>
+<p>Используемый порт берётся из транспорта, если он задан, и это - удалённый транспорт. (Для маршрутизаторов, которые лишь делают проверку, транспорт не нужно задавать.) Иначе, используется порт SMTP по умолчанию. Если удалённый транспорт задаёт исходящий интерфейс, используется он; иначе - интерфейс не определён. Точно также, текст используемый для команды HELO берётся из транспортного параметра <strong>helo_data</strong>; если транспорта нет, используется значение $smtp_active_hostname.</p>
+<p>Для проверки обратным вызовом отправителя, Exim создаёт SMTP-соединение к удалённому хосту, для проверки, может ли быть доставлен на адрес отправителя рикошет. Посылаются следующие SMTP-команды:</p>
+<div class="highlight-python"><pre>HELO &lt;local host name&gt;
+MAIL FROM:&lt;&gt;
+RCPT TO:&lt;the address to be tested&gt;
+QUIT</pre>
+</div>
+<p>Вместо HELO используется LHLO, если транспортный параметр <strong>protocol</strong> установлен в <strong>lmtp</strong>.</p>
+<p>Проверка обратным вызовом получателя - подобна. По умолчанию, она также использует пустой адрес для отправителя. Такое значение по умолчанию выбрано потому, что большинство хостов не используют не используют адрес отправителя при проверка получателя. Использование тех же самых адресов - средство для использования одной записи в кэше для каждого получателя. Однако, некоторые сервера используют для проверки адрес отправителя. Они обслуживаются параметрами <strong>use_sender</strong> и <strong>use_postmaster</strong>, описанными в следующей секции.</p>
+<p>Если ответ на команду RCPT - код 2xx, проверка успешна. Если - 5xx, проверка неудачна. Для любых других обстоятельств, Exim пробует следующий хост, если он есть. Если есть проблемы со всеми удалёнными хостами, ACL вернёт “defer”, если для параметра <strong>callout</strong> не дан параметр <strong>defer_ok</strong>, в случае чего - условие принудительно успешно.</p>
+<p>Обратный вызов может занимать некоторое время. По этой причине, Exim, обычно, сбрасывает SMTP вывод до осуществления обратного вызова в ACL, для избежания неожиданных таймаутов у клиентов, когда используется расширение SMTP PIPELINING. Сброс вывода может быть отключен использованием модификатора <strong>control</strong> для установки <strong>no_callout_flush</strong>.</p>
+</div>
+<div class="section" id="ch40-43">
+<span id="id34"></span><h2>Дополнительные параметры для обратных вызовов<a class="headerlink" href="#ch40-43" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Параметр <strong>callout</strong> может сопровождаться символом равно и несколькими необязательными параметрами, разделёнными запятыми. Например:</p>
+<div class="highlight-python"><pre>verify = recipient/callout=10s,defer_ok</pre>
+</div>
+<p>Старый синтаксис, имевший <strong>callout_defer_ok</strong> и <strong>check_postmaster</strong> как отдельные параметры проверки, оставлен для обратной совместимости, но его использование не приветствуется. Дополнительный параметры для <strong>callout</strong> таковы:</p>
+<blockquote>
+<div><dl class="docutils">
+<dt><strong>&lt;a time interval&gt;</strong></dt>
+<dd><p class="first">Этим определяется интервал, который применяется к попытке обратного вызова к каждому хосту. Например:</p>
+<div class="highlight-python"><pre>verify = sender/callout=5s</pre>
+</div>
+<p class="last">По умолчанию, он - 30 секунд.  Таймаут используется для каждого ответа с удалённого хоста. Также он используется для инициации связи, если не перезадан путём параметра <strong>connect</strong></p>
+</dd>
+<dt><strong>connect = &lt;time interval&gt;</strong></dt>
+<dd><p class="first">Этот параметр делает возможным установить различные (обычно, меньшие) таймауты для создания SMTP соединения. Например:</p>
+<div class="highlight-python"><pre>verify = sender/callout=5s,connect=1s</pre>
+</div>
+<p class="last">Если не задано, то по умолчанию этот таймаут равен значению общего таймаута.</p>
+</dd>
+<dt><strong>defer_ok</strong></dt>
+<dd>Когда этот параметр присутствует, ошибки соединения с любым хостом, или любые другие виды временных ошибок, обрабатываются как успех ACL. Однако, при таких обстоятельствах кэш не обновляется.</dd>
+<dt><strong>fullpostmaster</strong></dt>
+<dd>Этот параметр работает как и параметр <strong>postmaster</strong> (смотрите ниже), но если проверка на <em>postmaster&#64;domain</em> неудачна, она пробует просто <em>postmaster</em>, без домена, в соответствии с спецификацией <span class="target" id="index-3"></span><a class="rfc reference external" href="http://tools.ietf.org/html/rfc2821.html"><strong>RFC 2821</strong></a>. RFC заявляет, что неквалифицированный адрес <em>postmaster</em> должен быть принят.</dd>
+<dt><strong>mailfrom = &lt;email address&gt;</strong></dt>
+<dd><p class="first">Когда проверка адресов в строках заголовков использует проверочный параметр <strong>header_sender</strong>, Exim, по умолчанию, ведёт себя как будто адреса - адреса отправителя из конверта. Проверка обратным вызовом, поэтому, проверяет может ли быть доставлен рикошет, путём использования пустого адреса в команде MAIL. Однако, спорно, что эти адреса никогда бы не могли бы использоваться как отправители конверта, и поэтому рикошеты (с пустым отправителем) могли быть правомерно отклонены. Параметр обратного вызова <strong>mailfrom</strong> позволяет вам определить, какой адрес использовать в команде MAIL. Например:</p>
+<div class="highlight-python"><pre>require  verify = header_sender/callout=mailfrom=abcd@x.y.z</pre>
+</div>
+<p class="last">Этот параметр доступен лишь в параметре <strong>header_sender</strong>.</p>
+</dd>
+<dt><strong>maxwait = &lt;time interval&gt;</strong></dt>
+<dd><p class="first">Этот параметр устанавливает полный таймаут для выполнения проверки обратным вызовом. Например:</p>
+<div class="highlight-python"><pre>verify = sender/callout=5s,maxwait=30s</pre>
+</div>
+<p class="last">По умолчанию, этот таймаут равен четырём таймаутам для индивидуальных SMTP-команд. Общий таймаут применяется когда существует более одного хоста, который можно попробовать. Таймаут проверяется до того как пробуется следующий хост. Это предотвращает очень большие задержки, если существует большое количество хостов, и у всех них таймаут (например, когда сетевой таймаут).</p>
+</dd>
+<dt><strong>no_cache</strong></dt>
+<dd>Когда дан этот параметр, кэш обратных вызовов не читается и не обновляется.</dd>
+<dt><strong>postmaster</strong></dt>
+<dd>Когда установлен этот параметр, успешная проверка обратным вызовом сопровождается подобной проверкой на локальную часть <em>postmaster</em>, для того же самого домена. Если этот адрес отклоняется, обратный вызов - неудачен (но, смотрите <strong>fullpostmaster</strong>, выше). Результат проверки постмастера записывается в кэш; если она неудачна, это используется для неудачи следующего обратного вызова для домена, без создания соединения, пока не истечёт время записи в кэше.</dd>
+<dt><strong>postmaster_mailfrom = &lt;email address&gt;</strong></dt>
+<dd><p class="first">По умолчанию, проверка постмастера использует в команде MAIL пустой адрес отправителя. Вы можете использовать этот параметр для проверки с использованием иного адреса. Например:</p>
+<div class="highlight-python"><pre>require  verify = sender/callout=postmaster_mailfrom=abc@x.y.z</pre>
+</div>
+<p>Если представлены оба параметра - <strong>postmaster</strong> и <strong>postmaster_mailfrom</strong>, отвергается самая правая. Параметр <strong>postmaster</strong> эквивалентен этому примеру:</p>
+<div class="highlight-python"><pre>require  verify = sender/callout=postmaster_mailfrom=</pre>
+</div>
+<div class="last admonition warning">
+<p class="first admonition-title">Предупреждение</p>
+<p class="last">Меры кэширования для проверки постмастера не принимают во внимание адрес отправителя. Предполагается, что будет использоваться пустой или фиксированный непустой адрес. Всё что Exim запоминает - что проверка постмастера для домена успешна или неудачна.</p>
+</div>
+</dd>
+<dt><strong>random</strong></dt>
+<dd><p class="first">Когда установлен этот параметр, до обычной проверки обратным вызовом, Exim проверяет “случайную” локальную часть того же домена. Локальная часть в реальности не совсем случайна - она задаётся путём раскрытия параметра <strong>callout_random_local_part</strong>, которая по умолчанию такова:</p>
+<div class="highlight-python"><pre>$primary_host_name-$tod_epoch-testing</pre>
+</div>
+<p class="last">Идея состоит в том, чтобы попробовать определить, принимает ли удалённый хост все локальные части, без проверки. Если этот так, нет никакого смысла в выполнении обратного вызова для определённых локальных частей. Если проверка “random” успешна, результат сохраняется в записи кэша, и используется для принудительного успеха последующих проверок обратным вызовом, без создания соединения, до тех пор, пока не истечёт время жизни записи.</p>
+</dd>
+<dt><strong>use_postmaster</strong></dt>
+<dd><p class="first">Этот параметр применяется лишь к обратным вызовам проверки получателя. Например:</p>
+<div class="highlight-python"><pre>deny  !verify = recipient/callout=use_postmaster</pre>
+</div>
+<p class="last">Он вызывает использование в команде MAIL непустого адреса при выполнении обратного вызова проверки получателя, и, также, для проверки “random”, если она сконфигурирована. Локальная часть адреса - <em>postmaster</em>, и, домен - содержимое $qualify_domain.</p>
+</dd>
+<dt><strong>use_sender</strong></dt>
+<dd><p class="first">Этот параметр применяется лишь к обратным вызовам проверки получателя. Например:</p>
+<div class="highlight-python"><pre>require  verify = recipient/callout=use_sender</pre>
+</div>
+<p class="last">Он вызывает использование фактического адреса отправителя в команде MAIL, при проверке обратным вызовом, вместо пустого адреса. Нет необходимости использовать этот параметр, если вы не знаете, что вызываемые хосты используют отправителя при проверке получателя. Если её использовать неразборчиво, она уменьшает полноценность кэширования обратных вызовов.</p>
+</dd>
+</dl>
+</div></blockquote>
+<p>Если вы используете любой параметр, который устанавливает непустого отправителя для команды MAIL (<strong>mailfrom</strong>, <strong>postmaster_mailfrom</strong>, <strong>use_postmaster</strong> или <strong>use_sender</strong>), вы должны подумать о возможных петлях. Проверка получателя, обычно, производится между двумя хостами, под одним и тем же управлением, и хост который получает обратный вызов - обычно не настраивается для непосредственного проведения обратного вызова. Поэтому, обычно, безопасно использовать <strong>use_postmaster</strong> или <strong>use_sender</strong> в этих случаях.</p>
+<p>Однако, если вы используете непустой адрес отправителя для обратного вызова к произвольному хосту, есть вероятность, что удалённый хост сам инициирует обратный вызов к вашему хосту. Поскольку он проверяет отправителя сообщения, он, вероятно, будет использовать пустой адрес в MAIL, избегая петли обратных вызовов. Однако, в целях безопасности, лучше всего было бы настроить ваши собственные ACL, чтобы они не проводили проверку отправителя когда адрес получателя - адрес который вы используете для отправителя заголовка или проверки постмастера обратным вызовом.</p>
+<p>Другая проблема, при использовании непустых отправителей для обратных вызовов - кэширование. Когда вы устанавливаете <strong>mailfrom</strong> или <strong>use_sender</strong>, в записях кэша в качестве ключа используется комбинация отправитель/получатель; таким образом, для любого данного получателя выполняется намного больше обратных вызовов, чем когда используется пустой отправитель, или постмастер.</p>
+</div>
+<div class="section" id="ch40-44">
+<span id="id35"></span><h2>Кэширование обратных вызовов<a class="headerlink" href="#ch40-44" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Exim кэширует результаты обратных вызовов с целью уменьшить количество используемых ресурсов, если не задан параметр <strong>no_cache</strong> с параметром <strong>callout</strong>. База данных подсказок, называемая “callout”, используется для кэша. Используются два различных типа записей: первые типы записей - результат проверок обратным вызовом для специфических адресов, и другие информационные записи - которые применяются ко всему домену (например, что он принимает локальную часть <em>postmaster</em>).</p>
+<p>Когда оригинальный обратный вызов неудачен, дайтся детальное SMTP-сообщение о ошибке. Однако, для последующих ошибок, используются кэшированные данные, и это сообщение недоступно.</p>
+<p>Время жизни для негативных и позитивных записей адресного кэша - независимы, и может быть установлено путём глобального параметра <strong>callout_negative_expire</strong> (значение по умолчанию - 2 часа) и <strong>callout_positive_expire</strong> (значение по умолчанию - 24 часа), соответственно.</p>
+<p>Если хост даёт отрицательный ответ в SMTP-соединении, или отклоняет любую команду до и включительно</p>
+<div class="highlight-python"><pre>MAIL FROM:&lt;&gt;</pre>
+</div>
+<p>(но не включая команду MAIL с непустым адресом), любая попытка обратного вызова обязана стать неудачной. Exim помнит такие ошибки в записях кэша доменов, который используется для для неудачи обратных вызовов для домена, без создания нового соединения, пока не кончиться время жизни записи. Есть два отдельных времени окончания записей для кэша доменов: <strong>callout_domain_negative_expire</strong> (значение по умолчанию - три часа) и <strong>callout_domain_positive_expire</strong> (значение по умолчанию - семь дней).</p>
+<p>Записи доменов истекают, когда достигается негативное время жизни, если обратный вызов не может быть сделан для домена, или если неудачна проверка постмастера. Иначе, они истекают по достижении времени истечения. Это гарантирует, например, что хост остановивший приём “случайных” локальных частей, в конечном счёте будет замечен.</p>
+<p>Механизм кэширования обратных вызовов основан на домене проверяемого адреса. Если домен маршрутизируется к нескольким хостам, предполагается, что их поведение будет одинаковым.</p>
+</div>
+<div class="section" id="ch40-45">
+<span id="id36"></span><h2>Отчёты проверки адресов отправителя<a class="headerlink" href="#ch40-45" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Смотрите раздел <a class="reference internal" href="#ch40-41"><em>40.41</em></a> для общего обсуждения проверки. Когда проверка отправителя неудачна в ACL, детали о ошибке даются как дополнительные строки до 550-го ответа на релевантную SMTP-команду (RCPT или DATA). Например, если используется обратный вызов отправителя, вы могли бы видеть:</p>
+<div class="highlight-python"><pre>MAIL FROM:&lt;xyz@abc.example&gt;
+250 OK
+RCPT TO:&lt;pqr@def.example&gt;
+550-Verification failed for &lt;xyz@abc.example&gt;
+550-Called:   192.168.34.43
+550-Sent:     RCPT TO:&lt;xyz@abc.example&gt;
+550-Response: 550 Unknown local part xyz in &lt;xyz@abc.example&gt;
+550 Sender verification failed</pre>
+</div>
+<p>Если таким же образом была неудачна более чем одна команда RCPT, делали даются лишь для первой из них. Однако, некоторые администраторы не хотят отсылать об этом слишком много информации. Вы можете подавить детализацию путём добавления “/no_details” к утверждению ACL которое запрашивает проверку отправителя. Например:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">verify</span> <span class="o">=</span> <span class="n">sender</span><span class="o">/</span><span class="n">no_details</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="ch40-46">
+<span id="id37"></span><h2>Проверка при переадресации<a class="headerlink" href="#ch40-46" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Возникает дилемма, когда локальный адрес переадресуется путём перенаправления или подстановки синонима во время проверки: должны ли быть проверены созданные адреса, или успешного раскрытия оригинального адреса достаточно, для подтверждения? По умолчанию, Exim выбирает следующий прагматический подход:</p>
+<ul class="simple">
+<li>Когда входящий адрес переадресован лишь к одному дочернему адресу, проверка продолжается с дочерним адресом, и если проверка неудачна, оригинальная проверка также неудачна.</li>
+<li>Когда входящий адрес переадресован более чем к одному дочернему адресу, проверка не продолжается. Возвращается успешный результат.</li>
+</ul>
+<p>Это кажется наиболее разумным поведением для общего использования подстановки синонима, как способ переадресации различных локальных частей к тому же самому почтовому ящику. Это означает, например, что пара записей синонимов вида</p>
+<blockquote>
+<div><div class="highlight-python"><pre>A.Wol:   aw123
+aw123:   :fail: Gone away, no forwarding address</pre>
+</div>
+</div></blockquote>
+<p>работает как ожидается, вызывая ошибку с обоими локальными частями. Когда переадресация создает более одного адреса, поведение больше походит список рассылки, где существования синонима достаточно для успешности проверки.</p>
+<p>Однако, возможно изменить поведение по умолчанию так, что все успешные переадресации считаются как успешная проверка, однако создается много новых адресов. Это определено путём проверочного параметра <strong>success_on_redirect</strong>. Например:</p>
+<div class="highlight-python"><pre>require verify = recipient/success_on_redirect/callout=10s</pre>
+</div>
+<p>В этом примере, проверка успешна, если маршрутизатор создает новый адрес, и обратный вызов не происходит, поскольку никакой адрес не маршрутизируется на удалённый хост.</p>
+<p>Когда проверка тестируется параметром <strong>-bv</strong>, обработка переалресация производится также, за исключением случаев когда также задан параметр <strong>-v</strong> командной строки или иной параметр отладки. В этом случае, происходит полная проверка для каждого порождённого адреса и выводится отчёт для каждого из них.</p>
+</div>
+<div class="section" id="smtp-csa">
+<span id="ch40-47"></span><h2>Клиентская SMTP-авторизация (CSA)<a class="headerlink" href="#smtp-csa" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Клиентская SMTP-авторизация - система, которая позволяет сайту давать объявление, каким машинам можно, и каким нельзя посылать электронную почту. Это делается путём помещения специальной SRV записи в DNS; она ищется используя домен из HELO клиента. Во время записи (видимо - когда писался этот текст) - всё ещё черновик интернета. Клиентская SMTP-авторизация выполняется в Exim&#8217;e путём условия ACL:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">verify</span> <span class="o">=</span> <span class="n">csa</span>
+</pre></div>
+</div>
+<p>Оно неудачно, если клиент неавторизован. Если существует проблема в DNS, или не найдена действительная CSA SRV запись, или если клиент - авторизован, условие успешно. Эти три случая можно различить используя переменную раскрытия $csa_status, которая может принимать одно из значений “fail”, “defer”, “unknown”, или “ok”. Условие, самостоятельно, не отсрочивает доставку, поскольку, вероятно, это вызвало бы проблемы для законной почты.</p>
+<p>Сообщения о ошибках производимые кодом CSA включают немного больше деталей. Если $csa_status - “defer”, это может быть потому, что проблемы при поиске записи CSA SRV, или проблемы поиска целевой записи CSA. Есть четыре причины, чтобы $csa_status был “fail”:</p>
+<ul class="simple">
+<li>Клиентское имя хоста явно не авторизовано.</li>
+<li>IP адрес клиента не совпадает с какими-либо целевыми IP-адресами CSA.</li>
+<li>Клиентское имя хоста авторизовано, но у него нет допустимых IP-адресов (например, целевые адреса - IPv6 и клиент использует IPv4).</li>
+<li>Клиентское имя хоста не имеет записи CSA SRV, но родительский домен явно утверждает, что все поддомены должны быть явно разрешены.</li>
+</ul>
+<p>Условие проверки CSA может принимать аргумент, являющейся доменом для использования в запроса DNS. Значение по умолчанию:</p>
+<div class="highlight-python"><pre>verify = csa/$sender_helo_name</pre>
+</div>
+<p>Это воплощение включает расширение к CSA. Если запрос домена - буквальный адрес, типа [192.0.2.95], или если это голый IP-адрес, Exim ищет записи записи  в обратных DNS, как будто домен HELO был (например) <em>95.2.0.192.in-addr.arpa</em>. Поэтому, это значит сказать:</p>
+<div class="highlight-python"><pre>verify = csa/$sender_host_address</pre>
+</div>
+<p>Фактически, это проверка, выполняемая Exim&#8217;ом если клиент не сказал HELO. Это расширение может быть отключено путём установки параметра, в главной конфигурации, <strong>dns_csa_use_reverse</strong>, в ложь.</p>
+<p>Если непосредственно для домена не найдена запись CSA SRV, поиск выполняется через его родительские домены для записи, которая могла бы сделать утверждение о субдоменах. Максимальная глубина этого поиска ограничена используя параметр главной конфигурации <strong>dns_csa_search_limit</strong>, которая по умолчанию равна 5. Exim не ищет CSA SRV в домене верхнего уровня, таким образом, установка по умолчанию обработки домена HELO - семь (<em>hostname.five.four.three.two.one.com</em>). Это охватывает большинство легитимных доменов HELO.</p>
+<p>Поиск <em>dnsdb</em> также имеет поддержку для CSA. Хотя <em>dnsdb</em>, также, поддерживает прямые поиски SRV, этого недостаточно из-за поведения высшего домена для для поиска CSA, и (как с поисками PTR) <em>dnsdb</em> также превращает IP-адреса в поиске в обратном пространстве DNS. Результат успешного поиска, типа:</p>
+<div class="highlight-python"><pre>${lookup dnsdb {csa=$sender_helo_name}}</pre>
+</div>
+<p>имеет два поля разделённых пробелами: Код авторизации, и имя целевого хоста. Авторизационный код может быть “Y” - для yes, “N” - для no, “X” - для явно требуемого разрешения, но отсутствия, или “?” - для неизвестного.</p>
+</div>
+<div class="section" id="ch40-48">
+<span id="id38"></span><h2>Проверка тега адреса рикошета<a class="headerlink" href="#ch40-48" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Проверка тега адреса рикошета (Bounce address tag validation - BATV), это схема, посредством которой отправители конверта исходящего сообщения имеют добавленный к ним “tag” - шифрованный, с меткой времени. Подлинные входящие рикошеты всегда должны быть адресованы получателям,, которые имеют действительный тег. Эта схема - способ детектировать нежелательные рикошеты, вызванные подделкой адреса (часто называемые “сопутствующий спам”), поскольку получатели таких сообщений не содержат в себе действительный тег.</p>
+<p>Есть два элемента раскрытия для помощи в реализации схемы BATV “prvs” (частная подпись - private signature) в конфигурации Exim&#8217;a. Эта схема подписывает оригинальный адрес отправителя конверта путём использования простого ключа для добавления хэша адреса и некоторой, основанной на времени случайной информации. Элемент раскрытия <strong>prvs</strong> создаёт подписанный адрес, и элемент раскрытия <strong>prvscheck</strong> проверяет его. Синтаксис этих пунктов описан в разделе <a class="reference internal" href="ch11.html#ch11-05"><em>11.5</em></a>.</p>
+<p>Как пример, предположим, что секретные ключи (по ключу на адрес) были сохранены в БД MySQL. Запрос для поиска ключа для адреса мог быть определён макросом типа этого:</p>
+<div class="highlight-python"><pre>PRVSCHECK_SQL = ${lookup mysql{SELECT secret FROM batv_prvs \
+                WHERE sender='${quote_mysql:$prvscheck_address}'\
+                }{$value}}</pre>
+</div>
+<p>Предположим, также, что отправители использующие BATV заданы списком адресов называемым <strong>batv_senders</strong>. Тогда, в ACL для команд RCPT вы могли бы использовать это:</p>
+<div class="highlight-python"><pre># Bounces: drop unsigned addresses for BATV senders
+deny message = This address does not send an unsigned reverse path
+     senders = :
+     recipients = +batv_senders
+
+# Bounces: In case of prvs-signed address, check signature.
+deny message = Invalid reverse path signature.
+     senders = :
+     condition  = ${prvscheck {$local_part@$domain}\
+                  {PRVSCHECK_SQL}{1}}
+     !condition = $prvscheck_result</pre>
+</div>
+<p>Первое утверждение отклоняет получателей для рикошетов, которые адресованы простым адресам отправителей BATV, поскольку известно, что отправители  BATV не отсылают сообщения с открытым адресом отправителя. Второе утверждение отклоняет получателей которые подписаны prvs, но с неверными сигнатурами (или потому что неверный ключ, или произошёл таймаут сигнатуры).</p>
+<p>Адреса, не подписанные prvs, не отклоняются вторым утверждением, поскольку раскрытие <strong>prvscheck</strong> приносит пустую строку, если его первый аргумент не prvs-подписанный адрес, вызывая, таким образом, что условие <strong>condition</strong> становится ложным. Если первый аргумент - синтаксически верный prvs-подписанный адрес, возвращается третья строка (в этом случае - “1”), независимо от успеха проверок шифрования и таймаута. Переменная $prvscheck_result содержит результат проверок (пустая - для ошибки, “1” - для успеха).</p>
+<p>Есть ещё одна проблема, которую вы должны рассмотреть при осуществлении prvs-подписей: вы должны гарантировать, что маршрутизаторы примут prvs-подписанный адрес и корректно его доставят. Простой способ обработки этого - использование маршрутизатора <strong>redirect</strong> для удаления сигнатуры с конфигурацией типа такой:</p>
+<div class="highlight-python"><pre>batv_redirect:
+  driver = redirect
+  data = ${prvscheck {$local_part@$domain}{PRVSCHECK_SQL}}</pre>
+</div>
+<p>Это работает потому, что если третий аргумент <strong>prvscheck</strong> - пустой, результат раскрытия prvs-подписанного адреса - декодированное значение оригинального адреса. Этот маршрутизатор, вероятно, должен быть первым в ваших маршрутизаторах, которые обрабатывают локальные адреса.</p>
+<p>Для создания BATV-подписанного адреса в первом месте, может использоваться транспорт такой формы:</p>
+<div class="highlight-python"><pre>external_smtp_batv:
+  driver = smtp
+  return_path = ${prvs {$return_path} \
+                {${lookup mysql{SELECT \
+                secret FROM batv_prvs WHERE \
+                sender='${quote_mysql:$sender_address}'} \
+                {$value}fail}}}</pre>
+</div>
+<p>Если для существующего пути возврата ключ не может быть найден, подписывания не происходит.</p>
+</div>
+<div class="section" id="ch40-49">
+<span id="id39"></span><h2>Использование ACL для управления передачей<a class="headerlink" href="#ch40-49" title="Ссылка на этот заголовок">¶</a></h2>
+<p>MTA, как говорят, передает (relay) сообщение, если оно передаётся с некоторого хоста, и непосредственно доставляется на другой хост, как результат удалённого адреса содержавшегося в нём. Переадресация локальных частей через файл перенаправлений и синонимов, и, затем, передача сообщения на другой хост - не передача, но редирект в результате обработки символа процента (“percent hack”).</p>
+<p>Существует два вида передачи, которые называют “incoming” и “outgoing”. Хост, действующий как шлюз, или резервный MX - имеет отношение ко входящей передаче, от произвольных хостов к специфически установленным доменам. С другой стороны, хост, выступающий в роли умного хоста для множества клиентов, имеет отношение к исходящей передаче от этих клиентов ко всему интернету. Часто, некоторые хосты выполняют обе функции, но, в принципе, эти два вида передачи полностью независимы. То, что не требуется - передача почты с произвольного удалённого хоста через вашу систему к произвольным доменам.</p>
+<p>Вы можете осуществить контроль передачи путём подходящих утверждений ACL, которые выполняются для каждой команды RCPT. Для удобства, часто, самое лёгкое, использовать средство именованного списка Exim&#8217;a, для задания вовлечённых доменов и хостов. Например, предположим, что вы хотите следующее:</p>
+<ul class="simple">
+<li>Доставлять множество доменов в почтовые ящики локального хоста (или локально обрабатывать их каким-то другим способом). Скажем, они - <em>my.dom1.example</em> и <em>my.dom2.example</em>.</li>
+<li>Передача почты для множества других доменов, для которых вы являетесь вторичным MX. Это могли бы быть <em>friend1.example</em> и <em>friend2.example</em>.</li>
+<li>Передавать почту от хостов в вашей локальной LAN, к любым вовлечённым доменам. Предположим, ваша LAN - 192.168.45.0/24.</li>
+</ul>
+<p>В главной части конфигурации, вы помещаете следующие определения:</p>
+<div class="highlight-python"><pre>domainlist local_domains = my.dom1.example : my.dom2.example
+domainlist relay_domains = friend1.example : friend2.example
+hostlist   relay_hosts   = 192.168.45.0/24
+
+Теперь вы можете использовать эти определения в ACL, работающих для каждой команды RCPT::
+
+    acl_check_rcpt:
+      accept domains = +local_domains : +relay_domains
+      accept hosts   = +relay_hosts</pre>
+</div>
+<p>Первое утверждение принимает любую команду RCPT, которая содержит адрес в локальном или релейном домене. Для любых других доменов, управление передаётся второму утверждению, которое принимает команды, лишь если они приходят с релейных хостов. Практически, вы, вероятно, захотите создать свою, более сложную ACL чем эта, например, путём включения отправителя и проверки получателя. Конфигурация по умолчанию включает более всесторонний пример, который описан в главе <a class="reference internal" href="ch07.html#ch07-00"><em>7</em></a>.</p>
+</div>
+<div class="section" id="ch40-50">
+<span id="id40"></span><h2>Проверка конфигурации передачи<a class="headerlink" href="#ch40-50" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Вы можете проверить характеристики передачи вашей конфигурации таким же образом, как и проверяете поведение любой ACL для входящих SMTP-подключений, путём использования параметра <strong>-bh</strong> командной строки, для запуска поддельной SMTP-сессии, с которой вы взаимодействуете.</p>
+<p>Для особого тестирования на нежелательную передачу, хост <em>relay-test.mail-abuse.org</em> предоставляет полезный сервис. Если вы подключитесь по telnet на этот хост с хоста на котором запущен Exim, используя обычный порт telnet, вы увидите обычное сообщение о соединении telnet, и, затем, довольно долгая задержка. Будьте терпеливы. Удалённый хост создаёт SMTP-соединение обратно на ваш хост, и пробует множество обычных исследований на тестирование уязвимости - открытая передача. Результаты тестов, в конечном счёте, появятся на вашем терминале.</p>
+<table class="docutils footnote" frame="void" id="id41" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id5">[1]</a></td><td>в смысле - меньше букавок набирать - прим. lissyara</td></tr>
+</tbody>
+</table>
+<table class="docutils footnote" frame="void" id="id42" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id7">[2]</a></td><td>имеется ввиду - сообщения уходят вникуда - прим. lissyara</td></tr>
+</tbody>
+</table>
+<table class="docutils footnote" frame="void" id="id43" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id10">[3]</a></td><td>в данном абзаце - есть разница между числом принятых команд и числом принятых получателей, поскольку получатель может не существовать - тогда команда RCPT принята, а вот получатель - нет. - прим. lissyara</td></tr>
+</tbody>
+</table>
+<table class="docutils footnote" frame="void" id="id44" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id15">[4]</a></td><td>с последними версиями Exim&#8217;a - прим. переводчика</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Содержание</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Списки Контроля Доступа</a><ul>
+<li><a class="reference internal" href="#acl">Тестирование ACL</a></li>
+<li><a class="reference internal" href="#ch40-02">Определение, когда используются ACL</a></li>
+<li><a class="reference internal" href="#smtp-acl">Не-SMTP ACL&#8217;ы</a></li>
+<li><a class="reference internal" href="#acl-smtp">ACL подключения SMTP</a></li>
+<li><a class="reference internal" href="#ehlo-helo-acl">EHLO/HELO ACL</a></li>
+<li><a class="reference internal" href="#acl-data">ACL&#8217;ы DATA</a></li>
+<li><a class="reference internal" href="#the-smtp-dkim-acl">The SMTP DKIM ACL</a></li>
+<li><a class="reference internal" href="#smtp-acl-mime">SMTP ACL MIME</a></li>
+<li><a class="reference internal" href="#acl-quit">ACL QUIT</a></li>
+<li><a class="reference internal" href="#ch40-10">ACL не-QUIT</a></li>
+<li><a class="reference internal" href="#ch40-11">Нахождение ACL для использования</a></li>
+<li><a class="reference internal" href="#ch40-12">Коды возврата ACL</a></li>
+<li><a class="reference internal" href="#ch40-13">Не заданные параметры ACL</a></li>
+<li><a class="reference internal" href="#ch40-14">Данные для ACL сообщений</a></li>
+<li><a class="reference internal" href="#ch40-15">Данные для ACL не-сообщений</a></li>
+<li><a class="reference internal" href="#ch40-16">Формат ACL</a></li>
+<li><a class="reference internal" href="#ch40-17">Команды ACL</a></li>
+<li><a class="reference internal" href="#ch40-18">Переменные ACL</a></li>
+<li><a class="reference internal" href="#ch40-19">Обработка условий и модификаторов</a></li>
+<li><a class="reference internal" href="#ch40-20">Модификаторы ACL</a></li>
+<li><a class="reference internal" href="#control">Использование модификатора <strong>control</strong></a></li>
+<li><a class="reference internal" href="#ch40-22">Кратко о управлении исправлениями сообщений</a></li>
+<li><a class="reference internal" href="#ch40-23">Добавление строк заголовков в ACL&#8217;ах</a></li>
+<li><a class="reference internal" href="#ch40-24">Условия ACL</a></li>
+<li><a class="reference internal" href="#dns">Использование списков DNS</a></li>
+<li><a class="reference internal" href="#ip-dns">Задание IP-адреса для поиска в списках DNS</a></li>
+<li><a class="reference internal" href="#ch40-27">DNS-списки основанные на именах доменов</a></li>
+<li><a class="reference internal" href="#ch40-28">Поиски в DNS основанные на нескольких ключах</a></li>
+<li><a class="reference internal" href="#ch40-29">Данные возвращаемые списками DNS</a></li>
+<li><a class="reference internal" href="#ch40-30">Переменные устанавливаемые из списков DNS</a></li>
+<li><a class="reference internal" href="#ch40-31">Дополнительные совпадения условий для списков DNS</a></li>
+<li><a class="reference internal" href="#ch40-32">Отрицательные условия сравнения DNS</a></li>
+<li><a class="reference internal" href="#dns-dns">Обработка нескольких записей DNS из списка DNS</a></li>
+<li><a class="reference internal" href="#ch40-34">Дополнительная информация из объединённых списков DNS</a></li>
+<li><a class="reference internal" href="#dns-ipv6">Списки DNS и IPv6</a></li>
+<li><a class="reference internal" href="#ch40-36">Ограничение частоты входящих сообщений</a></li>
+<li><a class="reference internal" href="#ratelimit">Параметры измерения для <strong>ratelimit</strong></a></li>
+<li><a class="reference internal" href="#ch40-38">Параметры <strong>ratelimit</strong> для обработки быстрых клиентов</a></li>
+<li><a class="reference internal" href="#ch40-39">Использование ограничения частоты</a></li>
+<li><a class="reference internal" href="#ch40-40">Чтение данных <strong>ratelimit</strong> без обновления</a></li>
+<li><a class="reference internal" href="#ch40-41">Проверка адресов</a></li>
+<li><a class="reference internal" href="#ch40-42">Проверка обратным вызовом</a></li>
+<li><a class="reference internal" href="#ch40-43">Дополнительные параметры для обратных вызовов</a></li>
+<li><a class="reference internal" href="#ch40-44">Кэширование обратных вызовов</a></li>
+<li><a class="reference internal" href="#ch40-45">Отчёты проверки адресов отправителя</a></li>
+<li><a class="reference internal" href="#ch40-46">Проверка при переадресации</a></li>
+<li><a class="reference internal" href="#smtp-csa">Клиентская SMTP-авторизация (CSA)</a></li>
+<li><a class="reference internal" href="#ch40-48">Проверка тега адреса рикошета</a></li>
+<li><a class="reference internal" href="#ch40-49">Использование ACL для управления передачей</a></li>
+<li><a class="reference internal" href="#ch40-50">Проверка конфигурации передачи</a></li>
+</ul>
+</li>
+</ul>
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="ch39.html" title="предыдущая глава">Шифрование соединений с использованием TLS/SSL</a></li>
+      <li>Next: <a href="ch41.html" title="следующая глава">Проверка контента во время выполнения ACL</a></li>
+  </ul></li>
+</ul>
+  <h3>На этой странице</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/ch40.txt"
+           rel="nofollow">Показать исходный текст</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Быстрый поиск</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Искать" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Введите слова для поиска или имя модуля, класса или функции.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy; Copyright 2011, Exim Maintainers.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a>.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,110 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Маршрутизатор ipliteral &mdash; Specification of the Exim Mail Transfer Agent 4.70 documentation</title>
+    
+    <link rel="stylesheet" href="_static/flasky.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '4.70',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/translations.js"></script>
+    <link rel="top" title="Specification of the Exim Mail Transfer Agent 4.70 documentation" href="index.html" />
+    <link rel="next" title="Маршрутизатор iplookup" href="ch19.html" />
+    <link rel="prev" title="Маршрутизатор dnslookup" href="ch17.html" />
+   
+  
+  <link media="only screen and (max-device-width: 480px)" href="_static/small_flask.css" type= "text/css" rel="stylesheet" />
+
+  </head>
+  <body>
+    <div class="related">
+      <h3>Просмотр</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="Словарь-указатель"
+             accesskey="I">словарь</a></li>
+        <li class="right" >
+          <a href="ch19.html" title="Маршрутизатор iplookup"
+             accesskey="N">следующий</a> |</li>
+        <li class="right" >
+          <a href="ch17.html" title="Маршрутизатор dnslookup"
+             accesskey="P">предыдущий</a> |</li>
+        <li><a href="index.html">Specification of the Exim Mail Transfer Agent 4.70 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="ipliteral">
+<span id="ch18-00"></span><h1>Маршрутизатор <strong>ipliteral</strong><a class="headerlink" href="#ipliteral" title="Ссылка на этот заголовок">¶</a></h1>
+<p>Этот маршрутизатор не имеет собственных параметров. Если он не используется исключительно для проверки (см. параметр <strong>verify_only</strong>), то для него при помощи общего параметра <strong>transport</strong> должен быть определен необходимый транспорт. Маршрутизатор принимает адрес, если его доменная часть соответствует требованиям <span class="target" id="index-0"></span><a class="rfc reference external" href="http://tools.ietf.org/html/rfc2822.html"><strong>RFC 2822</strong></a>, т.е. имеет форму IP-адреса, заключенного в квадратные скобки. Например, этот маршрутизатор обрабатывает адрес</p>
+<div class="highlight-python"><pre>root@[192.168.1.1]</pre>
+</div>
+<p>путем доставки узлу с этим IP-адресом. Адрес IPv6 похож, но ему (адресу) предшествует “ipv6:”.</p>
+<div class="highlight-python"><pre>postmaster@[ipv6:fe80::a00:20ff:fe86:a061.5678]</pre>
+</div>
+<p>Exim позволяет писать “ipv4:” перед адресом IPv4 для совместимости, и на том основании, что рано или поздно кто-то попробует так написать.</p>
+<p>Если IP-адрес попадает в список IP-адресов, указанных в параметре <strong>ignore_target_hosts</strong>, то маршрутизатор отклоняется. Если IP в доменной части адреса указывает на локальную машину, то дальнейший исход определяется общим параметром <strong>self</strong>.</p>
+<p>Документы RFC требуют поддержки domain literals; однако их использование спорно в современном Интернете. Если вы хотите использовать этот маршрутизатор, то вы также должны определить параметр главной конфигурации <strong>allow_domain_literals</strong>. В противном случае, Exim не распознает domain literal синтаксис в адресах.</p>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper"><h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="ch17.html" title="предыдущая глава">Маршрутизатор <strong>dnslookup</strong></a></li>
+      <li>Next: <a href="ch19.html" title="следующая глава">Маршрутизатор <strong>iplookup</strong></a></li>
+  </ul></li>
+</ul>
+  <h3>На этой странице</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/ch18.txt"
+           rel="nofollow">Показать исходный текст</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Быстрый поиск</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Искать" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Введите слова для поиска или имя модуля, класса или функции.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy; Copyright 2011, Exim Maintainers.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a>.
+    </div>
+  </body>
+</html>

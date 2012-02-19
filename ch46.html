@@ -1,0 +1,190 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Настройка рикошетов и предупреждающих сообщений &mdash; Specification of the Exim Mail Transfer Agent 4.70 documentation</title>
+    
+    <link rel="stylesheet" href="_static/flasky.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '4.70',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/translations.js"></script>
+    <link rel="top" title="Specification of the Exim Mail Transfer Agent 4.70 documentation" href="index.html" />
+    <link rel="next" title="Некоторые общие параметры конфигурации" href="ch47.html" />
+    <link rel="prev" title="Обработка SMTP" href="ch45.html" />
+   
+  
+  <link media="only screen and (max-device-width: 480px)" href="_static/small_flask.css" type= "text/css" rel="stylesheet" />
+
+  </head>
+  <body>
+    <div class="related">
+      <h3>Просмотр</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="Словарь-указатель"
+             accesskey="I">словарь</a></li>
+        <li class="right" >
+          <a href="ch47.html" title="Некоторые общие параметры конфигурации"
+             accesskey="N">следующий</a> |</li>
+        <li class="right" >
+          <a href="ch45.html" title="Обработка SMTP"
+             accesskey="P">предыдущий</a> |</li>
+        <li><a href="index.html">Specification of the Exim Mail Transfer Agent 4.70 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="ch46-00">
+<span id="id1"></span><h1>Настройка рикошетов и предупреждающих сообщений<a class="headerlink" href="#ch46-00" title="Ссылка на этот заголовок">¶</a></h1>
+<p>Когда сообщение невозможно доставить, или оно остаётся в очереди более чем настроенное время, Exim посылает сообщение оригинальному отправителю, или на альтернативный настроенный адрес. Текст этих сообщений зашит в код Exim`a, но его можно изменить, путём добавления одной строки или путём замены каждого параграфа текстом, находящимся в файле.</p>
+<p>Строки заголовков “From:” и “To:” - создаются автоматически; вы можете вызвать добавление строки “Reply-To:”, путём установки параметра <strong>errors_reply_to</strong>. Также, Exim добавляет строку:</p>
+<div class="highlight-python"><pre>Auto-Submitted: auto-generated</pre>
+</div>
+<p>ко всем предупреждающим сообщениям и рикошетам.</p>
+<div class="section" id="ch46-01">
+<span id="id2"></span><h2>Настройка рикошетов<a class="headerlink" href="#ch46-01" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Если установлена <strong>bounce_message_text</strong>, её содержимое включается в сообщение по умолчанию, немедленно после “This message was created automatically by mail delivery software.”. Строка не раскрывается. Она не используется, если <strong>bounce_message_file</strong> установлена.</p>
+<p>Когда установлена <strong>bounce_message_file</strong>, она должна указывать на файл шаблона для конструирования сообщения о ошибке. Файл состоит из ряда текстовых элементов, разделённых строками состоящими ровно из четырёх звёздочек. Если файл не может быть открыт, используется текст по умолчанию и в главный лог и лог паники пишется сообщение. Если любой текстовый элемент в файле - пустой, для этого элемента используется текст по умолчанию.</p>
+<p>Каждый элемент текста, читаемый из файла, раскрывается, и существуют две переменные раскрытия, которые могут тут использоваться: $bounce_recipient - устанавливается в получателя сообщения о ошибке, когда оно создаётся, и $bounce_return_size_limit содержит значение параметра <strong>return_size_limit</strong>, округлённое до целого числа.</p>
+<p>Элементы должны появляться в файле в следующем порядке:</p>
+<ul class="simple">
+<li>Первый элемент включается в заголовки, и должен включать, по крайней мере, заголовок “Subject:”. Exim не проверяет синтаксис этих заголовков.</li>
+<li>Второй элемент формирует начало сообщения о ошибке. После него, Exim перечисляет неудачные адреса с их сообщениями о ошибке.</li>
+<li>Третий элемент используется для ввода любого текста из транспортов трубы (pipe), который должен быть возвращён отправителю. Он опускается, если текста нет.</li>
+<li>Четвёртый элемент используется для ввода копии сообщения, которое возвращается как часть отчёта о ошибке.</li>
+<li>Пятый элемент добавляется после четвёртого, если возвращённое сообщение усечено, поскольку оно больше <strong>return_size_limit</strong>.</li>
+<li>Шестой элемент добавляется после копии оригинального сообщения.</li>
+</ul>
+<p>Состояние по умолчанию (параметр <strong>bounce_message_file</strong> не задан) - эквивалентно следующему файлу, с пустым шестым элементом. Строка “Subject:” и некоторые другие строки были разделены, чтобы подогнать их под страницу:</p>
+<div class="highlight-python"><pre>Subject: Mail delivery failed
+${if eq{$sender_address}{$bounce_recipient}
+{: returning message to sender}}
+****
+This message was created automatically by mail delivery software.
+A message ${if eq{$sender_address}{$bounce_recipient}
+{that you sent }{sent by
+
+&lt;$sender_address&gt;
+
+}}could not be delivered to all of its recipients.
+This is a permanent error. The following address(es) failed:
+****
+The following text was generated during the delivery attempt(s):
+****
+------ This is a copy of the message, including all the headers.
+------
+****
+------ The body of the message is $message_size characters long;
+only the first
+------ $bounce_return_size_limit or so are included here.
+****</pre>
+</div>
+</div>
+<div class="section" id="ch46-02">
+<span id="id3"></span><h2>Настройка предупреждающих сообщений<a class="headerlink" href="#ch46-02" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Параметром <strong>warn_message_file</strong> может быть указан файл шаблона, для использования при создании предупреждений о задержках сообщений. В этом случае, есть лишь три секции текста:</p>
+<ul class="simple">
+<li>Первый элемент включается в заголовки, и должен включать, по крайней мере, заголовок “Subject:”. Exim не проверяет синтаксис этих заголовков.</li>
+<li>Второй элемент формирует начало предупреждающего сообщения. После него Exim перечисляет задержанные адреса.</li>
+<li>Затем, третий элемент завершает сообщение.</li>
+</ul>
+<p>Состояние по умолчанию, эквивалентно следующему текстовому файлу, исключая, что некоторые строки были разделены для того, чтобы подогнать их под страницу:</p>
+<div class="highlight-python"><pre>Subject: Warning: message $message_exim_id delayed
+$warn_message_delay
+****
+This message was created automatically by mail delivery software.
+
+A message ${if eq{$sender_address}{$warn_message_recipients}
+{that you sent }{sent by
+
+&lt;$sender_address&gt;
+
+}}has not been delivered to all of its recipients after
+more than $warn_message_delay on the queue on $primary_hostname.
+
+The message identifier is:     $message_exim_id
+The subject of the message is: $h_subject
+The date of the message is:    $h_date
+
+The following address(es) have not yet been delivered:
+****
+No action is required on your part. Delivery attempts will
+continue for some time, and this warning may be repeated at
+intervals if the message remains undelivered. Eventually the
+mail delivery software will give up, and when that happens,
+the message will be returned to you.</pre>
+</div>
+<p>Однако, в состоянии по умолчанию, сроки темы и даты - пропущены, если не существуют соответствующие заголовки. В течение раскрытия этого файла, в $warn_message_delay устанавливается время задержки, в одной из форм - “&lt;n&gt; minutes” или “&lt;n&gt; hours”, и $warn_message_recipients содержит список получателей предупреждающего сообщения. Их может быть более чем один, если есть несколько адресов с различными установками <strong>errors_to</strong> в обрабатывавших их маршрутизаторах.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Содержание</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Настройка рикошетов и предупреждающих сообщений</a><ul>
+<li><a class="reference internal" href="#ch46-01">Настройка рикошетов</a></li>
+<li><a class="reference internal" href="#ch46-02">Настройка предупреждающих сообщений</a></li>
+</ul>
+</li>
+</ul>
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="ch45.html" title="предыдущая глава">Обработка SMTP</a></li>
+      <li>Next: <a href="ch47.html" title="следующая глава">Некоторые общие параметры конфигурации</a></li>
+  </ul></li>
+</ul>
+  <h3>На этой странице</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/ch46.txt"
+           rel="nofollow">Показать исходный текст</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Быстрый поиск</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Искать" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Введите слова для поиска или имя модуля, класса или функции.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy; Copyright 2011, Exim Maintainers.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a>.
+    </div>
+  </body>
+</html>

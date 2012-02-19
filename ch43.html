@@ -1,0 +1,220 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Системная фильтрация сообщений &mdash; Specification of the Exim Mail Transfer Agent 4.70 documentation</title>
+    
+    <link rel="stylesheet" href="_static/flasky.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '4.70',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/translations.js"></script>
+    <link rel="top" title="Specification of the Exim Mail Transfer Agent 4.70 documentation" href="index.html" />
+    <link rel="next" title="Обработка сообщения" href="ch44.html" />
+    <link rel="prev" title="Добавляем функцию local_scan() в Exim" href="ch42.html" />
+   
+  
+  <link media="only screen and (max-device-width: 480px)" href="_static/small_flask.css" type= "text/css" rel="stylesheet" />
+
+  </head>
+  <body>
+    <div class="related">
+      <h3>Просмотр</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="Словарь-указатель"
+             accesskey="I">словарь</a></li>
+        <li class="right" >
+          <a href="ch44.html" title="Обработка сообщения"
+             accesskey="N">следующий</a> |</li>
+        <li class="right" >
+          <a href="ch42.html" title="Добавляем функцию local_scan() в Exim"
+             accesskey="P">предыдущий</a> |</li>
+        <li><a href="index.html">Specification of the Exim Mail Transfer Agent 4.70 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="ch43-00">
+<span id="id1"></span><h1>Системная фильтрация сообщений<a class="headerlink" href="#ch43-00" title="Ссылка на этот заголовок">¶</a></h1>
+<p>Предыдущие части (ACL и функция local scan) описывают проверки, которые могут быть применены к сообщениям до того, как они принимаются хостом. Также есть механизм для проверки сообщений после их получения, но до доставки. Он называется - “system filter”.</p>
+<p>Системный фильтр работает подобно файлу пользовательского фильтра, но он запускается лишь один раз на сообщение (однако, у сообщения много получателей). Обычно, он не должен использоваться вместо маршрутизации, поскольку команда <strong>deliver</strong> в системном маршрутизаторе даёт новые адреса получателей конверта. Системный фильтр должен быть фильтром Exim`a. Он не может быть фильтром Sieve.</p>
+<p>Системный фильтр запускается в начале попытки доставки, до какой-либо маршрутизации. Если сообщение невозможно доставить при первой попытке, системный фильтр запускается снова в начале каждого повтора. Если вы хотите чтобы фильтр работал лишь при первой доставке, вы можете использовать в фильтре условие <strong>first_delivery</strong> в команде <strong>if</strong>, для предотвращения обработки при повторах.</p>
+<p>..warning:: Поскольку системный фильтр запускается лишь один раз, переменные являющиеся специфическими для индивидуальных адресов получателей, типа $local_part и $domain, не установлены, и условие “personal” - незначащее. Если вы хотите запускать заданный центрально фильтр независимо для каждого адреса получателя, вы можете это сделать путём установки подходящего маршрутизатора <strong>redirect</strong>, как описано ниже, в разделе <a class="reference internal" href="#ch43-08"><em>43.8</em></a>.</p>
+<div class="section" id="ch43-01">
+<span id="id2"></span><h2>Установка системного фильтра<a class="headerlink" href="#ch43-01" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Имя файла, который содержит системный фильтр, должно быть задано путём установки <strong>system_filter</strong>. Если вы хотите запускать фильтр не под uid и gid root`a, вы, также, должны установить <strong>system_filter_user</strong> и <strong>system_filter_group</strong>, соответственно. Например:</p>
+<div class="highlight-python"><pre>system_filter = /etc/mail/exim.filter
+system_filter_user = exim</pre>
+</div>
+<p>Если системный фильтр создает любую доставку в файлы или трубы (через команды <strong>save</strong> или <strong>pipe</strong>), транспорты для обработки этих доставок должны быть определены путём установки <strong>system_filter_file_transport</strong> и <strong>system_filter_pipe_transport</strong>, соответственно. Точно также, <strong>system_filter_reply_transport</strong> должна быть установлена для обработки любых сообщений создаваемых путём команды <strong>reply</strong>.</p>
+</div>
+<div class="section" id="ch43-02">
+<span id="id3"></span><h2>Тестирование системного фильтра<a class="headerlink" href="#ch43-02" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Вы можете запускать простые тесты системного фильтра точно также, как для пользовательского фильтра, но вы холжны использовать <strong>-bF</strong> вместо <strong>-bf</strong>, так, чтобы были распознаны особенности, разрешённые лишь в системных фильтрах.</p>
+<p>Если вы хотите тестировать комбинированный эффект системного и пользовательского фильтров, вы можете использовать оба параметра - <strong>-bF</strong> и <strong>-bf</strong>, в одной командной строке.</p>
+</div>
+<div class="section" id="ch43-03">
+<span id="id4"></span><h2>Содержимое системного фильтра<a class="headerlink" href="#ch43-03" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Язык, используемый для определения системных фильтров - точно такой же как и для файлов пользовательских фильтров. Он описан в отдельном документе для пользователя - “Exim’s interface to mail filtering”. Однако, есть некоторые дополнительные особенности, которые доступны лишь в системных фильтрах; они описаны в последующих секциях. Если они встречаются в файлах пользовательских фильтров, или при тестировании с <strong>-bf</strong>, они вызывают ошибки.</p>
+<p>Есть два специальных условия, которые доступны в файлах фильтров пользователей, но проектировались для использования в системных фильтрах. Условие <strong>first_delivery</strong> - истинно лишь для первой попытки доставки сообщения, и <strong>manually_thawed</strong> - истинно лишь если сообщение было заморожено, и в последствии было разморожено административным пользователем. Явная принудительная доставка считается ручным размораживанием, но разморозка в результате установки <strong>auto_thaw</strong> таковой не считается.</p>
+<div class="admonition warning">
+<p class="first admonition-title">Предупреждение</p>
+<p class="last">Если системный фильтр использует условие <strong>first_delivery</strong> для создания <strong>unseen</strong> (невидимой) доставки, и эта доставка неуспешна, ещё одна попытка доставки не производится. Если вы хотите чтобы Exim повторял невидимые доставки до их успеха, вы должны установить её при каждом запуске фильтра.</p>
+</div>
+<p>Когда системный фильтр завершает работу, значения переменных  $n0 - $n9 копируются в $sn0 - $sn9, и, таким образом, становятся доступны в файлах пользовательских фильтров. Таким образом, системный фильтр может, например, устанавливать “баллы” для передачи пользовательским фильтрам.</p>
+</div>
+<div class="section" id="ch43-04">
+<span id="id5"></span><h2>Дополнительные переменные для системных фильтров<a class="headerlink" href="#ch43-04" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Переменная раскрытия $recipients, содержащая список всех получателей сообщения (разделённых запятыми и пробелами), - доступна в системных фильтрах. Из соображений безопасности, она не доступна в пользовательских фильтрах.</p>
+</div>
+<div class="section" id="defer-freeze-fail">
+<span id="ch43-05"></span><h2><strong>Defer</strong>, <strong>freeze</strong>, и <strong>fail</strong> команды системного фильтра<a class="headerlink" href="#defer-freeze-fail" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Существуют три дополнительные команды (<strong>defer</strong>, <strong>freeze</strong> и <strong>fail</strong>), которые всегда доступны в системных фильтрах, но, обычно, недопустимы в пользовательских фильтрах. (Смотрите параметры <strong>allow_defer</strong>, <strong>allow_freeze</strong> и <strong>allow_fail</strong> маршрутизатора <strong>redirect</strong>.) Эти команды, необязательно, могут сопровождаться словом <strong>text</strong> и строкой содержащей сообщение о ошибке, например:</p>
+<div class="highlight-python"><pre>fail text "this message looks like spam to me"</pre>
+</div>
+<p>Ключевое слово <strong>text</strong> необязательно, если следующий символ - двойная кавычка.</p>
+<p>Команда <strong>defer</strong> задерживает доставку оригинальных получателей сообщения. Команда <strong>fail</strong> вызывает неудачу оригинальных получателей, и создание рикошета. Команда <strong>freeze</strong> останавливает все попытки доставки для оригинальных получателей. Во всех случаях, любые новые доставки определённые фильтром предпринимаются обычным образом после работы фильтра.</p>
+<p>Команда <strong>freeze</strong> игнорируется, если сообщение было разморожено вручную, и с тех пор не было вручную заморожено.Это означает, что автоматическое замораживание путём системного фильтра может использоваться как способ проверки подозрительных сообщений.Если выясняется, что сообщение нормальное, ручная разморозка позволяет его доставку.</p>
+<p>Текст, данный с командой <strong>fail</strong>, используется как часть сообщения рикошета, а также записывается в лог. Если сообщение очень длинное, они могут занимать много места в логах, если отказы происходят постоянно. Для уменьшения размера сообщений в логах, Exim специальным образом интерпретирует текст, если он начинается с “&lt;&lt;”, и, позднее, содержит “&gt;&gt;”. Текст между этими двумя строками пишется в лог, и оставшаяся часть текста используется в сообщении рикошета. Например:</p>
+<div class="highlight-python"><pre>fail "&lt;&lt;filter test 1&gt;&gt;Your message is rejected \
+     because it contains attachments that we are \
+     not prepared to receive."</pre>
+</div>
+<p>Используйте команду <strong>fail</strong> с большой осторожностью, когда решение о неудаче основано на содержимом сообщения, поскольку сообщение рикошета будет включать содержимое оригинального сообщения, и может снова вызвать команду <strong>fail</strong> (вызывая зацикливание почты), если не были приняты специальные меры для предотвращения этого. Тестирование условия <strong>error_message</strong> - один из путей это предотвратить. Например, вы можете использовать:</p>
+<div class="highlight-python"><pre>if $message_body contains "this is spam" and not error_message
+then fail text "spam is not wanted here" endif</pre>
+</div>
+<p>хотя, разумеется, могут проходить нежелательные рикошеты. Альтернатива - умная проверка тела и/или заголовков для детектирования рикошетов созданных фильтром.</p>
+<p>Интерпретация системного фильтра прекращается немедленно после выполнения команды <strong>defer</strong>, <strong>freeze</strong> или <strong>fail</strong>. Однако, любые доставки, установленные ранее в фильтре - соблюдаются, таким образом, вы можете использовать последовательность типа</p>
+<div class="highlight-python"><pre>mail ...
+freeze</pre>
+</div>
+<p>для отправки заданного сообщения при заморозке системным фильтром (или задержке, или ошибке) сообщения. Нормальные доставки для сообщения, разумеется, не происходят.</p>
+</div>
+<div class="section" id="ch43-06">
+<span id="id6"></span><h2>Добавление и удаление заголовков в системном фильтре<a class="headerlink" href="#ch43-06" title="Ссылка на этот заголовок">¶</a></h2>
+<p>Две команды фильтра, которые доступны лишь в системных фильтрах, таковы:</p>
+<div class="highlight-python"><pre>headers add &lt;string&gt;
+headers remove &lt;string&gt;</pre>
+</div>
+<p>Аргумент для <strong>headers add</strong> - строка, которая раскрывается, и, затем, добавляется к концу заголовков сообщения. Ответственностью разработчика фильтра является проследить за соответствием синтаксису <span class="target" id="index-0"></span><a class="rfc reference external" href="http://tools.ietf.org/html/rfc2822.html"><strong>RFC 2822</strong></a>. Начальные пробелы игнорируются, и если строка пуста, или раскрытие принудительно неудачно, команда не имеет эффекта.</p>
+<p>Вы можете использовать “n” внутри строки, сопровождаемый пробелом, для задания продолженных строк заголовков. Более чем один заголовок может быть добавлен в одной команде, путём включения “n” в строке без пробелов. Например:</p>
+<div class="highlight-python"><pre>headers add "X-header-1: ....\n  \
+            continuation of X-header-1 ...\n\
+            X-header-2: ...."</pre>
+</div>
+<p>Отметьте, что строки заголовков продолжающие пробелы после первого символа новой строки должны быть помещены до обратного слэша, который продолжает строку ввода, поскольку пробелы после появления продолжения игнорируются.</p>
+<p>Аргумент для <strong>headers remove</strong> - список имён заголовков, разделённых двоеточиями. Эта команда применяется лишь к тем заголовкам, которые сохраняются с сообщением; те, что добавляются в процессе доставки (типа “Envelope-To:” и “Return-Path:”) не могут быть удалены этим средством. Если есть более одного заголовка с одинаковым именем, они все удаляются.</p>
+<p>Команда <strong>headers</strong> в системном фильтре, делает немедленные изменения строк заголовков, полученных с сообщением (с возможными дополнениями от обработки ACL). Последующие команды системного фильтра оперируют модифицированным набором заголовков, который, также, является основой для последующей доставки. Кроме последующей модификации в процессе маршрутизации или транспортировки, этот набор заголовков используется для всех получателей сообщения.</p>
+<p>В процессе маршрутизации и транспортировки, переменные, которые ссылаются на содержимое строк заголовков, ссылаются лишь на те строки, которые находятся в этом наборе заголовков. Таким образом, строки заголовков, добавленные системным фильтром, видны в файлах пользовательских фильтров, и во всех маршрутизаторах и транспортах. Это - противоположно манипуляциям заголовками в маршрутизаторах и транспортах, которые не немедленные, а вместо этого, сохраняются вплоть до фактической записи сообщения (смотрите раздел <a class="reference internal" href="ch44.html#ch44-17"><em>44.17</em></a>).</p>
+<p>Если сообщение не доставляется в первую попытку, строки заголовков, добавленные системным фильтром, сохраняются с сообщением, и, таким образом, остаются представленными в следующую попытку доставки. Удаленные строки заголовков остаются присутствовать, но помечены “deleted”, таким образом, они не транспортируются с сообщением. Для этого случая, обычно, команду <strong>headers</strong> делают зависимой от команды <strong>first_delivery</strong> так, чтобы строки заголовков не модифицировались более одного раза.</p>
+<p>Поскольку модификация заголовков в системном фильтре происходит немедленно, вы должны использовать косвенный подход, если хотите изменить содержимое строки заголовка. Например:</p>
+<div class="highlight-python"><pre>headers add "Old-Subject: $h_subject:"
+headers remove "Subject"
+headers add "Subject: new subject (was: $h_old-subject:)"
+headers remove "Old-Subject"</pre>
+</div>
+</div>
+<div class="section" id="ch43-07">
+<span id="id7"></span><h2>Установка адреса ошибок в системном фильтре<a class="headerlink" href="#ch43-07" title="Ссылка на этот заголовок">¶</a></h2>
+<p>В системном фильтре, команда <strong>deliver</strong> вида</p>
+<div class="highlight-python"><pre>errors_to &lt;some address&gt;</pre>
+</div>
+<p>может использоваться для изменения адреса отправителя конверта (и, следовательно, сообщения о ошибках) для этой доставки, может быть задан любой адрес. (В пользовательском фильтре, может быть установлен лишь текущий адрес пользователя.) Например, если какая-то почта проверяется, вы могли бы использовать</p>
+<div class="highlight-python"><pre>unseen deliver monitor@spying.example errors_to root@local.example</pre>
+</div>
+<p>для получения копии, которая не была бы послана обратно на обычный адрес ошибки, если доставка неудачна.</p>
+</div>
+<div class="section" id="ch43-08">
+<span id="id8"></span><h2>Фильтрация по адресам<a class="headerlink" href="#ch43-08" title="Ссылка на этот заголовок">¶</a></h2>
+<p>В отличие от системного фильтра, который запускается лишь один раз на сообщение для каждой попытки доставки, также возможно установить операцию фильтрации для всей системы, которая запускается один раз для каждого получателя адреса. В этом случае, могут использоваться переменные типа $local_part и $domain, и действительно, выбор файла фильтра может быть сделан зависимым от них. Это - пример маршрутизатора, который осуществляет такой фильтр:</p>
+<div class="highlight-python"><pre>central_filter:
+  check_local_user
+  driver = redirect
+  domains = +local_domains
+  file = /central/filters/$local_part
+  no_verify
+  allow_filter
+  allow_freeze</pre>
+</div>
+<p>Фильтр запускается в отдельном процессе под собственным uid. Поэтому, любой параметр <strong>check_local_user</strong> должна быть установлен (как выше), в случае когда фильтр выполняется от локального пользователя, или параметр <strong>user</strong> должен определять, какой пользователь будет использоваться. Если заданы оба, <strong>user</strong> изменяется.</p>
+<p>Необходимо позаботится чтобы ни одна из команд в файле фильтра не определяет важную доставку, если сообщение доставляется его непосредственному получателю. Тогда маршрутизатор не будет требовать адрес, таким образом, оно будет передано последующим маршрутизаторам для доставки обычным способом.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Содержание</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Системная фильтрация сообщений</a><ul>
+<li><a class="reference internal" href="#ch43-01">Установка системного фильтра</a></li>
+<li><a class="reference internal" href="#ch43-02">Тестирование системного фильтра</a></li>
+<li><a class="reference internal" href="#ch43-03">Содержимое системного фильтра</a></li>
+<li><a class="reference internal" href="#ch43-04">Дополнительные переменные для системных фильтров</a></li>
+<li><a class="reference internal" href="#defer-freeze-fail"><strong>Defer</strong>, <strong>freeze</strong>, и <strong>fail</strong> команды системного фильтра</a></li>
+<li><a class="reference internal" href="#ch43-06">Добавление и удаление заголовков в системном фильтре</a></li>
+<li><a class="reference internal" href="#ch43-07">Установка адреса ошибок в системном фильтре</a></li>
+<li><a class="reference internal" href="#ch43-08">Фильтрация по адресам</a></li>
+</ul>
+</li>
+</ul>
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="ch42.html" title="предыдущая глава">Добавляем функцию <em>local_scan()</em> в Exim</a></li>
+      <li>Next: <a href="ch44.html" title="следующая глава">Обработка сообщения</a></li>
+  </ul></li>
+</ul>
+  <h3>На этой странице</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/ch43.txt"
+           rel="nofollow">Показать исходный текст</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Быстрый поиск</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Искать" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Введите слова для поиска или имя модуля, класса или функции.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy; Copyright 2011, Exim Maintainers.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a>.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,89 @@
+
+.. _ch02_00:
+
+==============
+Включенный код
+==============
+
+В дистрибутив Exim включено много внешнего кода.
+
+* Регулярные выражения поддерживаются в Exim`e и в мониторе Exim`a с
+  использованием свободно распространяемой библиотеки PCRE, © Университета
+  Кембриджа. Исходные коды PCRE более не поставляются с Exim, таким образом вам
+  необходимо использовать PCRE, входящий в вашу систему, или скачать и
+  инсталлировать полную версию библиотеки с
+  ftp://ftp.csx.cam.ac.uk/pub/software/programming/pcre.  * Метод поиска cdb
+  (Constant DataBase) реализован с помощью кода, внесённого Найджелом
+  Метэринэмом в то время, когда он был сотрудником Planet Online Ltd. Реализация
+  этого метода полностью содержится в коде Exim. Она не связана с внешней
+  библиотекой cdb. Код содержит следующие заявления::
+
+    Copyright © 1998 Nigel Metheringham, Planet Online Ltd This program is free
+    software; you can redistribute it and/or modify it under the terms of the
+    GNU General Public License as published by the Free Software Foundation;
+    either version 2 of the License, or (at your option) any later version.
+    This code implements Dan Bernstein's Constant DataBase (cdb) spec.
+    Information, the spec and sample code for cdb can be obtained from
+    http://www.pobox.com/~djb/cdb.html. This implementation borrows some code
+    from Dan Bernstein's implementation (which has no license restrictions
+    applied to it).
+
+* Поддержка клиентов Microsoft “Secure Password Authentication” обеспечивается
+  кодом, внесённым Marc Prud’hommeaux. Поддержка сервера была внесена Томом
+  Кистнером. Также включён некоторый код из проекта Samba, выпущенный под Gnu
+  GPL.  * Поддержка вызовов Cyrus *pwcheck* и *saslauthd* даемонов
+  обеспечивается кодом, взятым из библиотеки Cyrus-SASL и адаптирован Alexander
+  S. Sabourenkov (русский товарищ - но пришлось писать по аглицки - непонятно
+  как правильно перевести фамилию с аглицкого транслита... - прим. lissyara).
+  Уведомление о разрешении представлено ниже, в соответствии с условиями
+  оговорёнными в нём.::
+
+    Copyright © 2001 Carnegie Mellon University. All rights reserved.
+    Redistribution and use in source and binary forms, with or without
+    modification, are permitted provided that the following conditions are met:
+    Redistributions of source code must retain the above copyright notice, this
+    list of conditions and the following disclaimer.  Redistributions in binary
+    form must reproduce the above copyright notice, this list of conditions and
+    the following disclaimer in the documentation and/or other materials
+    provided with the distribution.  The name “Carnegie Mellon University” must
+    not be used to endorse or promote products derived from this software
+    without prior written permission. For permission or any other legal
+    details, please contact               Office of Technology Transfer
+    Carnegie Mellon University 5000 Forbes Avenue Pittsburgh, PA  15213-3890
+    (412) 268-4387, fax: (412) 268-7395 tech-transfer@andrew.cmu.edu
+    Redistributions of any form whatsoever must retain the following
+    acknowledgment: “This product includes software developed by Computing
+    Services at Carnegie Mellon University (http://www.cmu.edu/computing/.”
+    CARNEGIE MELLON UNIVERSITY DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS
+    SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS,
+    IN NO EVENT SHALL CARNEGIE MELLON UNIVERSITY BE LIABLE FOR ANY SPECIAL,
+    INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+    LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+    OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+    PERFORMANCE OF THIS SOFTWARE.
+
+* Программа Exim Monitor, являющаяся приложением X-Window, включает
+  модифицированные версии Athena StripChart и элементов управления (виджетов)
+  TextPop. Авторские права на этот код у DEC и MIT, в соответствии с их
+  условиями, представленными ниже.::
+
+    Copyright 1987, 1988 by Digital Equipment Corporation, Maynard,
+    Massachusetts, and the Massachusetts Institute of Technology, Cambridge,
+    Massachusetts.  All Rights Reserved Permission to use, copy, modify, and
+    distribute this software and its documentation for any purpose and without
+    fee is hereby granted, provided that the above copyright notice appear in
+    all copies and that both that copyright notice and this permission notice
+    appear in supporting documentation, and that the names of Digital or MIT
+    not be used in advertising or publicity pertaining to distribution of the
+    software without specific, written prior permission.  DIGITAL DISCLAIMS ALL
+    WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES
+    OF MERCHANTABILITY AND FITNESS, IN NO EVENT SHALL DIGITAL BE LIABLE FOR ANY
+    SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER
+    RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF
+    CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
+    CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE. 
+
+* Много людей внесли фрагменты кода, некоторые большие, некоторые маленькие,
+  которые не были охвачены никакими определенными лицензионными требованиями.
+  Предполагается, что эти вкладчики рады видеть их код включённым в Exim под
+  GPL.
